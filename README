@@ -1,0 +1,8 @@
+=== Overview ===
+TryOCaml is the easiest way to learn how to code in OCaml language. A funny way
+to learn the language and be in touch with experts through IRC channel.
+
+=== Requirements ===
+
+  * Findlib
+  * Js_of_ocaml (version 1.0.3 at least)
