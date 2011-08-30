@@ -12,7 +12,7 @@ COMP=$(JS_OF_OCAML_PATH)/compiler/$(COMPILER)
 JSFILES=$(JS_OF_OCAML_PATH)/runtime/runtime.js $(JS_OF_OCAML_PATH)/runtime/weak.js toplevel_runtime.js
 OCAMLC=ocamlfind ocamlc -package lwt,str -pp "camlp4o $(JS_OF_OCAML_PATH)/lib/syntax/pa_js.cmo" -I $(JS_OF_OCAML_PATH)/lib -I $(JS_OF_OCAML_PATH)/compiler
 STDLIB=$(JS_OF_OCAML_PATH)/lib/$(LIBNAME).cma $(JS_OF_OCAML_PATH)/compiler/compiler.cma toplevellib.cma
-
+EXPUNGE=$(shell ocamlc -where)/expunge
 # Removed gc and sys
 STDLIB_MODULES=\
   arg \
@@ -67,8 +67,8 @@ $(NAME).js: $(NAME).byte $(COMP) $(JSFILES)
 
 $(NAME).byte: $(OBJS) $(JS_OF_OCAML_PATH)/compiler/compiler.cma
 	$(OCAMLC) -linkall -package str -linkpkg -o $@.tmp $(STDLIB) $(OBJS)
-	/usr/lib/ocaml/expunge $@.tmp $@ $(PERVASIVES)
-	rm -f $@.tpm
+	$(EXPUNGE) $@.tmp $@ $(PERVASIVES)
+	rm -f $@.tmp
 
 %.cmo: %.ml
 	$(OCAMLC) -c $<
