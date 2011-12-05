@@ -6,3 +6,13 @@ to learn the language and be in touch with experts through IRC channel.
 
   * Findlib
   * Js_of_ocaml (version 1.0.3 at least)
+
+=== Try it === 
+
+0: make depend
+1: make
+
+Then, with your favorite browser launch src/index.html:
+
+2: chromium-browser src/index.html
+

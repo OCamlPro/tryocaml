@@ -5,13 +5,12 @@ OBJS=toplevel.cmo
 all: $(NAME).js
 
 include ../Makefile.conf
-include $(JS_OF_OCAML_PATH)/Makefile.conf
--include $(JS_OF_OCAML_PATH)/Makefile.local
+-include ../Makefile.local
 
-COMP=$(JS_OF_OCAML_PATH)/compiler/$(COMPILER)
-JSFILES=$(JS_OF_OCAML_PATH)/runtime/runtime.js $(JS_OF_OCAML_PATH)/runtime/weak.js toplevel_runtime.js
-OCAMLC=ocamlfind ocamlc -package lwt,str -pp "camlp4o $(JS_OF_OCAML_PATH)/lib/syntax/pa_js.cmo" -I $(JS_OF_OCAML_PATH)/lib -I $(JS_OF_OCAML_PATH)/compiler
-STDLIB=$(JS_OF_OCAML_PATH)/lib/$(LIBNAME).cma $(JS_OF_OCAML_PATH)/compiler/compiler.cma toplevellib.cma
+COMP=../compiler/$(COMPILER)
+JSFILES=../runtime/runtime.js ../runtime/weak.js toplevel_runtime.js
+OCAMLC=ocamlfind ocamlc -package lwt,str -pp "camlp4o ../lib/syntax/pa_js.cmo" -I ../lib -I ../compiler
+STDLIB= ../lib/$(LIBNAME).cma ../compiler/compiler.cma toplevellib.cma
 EXPUNGE=$(shell ocamlc -where)/expunge
 # Removed gc and sys
 STDLIB_MODULES=\
@@ -65,7 +64,7 @@ PERVASIVES=$(STDLIB_MODULES) outcometree topdirs toploop
 $(NAME).js: $(NAME).byte $(COMP) $(JSFILES)
 	$(COMP) -toplevel -noinline -noruntime $(JSFILES) $(NAME).byte $(OPTIONS)
 
-$(NAME).byte: $(OBJS) $(JS_OF_OCAML_PATH)/compiler/compiler.cma
+$(NAME).byte: $(OBJS) ../compiler/compiler.cma
 	$(OCAMLC) -linkall -package str -linkpkg -o $@.tmp $(STDLIB) $(OBJS)
 	$(EXPUNGE) $@.tmp $@ $(PERVASIVES)
 	rm -f $@.tmp
@@ -73,10 +72,10 @@ $(NAME).byte: $(OBJS) $(JS_OF_OCAML_PATH)/compiler/compiler.cma
 %.cmo: %.ml
 	$(OCAMLC) -c $<
 
-%.cmi: $(JS_OF_OCAML_PATH)/compiler/compiler.cma
+%.cmi: ../compiler/compiler.cma
 
-$(JS_OF_OCAML_PATH)/compiler/compiler.cma:
-	$(MAKE) -C $(JS_OF_OCAML_PATH)/compiler compiler.cma
+../compiler/compiler.cma:
+	$(MAKE) -C ../compiler compiler.cma
 
 errors.cmi: errors.mli
 	$(OCAMLC) -c $<
@@ -85,6 +84,6 @@ clean::
 	rm -f *.cm[io] $(NAME).byte $(NAME).js
 
 depend:
-	ocamldep -pp "camlp4o $(JS_OF_OCAML_PATH)/lib/syntax/pa_js.cmo" -I $(JS_OF_OCAML_PATH)/compiler *.ml *.mli > .depend
+	ocamldep -pp "camlp4o ../lib/syntax/pa_js.cmo" -I ../compiler *.ml *.mli > .depend
 
 include .depend

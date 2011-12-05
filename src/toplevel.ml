@@ -43,11 +43,6 @@ external global_data : unit -> Obj.t array = "caml_get_global_data"
 let g = global_data ()
 
 let _ =
-(*
-  Util.set_debug "parser";
-  Util.set_debug "deadcode";
-  Util.set_debug "main";
-*)
   let toc = Obj.magic (Array.unsafe_get g (-2)) in
   let prims = split_primitives (List.assoc "PRIM" toc) in
 
@@ -69,16 +64,10 @@ let s =
    let rec fact n = if n = 0 then 1. else float n *. fact (n - 1);;\n\
    fact 20;;\n"
 
-let doc = Dom_html.document
-let button_type = Js.string "button"
-let button txt action =
-  let b = Dom_html.createInput ~_type:button_type doc in
-  b##value <- Js.string txt;
-  b##onclick <- Dom_html.handler (fun _ -> action (); Js._true);
-  b
+let doc = Html.document
 
 let start ppf =
-  Format.fprintf ppf "        Objective Caml version %s@.@." Sys.ocaml_version;
+  Format.fprintf ppf "        Try OCaml %s@.@." Sys.ocaml_version;
   Toploop.initialize_toplevel_env ();
   Toploop.input_name := ""
 
@@ -141,6 +130,7 @@ let run _ =
   let output = Html.createDiv doc in
   output##id <- Js.string "output";
   output##style##whiteSpace <- Js.string "pre";
+  output##style##backgroundColor <- Js.string "red";
   Dom.appendChild top output;
 
   let ppf =
@@ -150,24 +140,29 @@ let run _ =
            (doc##createTextNode(Js.string (String.sub s i l))))
       (fun _ -> ())
   in
-
   let textbox = Html.createTextarea doc in
   textbox##rows <- 10; textbox##cols <- 80;
   textbox##value <- Js.string s;
+  output##style##overflowX <- Js.string "scroll";
   Dom.appendChild top textbox;
   Dom.appendChild top (Html.createBr doc);
 
   textbox##focus(); textbox##select();
-  let b =
-    button "Send"
-      (fun () ->
-         loop (Js.to_string textbox##value) ppf;
-         textbox##focus(); textbox##select();
-         doc##documentElement##scrollTop <- doc##body##scrollHeight)
-  in
-  Dom.appendChild top b;
+  let enter_keycode = ref 13 (* Enter key *) in 
+  Html.document##onkeypress <-
+    (Html.handler
+       (fun e ->
+         if e##keyCode = !enter_keycode then begin     
+           loop (Js.to_string textbox##value) ppf;
+           textbox##focus(); textbox##select();
+           doc##documentElement##scrollTop <- doc##body##scrollHeight;
+  output##scrollTop <- output##scrollHeight - output##clientHeight;
+           textbox##value <- Js.string "";
+           loop (Js.to_string textbox##value) ppf;
+           Js._false
+         end 
+         else Js._true));
   start ppf;
-
   Js._false
-
+  
 let _ = Html.window##onload <- Html.handler run
