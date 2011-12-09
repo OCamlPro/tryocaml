@@ -1,4 +1,4 @@
-all: compiler library runtime src
+all: compiler library runtime depend src
 
 include Makefile.conf
 

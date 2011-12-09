@@ -9,10 +9,9 @@ to learn the language and be in touch with experts through IRC channel.
 
 === Try it === 
 
-0: make depend
-1: make
+0: make
 
 Then, with your favorite browser launch src/index.html:
 
-2: chromium-browser src/index.html
+1: chromium-browser src/index.html
 

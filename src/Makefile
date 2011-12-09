@@ -5,11 +5,10 @@ OBJS=toplevel.cmo
 all: $(NAME).js
 
 include ../Makefile.conf
--include ../Makefile.local
 
 COMP=../compiler/$(COMPILER)
 JSFILES=../runtime/runtime.js ../runtime/weak.js toplevel_runtime.js
-OCAMLC=ocamlfind ocamlc -package lwt,str -pp "camlp4o ../lib/syntax/pa_js.cmo" -I ../lib -I ../compiler
+OCAMLC=ocamlfind ocamlc -annot -package lwt,str -pp "camlp4o ../lib/syntax/pa_js.cmo" -I ../lib -I ../compiler
 STDLIB= ../lib/$(LIBNAME).cma ../compiler/compiler.cma toplevellib.cma
 EXPUNGE=$(shell ocamlc -where)/expunge
 # Removed gc and sys
@@ -57,7 +56,6 @@ STDLIB_MODULES=\
   stringLabels \
   weak
 PERVASIVES=$(STDLIB_MODULES) outcometree topdirs toploop
-
 #toplevel.byte: $(OBJS:cmx=cmo) toplevel.cmo
 #	ocamlfind ocamlc -linkall -g -package str -linkpkg toplevellib.cma -o $@.tmp $^
 

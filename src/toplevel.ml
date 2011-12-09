@@ -18,14 +18,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
-(*
-TODO
-- different style for toplevel input, output and errors
-  in particular, the prompt should not be part of the text
-  (CSS generated content)
-- syntax highlighting?
-*)
-
 let split_primitives p =
   let len = String.length p in
   let rec split beg cur =
@@ -56,18 +48,18 @@ let _ =
 
 module Html = Dom_html
 
-let s =
-  "let x = 10+10;;\n\
-   let y = x * 3;;\n\
-   String.make x 'a';;\n\
-   sin 1.;;\n\
-   let rec fact n = if n = 0 then 1. else float n *. fact (n - 1);;\n\
-   fact 20;;\n"
+let s = "> "
 
 let doc = Html.document
+let button_type = Js.string "reset"
+let button txt action =
+  let b = Dom_html.createInput ~_type:button_type doc in
+  b##value <- Js.string txt;
+  b##onclick <- Dom_html.handler (fun _ -> action (); Js._true);
+  b
 
 let start ppf =
-  Format.fprintf ppf "        Try OCaml %s@.@." Sys.ocaml_version;
+  Format.fprintf ppf "        Try OCaml (v. %s)@.@." Sys.ocaml_version;
   Toploop.initialize_toplevel_env ();
   Toploop.input_name := ""
 
@@ -105,32 +97,31 @@ let ensure_at_bol ppf =
   end
 
 let loop s ppf =
+  (* XXX use a regexp instead of substring *)
+  let s = String.sub s 1 ((String.length s) - 1) in
   let lb = Lexing.from_function (refill_lexbuf s (ref 0) ppf) in
   begin try
     while true do
       try
-        let phr = !Toploop.parse_toplevel_phrase lb in
+        let phr = !Toploop.parse_toplevel_phrase lb in        
         ensure_at_bol ppf;
-        ignore(Toploop.execute_phrase true ppf phr)
+        ignore (Toploop.execute_phrase true ppf phr)
       with
-        End_of_file ->
-          raise End_of_file
-      | x ->
+          End_of_file ->
+            raise End_of_file
+        | x ->
           ensure_at_bol ppf;
           Errors.report_error ppf x
     done
-  with End_of_file ->
-    ()
+    with End_of_file -> ()
   end
 
 let run _ =
-  let top =
-    Js.Opt.get (doc##getElementById(Js.string "toplevel"))
-      (fun () -> assert false) in
+  let top = 
+    Js.Opt.get (doc##getElementById (Js.string "toplevel")) (fun () -> assert false) in
   let output = Html.createDiv doc in
-  output##id <- Js.string "output";
+  output##id <- Js.string "toplevel";
   output##style##whiteSpace <- Js.string "pre";
-  output##style##backgroundColor <- Js.string "red";
   Dom.appendChild top output;
 
   let ppf =
@@ -141,27 +132,35 @@ let run _ =
       (fun _ -> ())
   in
   let textbox = Html.createTextarea doc in
-  textbox##rows <- 10; textbox##cols <- 80;
+  textbox##rows <- 10; 
+  textbox##cols <- 70;
   textbox##value <- Js.string s;
-  output##style##overflowX <- Js.string "scroll";
   Dom.appendChild top textbox;
   Dom.appendChild top (Html.createBr doc);
-
-  textbox##focus(); textbox##select();
-  let enter_keycode = ref 13 (* Enter key *) in 
-  Html.document##onkeypress <-
+  textbox##focus();
+  textbox##select();
+  doc##documentElement##scrollTop <- doc##body##scrollHeight;
+  output##scrollTop <- output##scrollHeight - output##clientHeight;
+  let enter_key = 13 (* Enter key *) in
+  Html.document##onkeyup <-
     (Html.handler
        (fun e ->
-         if e##keyCode = !enter_keycode then begin     
-           loop (Js.to_string textbox##value) ppf;
-           textbox##focus(); textbox##select();
-           doc##documentElement##scrollTop <- doc##body##scrollHeight;
-  output##scrollTop <- output##scrollHeight - output##clientHeight;
-           textbox##value <- Js.string "";
-           loop (Js.to_string textbox##value) ppf;
+         doc##documentElement##scrollTop <- doc##body##scrollHeight;
+         if e##keyCode = enter_key then begin
+           let str = textbox##value in
+           textbox##value <- Js.string "> ";
+           loop (Js.to_string str) ppf;
+           textbox##focus(); 
            Js._false
-         end 
+         end        
          else Js._true));
+  let b =
+    button "Reset"
+      (fun () ->
+        ()                              (* TODO xxx clear all the div ? *)
+      )
+  in
+  Dom.appendChild top b;
   start ppf;
   Js._false
   
