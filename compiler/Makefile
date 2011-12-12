@@ -31,8 +31,7 @@ compiler.cma: $(OBJS:cmx=cmo)
 	ocamlfind ocamlc -package findlib,str -c $<
 
 clean:
-	rm -f *.cm[aiox] 
-	rm -f *.o
+	rm -f *.cm[aiox] *.o
 	rm -f js_of_ocaml compile
 
 depend:

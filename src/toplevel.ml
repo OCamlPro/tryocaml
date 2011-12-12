@@ -58,10 +58,22 @@ let button txt action =
   b##onclick <- Dom_html.handler (fun _ -> action (); Js._true);
   b
 
+let exec ppf s =
+  let lb = Lexing.from_string s in
+  try
+    List.iter
+      (fun phr ->
+        if not (Toploop.execute_phrase false ppf phr) then raise Exit)
+      (!Toploop.parse_use_file lb)
+  with
+    | Exit -> ()
+    | x    -> Errors.report_error ppf x
+
 let start ppf =
   Format.fprintf ppf "        Try OCaml (v. %s)@.@." Sys.ocaml_version;
   Toploop.initialize_toplevel_env ();
-  Toploop.input_name := ""
+  Toploop.input_name := "";
+  exec ppf "open Tutorial"
 
 let at_bol = ref true
 let consume_nl = ref false
@@ -95,7 +107,7 @@ let ensure_at_bol ppf =
     Format.fprintf ppf "@.";
     consume_nl := true; at_bol := true
   end
-
+      
 let loop s ppf =
   (* XXX use a regexp instead of substring *)
   let s = String.sub s 1 ((String.length s) - 1) in
