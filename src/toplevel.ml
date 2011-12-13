@@ -48,7 +48,7 @@ let _ =
 
 module Html = Dom_html
 
-let s = "> "
+let s = "# "
 
 let doc = Html.document
 let button_type = Js.string "reset"
@@ -115,7 +115,7 @@ let loop s ppf =
   begin try
     while true do
       try
-        let phr = !Toploop.parse_toplevel_phrase lb in        
+        let phr = !Toploop.parse_toplevel_phrase lb in
         ensure_at_bol ppf;
         ignore (Toploop.execute_phrase true ppf phr)
       with
@@ -132,9 +132,8 @@ let run _ =
   let top = 
     Js.Opt.get (doc##getElementById (Js.string "toplevel")) (fun () -> assert false) in
   let output = Html.createDiv doc in
-  output##id <- Js.string "toplevel";
+  output##id <- Js.string "output";
   output##style##whiteSpace <- Js.string "pre";
-  Dom.appendChild top output;
 
   let ppf =
     Format.make_formatter
@@ -144,25 +143,29 @@ let run _ =
       (fun _ -> ())
   in
   let textbox = Html.createTextarea doc in
-  textbox##rows <- 10; 
+  textbox##rows <- 7; 
   textbox##cols <- 70;
   textbox##value <- Js.string s;
   Dom.appendChild top textbox;
-  Dom.appendChild top (Html.createBr doc);
   textbox##focus();
   textbox##select();
-  doc##documentElement##scrollTop <- doc##body##scrollHeight;
-  output##scrollTop <- output##scrollHeight - output##clientHeight;
+  let container = 
+    Js.Opt.get (doc##getElementById (Js.string "container")) (fun () -> assert false) in
+  let tryocaml = 
+    Js.Opt.get (doc##getElementById (Js.string "tryocaml")) (fun () -> assert false) in
+  let output_area =
+    Js.Opt.get (doc##getElementById (Js.string "output-area")) (fun () -> assert false) in
+  
   let enter_key = 13 (* Enter key *) in
   Html.document##onkeyup <-
     (Html.handler
        (fun e ->
-         doc##documentElement##scrollTop <- doc##body##scrollHeight;
          if e##keyCode = enter_key then begin
            let str = textbox##value in
-           textbox##value <- Js.string "> ";
+           textbox##value <- Js.string "# ";
            loop (Js.to_string str) ppf;
-           textbox##focus(); 
+           textbox##focus();
+           container##scrollTop <- container##scrollHeight;
            Js._false
          end        
          else Js._true));
@@ -172,7 +175,9 @@ let run _ =
         ()                              (* TODO xxx clear all the div ? *)
       )
   in
-  Dom.appendChild top b;
+ output_area##scrollTop <- output_area##scrollHeight;
+  Dom.appendChild tryocaml b;
+  Dom.appendChild output_area output;
   start ppf;
   Js._false
   

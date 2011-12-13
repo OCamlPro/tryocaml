@@ -1,8 +1,8 @@
 
 NAME=toplevel
-OBJS=../tutorial/utils.cmo ../tutorial/tutorial.cmo toplevel.cmo
+OBJS=tutorial/utils.cmo tutorial/tutorial.cmo toplevel.cmo
 
-all: depend tutorial $(NAME).js
+all: depend tuto $(NAME).js
 
 include ../Makefile.conf
 
@@ -63,7 +63,7 @@ PERVASIVES=$(STDLIB_MODULES) outcometree topdirs toploop
 #	ocamlfind ocamlc -linkall -g -package str -linkpkg toplevellib.cma -o $@.tmp $^
 
 $(NAME).js: $(NAME).byte $(JSFILES)
-	$(COMP) -I ../tutorial -toplevel -noinline -noruntime $(JSFILES) $(NAME).byte $(OPTIONS)
+	$(COMP) -I tutorial -toplevel -noinline -noruntime $(JSFILES) $(NAME).byte $(OPTIONS)
 
 $(NAME).byte: $(OBJS) ../compiler/compiler.cma
 	$(OCAMLC) -linkall -package str -linkpkg -o $@.tmp $(STDLIB) $(OBJS)
@@ -81,11 +81,12 @@ $(NAME).byte: $(OBJS) ../compiler/compiler.cma
 errors.cmi: errors.mli
 	$(OCAMLC) -c $<
 
-tutorial:
-	$(MAKE) -C ../tutorial
+tuto:
+	$(MAKE) -C tutorial
 
 clean::
 	rm -f *.cm[io] $(NAME).byte $(NAME).js *.annot
+	$(MAKE) -C tutorial clean
 
 depend:
 	ocamldep -pp "camlp4o ../lib/syntax/pa_js.cmo" -I ../compiler *.ml *.mli > .depend

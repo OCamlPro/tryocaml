@@ -15,3 +15,10 @@ Then, with your favorite browser launch src/index.html:
 
 1: chromium-browser src/index.html
 
+=== Lessons ===
+
+To add new lessons:
+ - TODO
+
+To add new step in an existing lesson:
+ - TODO

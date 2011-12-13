@@ -3,25 +3,38 @@
     margin-right: 25%;
 }
 
-#toplevel {
-    font-size: 12px;
-    background-color: #98FB98;
-    font-family: "Courier New", Courier, monospace;
-    min-width: 300px;
-    min-height: 50px;
+#container {   
     overflow: auto;
-    /* overflow-y: hidden; */
-    /* border-width: 2px;  */
-    /* border-style: solid;  */
-    /* border-color: #000000;  */
+    overflow-x: hidden;
+    border:0;
+    background-color: #98FB98;
+    font-weight: bold;    
+    font-size: 12px;
+    font-family: "Courier New", Courier, monospace;
+    height: 350px;
+}
+
+#output-area {
+    overflow: auto;
+    border: 0;
+    background-color: #98FB98;
+    font-weight: bold;    
+    font-size: 12px;
+    font-family: "Courier New", Courier, monospace;
+  
+}
+
+#toplevel {
+    width: 300px;
+    height: 50px;
 }
 
 textarea {
+   width: 800px;
     border: 0;
     background: transparent;
     resize: none;
     outline: none;
-    /* overflow-y: hidden; */
     font-family: "Courier New", Courier, monospace;
 }
 
@@ -48,7 +61,6 @@ textarea {
 
 #bottom {    
     text-align: center;
-    /* background-color: #333366; */
     font-weight: bold;
     margin-left: 25%;
     margin-right: 25%;

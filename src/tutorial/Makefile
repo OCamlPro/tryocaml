@@ -1,5 +1,5 @@
 
-include ../Makefile.conf
+include ../../Makefile.conf
 OCAMLC = ocamlc
 OCAMLOPT = ocamlopt
 OCAMLDEP = ocamldep
