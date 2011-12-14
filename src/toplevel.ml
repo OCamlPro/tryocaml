@@ -1,7 +1,7 @@
 (* Js_of_ocaml toplevel
  * http://www.ocsigen.org/js_of_ocaml/
- * Copyright (C) 2011 Jérôme Vouillon
- * Laboratoire PPS - CNRS Université Paris Diderot
+ * (C) 2011 Jérôme Vouillon Laboratoire PPS - CNRS Université Paris Diderot
+ * (C) 2011 Cagdas Bozman - OCamlPro SAS
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -48,7 +48,7 @@ let _ =
 
 module Html = Dom_html
 
-let s = "# "
+let s = ""
 
 let doc = Html.document
 let button_type = Js.string "reset"
@@ -71,6 +71,7 @@ let exec ppf s =
 
 let start ppf =
   Format.fprintf ppf "        Try OCaml (v. %s)@.@." Sys.ocaml_version;
+  Format.fprintf ppf "Hi ! How are you ? Welcome to TryOCaml. Let'start with your name ?\nType it with quotes around it like this \"Cagdas\"\n";
   Toploop.initialize_toplevel_env ();
   Toploop.input_name := "";
   exec ppf "open Tutorial"
@@ -110,7 +111,6 @@ let ensure_at_bol ppf =
       
 let loop s ppf =
   (* XXX use a regexp instead of substring *)
-  let s = String.sub s 1 ((String.length s) - 1) in
   let lb = Lexing.from_function (refill_lexbuf s (ref 0) ppf) in
   begin try
     while true do
@@ -151,8 +151,6 @@ let run _ =
   textbox##select();
   let container = 
     Js.Opt.get (doc##getElementById (Js.string "container")) (fun () -> assert false) in
-  let tryocaml = 
-    Js.Opt.get (doc##getElementById (Js.string "tryocaml")) (fun () -> assert false) in
   let output_area =
     Js.Opt.get (doc##getElementById (Js.string "output-area")) (fun () -> assert false) in
   
@@ -162,21 +160,23 @@ let run _ =
        (fun e ->
          if e##keyCode = enter_key then begin
            let str = textbox##value in
-           textbox##value <- Js.string "# ";
+           textbox##value <- Js.string "";
            loop (Js.to_string str) ppf;
            textbox##focus();
            container##scrollTop <- container##scrollHeight;
            Js._false
          end        
          else Js._true));
-  let b =
-    button "Reset"
-      (fun () ->
-        ()                              (* TODO xxx clear all the div ? *)
-      )
-  in
- output_area##scrollTop <- output_area##scrollHeight;
-  Dom.appendChild tryocaml b;
+  (* let b = *)
+  (*   button "Reset" *)
+  (*     (fun () -> *)
+  (*       ()                              (\* TODO xxx clear all the div ? *\) *)
+  (*     ) *)
+  (* in *)
+  output_area##scrollTop <- output_area##scrollHeight;
+  (* let tryocaml =  *)
+  (*   Js.Opt.get (doc##getElementById (Js.string "tryocaml")) (fun () -> assert false) in *)
+  (* Dom.appendChild tryocaml b; *)
   Dom.appendChild output_area output;
   start ppf;
   Js._false

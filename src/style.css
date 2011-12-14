@@ -1,68 +1,102 @@
 #tryocaml {
-    margin-left: 25%;
-    margin-right: 25%;
+    margin-left: 15%;
+    margin-right: 15%;
+    padding-top: 50px;
 }
 
-#container {   
+#container { 
+    margin-left: 10%;
+    margin-right: 15%;
     overflow: auto;
     overflow-x: hidden;
-    border:0;
-    background-color: #98FB98;
+    border:1;
+    border-style: solid;
+    background-color: #DCDCDC;
     font-weight: bold;    
-    font-size: 12px;
+    font-size: 14px;
     font-family: "Courier New", Courier, monospace;
-    height: 350px;
+    height: 300px;
 }
 
 #output-area {
-    overflow: auto;
     border: 0;
-    background-color: #98FB98;
-    font-weight: bold;    
-    font-size: 12px;
+    font-weight: bold;
     font-family: "Courier New", Courier, monospace;
   
 }
 
 #toplevel {
+    margin-left: 5px;
     width: 300px;
     height: 50px;
+    float: left;
+}
+
+#sharp:before {
+    content: "#";
+    margin-top: 2px;
+    float: left;
 }
 
 textarea {
-   width: 800px;
+    width: 800px;
     border: 0;
     background: transparent;
     resize: none;
     outline: none;
     font-family: "Courier New", Courier, monospace;
+    font-size: 14px;
 }
 
 #tryocaml-title {
     text-align: center;
-    background-color: #ADD8E6;
-    margin-bottom: 50px;
+    margin-bottom: 30px;
     font-size: 25px;
     font-family: Impact, "Arial Black", Arial, Verdana, serif;
     font-weight: bold;    
-    border-width: 2px;
-    border-style: solid;
-    border-color: #000000;
 }
 
-#infos {
-    background-color: #FF6347;
+div.infos {
+    background-color: gray;
     font-weight: bold;
-    margin-top: 50px;
-    border-width: 2px; 
+    margin-top: 30px;
+    border-width: 2; 
     border-style: solid; 
     border-color: #000000; 
+}
+
+div.infos-title {
+    padding-top: 20px;
+    padding-bottom: 10px;
+    text-align: center;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+p.sub-infos {
+    text-align: center;
+    font-weight: bold;
+}
+
+#social-network {
+    text-align: center;
+    background-color: gray;
+    font-weight: bold;
+    margin-top: 30px;
+    border-width: 2; 
+    border-style: solid; 
+
 }
 
 #bottom {    
     text-align: center;
     font-weight: bold;
-    margin-left: 25%;
-    margin-right: 25%;
-    margin-top: 50px;
+    margin-left: 15%;
+    margin-right: 15%;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+#fantasy {
+    font-family: fantasy;
 }

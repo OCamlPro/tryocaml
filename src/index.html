@@ -7,8 +7,48 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <script type="text/javascript" src="toplevel.js"></script>
     <link type="text/css" href="style.css" rel="stylesheet">
-  </head>
+    <link type="text/css" href="bootstrap.css" rel="stylesheet">
+    </head>
     <body>
+
+      <div class="topbar-wrapper" style="z-index: 5;">
+        <div class="topbar" data-dropdown="dropdown">
+          <div class="topbar-inner" id="fantasy">
+            <div class="container">
+              <h3><a href="#">Try OCaml</a></h3>
+              <ul class="nav">
+                <li class="active"><a href="#">Home</a></li>
+                <li><a href="#">Link2</a></li>
+                <li><a href="#">Link3</a></li>
+                <li><a href="#">Link4</a></li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle">Dropdown</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="#1">Secondary link</a></li>
+                    <li><a href="#2">Something else here</a></li>
+                    <li class="divider"></li>
+                    <li><a href="#">Another link</a></li>
+                  </ul>
+                </li>
+              </ul>
+              <form class="pull-left" action="">
+                <input type="text" placeholder="Search" />
+              </form>
+              <ul class="nav secondary-nav">
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle">Dropdown</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="#">Contact</a></li>
+                    <li><a href="#">Log out</a></li>
+                    <li class="divider"></li>
+                    <li><a href="#">Another link</a></li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </div><!-- /topbar-inner -->
+        </div><!-- /topbar -->
+      </div><!-- /topbar-wrapper -->
       <div id="tryocaml">
         
         <div id="tryocaml-title">
@@ -17,17 +57,105 @@
         
         <div id="container">
           <div id="output-area"></div>
-          <div id="toplevel"></div>
+          <div id="sharp"></div><div id="toplevel"></div>
         </div>
-        
-        <div id="infos">
-          Type \tutorial\ to start the tutorial.
+
+        <div class="row">
+          <div class="span18" id="social-network">
+            FACEBOOK - TWITTER - LINKEDIN
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="span18">
+            <div class="infos">
+            <h1>Type *tutorial* to start the tutorial.</h1>           
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris
+            vulputate fringilla erat, ut suscipit ante tempor
+            eu. Pellentesque habitant morbi tristique senectus et
+            netus et malesuada fames ac turpis egestas. Fusce sodales
+            mi a elit tincidunt ac pellentesque diam dignissim. In
+            tincidunt nisi eget dolor dictum at interdum lorem
+            facilisis. Integer suscipit dolor nec leo auctor
+            ullamcorper ac vel nisi. Donec aliquam, mauris id
+            convallis facilisis, augue nulla tempor mi, a faucibus
+            arcu nulla vitae erat. Quisque a nisi eu tellus convallis
+            vulputate a at erat. Nullam ac dictum dui. Cras quis urna
+            nulla, nec aliquam urna.
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="span6">   
+            <div class="infos">
+                  Lorem ipsum dolor sit amet, consectetur adipiscing
+                  elit. Mauris vulputate fringilla erat, ut suscipit
+                  ante tempor eu. Pellentesque habitant morbi
+                  tristique senectus et netus et malesuada fames ac
+                  turpis egestas. Fusce sodales mi a elit tincidunt ac
+                  pellentesque diam dignissim. In tincidunt nisi eget
+                  dolor dictum at interdum lorem facilisis. Integer
+                  suscipit dolor nec leo auctor ullamcorper ac vel
+                  nisi. Donec aliquam, mauris id convallis facilisis,
+                  augue nulla tempor mi, a faucibus arcu nulla vitae
+                  erat. Quisque a nisi eu tellus convallis vulputate a
+                  at erat. Nullam ac dictum dui. Cras quis urna nulla,
+                  nec aliquam urna.
+            </div>
+            <div class="infos-title">Program in OCaml</div>
+            <p class="sub-infos">A funny way to learn OCaml. No worry about your
+              operating system, just start to code !</p>
+          </div>
+          <div class="span6">
+            <div class="infos">
+              Lorem ipsum dolor sit amet, consectetur adipiscing
+              elit. Mauris vulputate fringilla erat, ut suscipit ante
+              tempor eu. Pellentesque habitant morbi tristique
+              senectus et netus et malesuada fames ac turpis
+              egestas. Fusce sodales mi a elit tincidunt ac
+              pellentesque diam dignissim. In tincidunt nisi eget
+              dolor dictum at interdum lorem facilisis. Integer
+              suscipit dolor nec leo auctor ullamcorper ac vel
+              nisi. Donec aliquam, mauris id convallis facilisis,
+              augue nulla tempor mi, a faucibus arcu nulla vitae
+              erat. Quisque a nisi eu tellus convallis vulputate a at
+              erat. Nullam ac dictum dui. Cras quis urna nulla, nec
+              aliquam urna.              
+            </div>
+            <div class="infos-title">Track your progress</div>
+            <p class="sub-infos">Keep a trace of your
+            progression. </p>
+          </div>
+          <div class="span6">
+            <div class="infos">
+                  Lorem ipsum dolor sit amet, consectetur adipiscing
+                  elit. Mauris vulputate fringilla erat, ut suscipit
+                  ante tempor eu. Pellentesque habitant morbi
+                  tristique senectus et netus et malesuada fames ac
+                  turpis egestas. Fusce sodales mi a elit tincidunt ac
+                  pellentesque diam dignissim. In tincidunt nisi eget
+                  dolor dictum at interdum lorem facilisis. Integer
+                  suscipit dolor nec leo auctor ullamcorper ac vel
+                  nisi. Donec aliquam, mauris id convallis facilisis,
+                  augue nulla tempor mi, a faucibus arcu nulla vitae
+                  erat. Quisque a nisi eu tellus convallis vulputate a
+                  at erat. Nullam ac dictum dui. Cras quis urna nulla,
+                  nec aliquam urna.                  
+            </div>
+            <div class="infos-title">Submit a new lesson</div>
+            <p class="sub-infos">Now that you are a pro, create and
+            submit new lessons. </p>
+          </div>
         </div>
 
         <div id="bottom">
-          © 2011 <a href="http://www.ocamlpro.com/">OCamlPro</a> SAS
+          © 2011 OCamlPro <br />
+          <a href="http://ocsigen.org/js_of_ocaml/">Js_of_ocaml</a> -
+          <a href="">Blog</a> -
+          <a href="">About us</a> -  
+          <a href="mailto:contact@ocamlpro.com">Contact</a> -  
+          <a href="http://caml.inria.fr/">OCaml</a> -
         </div>
-
       </div>
   </body>
 </html>
