@@ -154,19 +154,42 @@ let run _ =
   let output_area =
     Js.Opt.get (doc##getElementById (Js.string "output-area")) (fun () -> assert false) in
   
-  let enter_key = 13 (* Enter key *) in
+  let history_bckwrd = ref [] in
+  let history_frwrd = ref [] in
   Html.document##onkeyup <-
     (Html.handler
-       (fun e ->
-         if e##keyCode = enter_key then begin
+       (fun e -> match e##keyCode with
+         | 13 -> (* ENTER key *)
            let str = textbox##value in
+	   let s = Js.to_string str in
+	   history_bckwrd := Js.string (
+	     String.sub s 0 ((String.length s) - 1)):: !history_bckwrd;
            textbox##value <- Js.string "";
            loop (Js.to_string str) ppf;
            textbox##focus();
            container##scrollTop <- container##scrollHeight;
            Js._false
-         end        
-         else Js._true));
+	 | 38 -> (* UP ARROW key *) begin
+	   match !history_bckwrd with 
+	       [] -> Js._true
+	     | s :: l -> 
+	       let str = textbox##value in
+	       history_frwrd := str :: !history_frwrd ;
+	       textbox##value <- s;
+	       history_bckwrd := l;
+	       Js._false
+	 end
+	 | 40 -> (* DOWN ARROW key *) begin
+	   match !history_frwrd with 
+	       [] -> Js._true
+	     | s :: l -> 
+	       let str = textbox##value in
+	       history_bckwrd := str :: !history_bckwrd ;
+	       textbox##value <- s;
+	       history_frwrd := l;
+	       Js._false
+	 end
+	 | _ -> Js._true));
   (* let b = *)
   (*   button "Reset" *)
   (*     (fun () -> *)
