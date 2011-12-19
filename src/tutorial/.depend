@@ -1,4 +1,5 @@
-tutorial.cmo: utils.cmo
-tutorial.cmx: utils.cmx
+tutorial.cmi:
+tutorial.cmo: utils.cmo tutorial.cmi
+tutorial.cmx: utils.cmx tutorial.cmi
 utils.cmo:
 utils.cmx:

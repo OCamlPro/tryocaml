@@ -71,7 +71,7 @@ let exec ppf s =
 
 let start ppf =
   Format.fprintf ppf "        Try OCaml (v. %s)@.@." Sys.ocaml_version;
-  Format.fprintf ppf "Hi ! How are you ? Welcome to TryOCaml. Let'start with your name ?\nType it with quotes around it like this \"Cagdas\"\n";
+  Format.fprintf ppf "Hi ! How are you ? Welcome to TryOCaml. Let'start with your name ?\nType it with quotes around it like this \"Cagdas\";;\n";
   Toploop.initialize_toplevel_env ();
   Toploop.input_name := "";
   exec ppf "open Tutorial"

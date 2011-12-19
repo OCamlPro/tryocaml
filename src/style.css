@@ -56,7 +56,7 @@ textarea {
     font-weight: bold;    
 }
 
-div.infos {
+.infos {
     background-color: gray;
     font-weight: bold;
     margin-top: 30px;
@@ -65,12 +65,45 @@ div.infos {
     border-color: #000000; 
 }
 
-div.infos-title {
-    padding-top: 20px;
+.infos_box {
+    background-color: #DCDCDC;
+    font-weight: bold;
+    margin-top: 30px;
+    border-width: 2; 
+    border-style: solid; 
+    border-color: #000000; 
+    width: 351px;
+    height: 230px;
+}
+
+.infos_caml {
+    background: url(images/ocaml_code.png);
+    background-repeat: no-repeat;
+    background-color: white;
+    font-weight: bold;
+    margin-top: 30px;
+    border-width: 2; 
+    border-style: solid; 
+    border-color: #000000; 
+    width: 351px;
+    height: 230px;
+}
+
+.infos_title {
+    padding-top: 15px;
     padding-bottom: 10px;
     text-align: center;
     font-size: 25px;
     font-weight: bold;
+}
+
+.infos_lessons {
+    background-color: #DCDCDC;
+    font-weight: bold;
+    margin-top: 15px;
+    border-width: 1; 
+    border-style: solid; 
+    border-color: #000000; 
 }
 
 p.sub-infos {
@@ -80,19 +113,13 @@ p.sub-infos {
 
 #social-network {
     text-align: center;
-    background-color: gray;
     font-weight: bold;
-    margin-top: 30px;
-    border-width: 2; 
-    border-style: solid; 
-
+    margin-top: 20px;
 }
 
 #bottom {    
     text-align: center;
     font-weight: bold;
-    margin-left: 15%;
-    margin-right: 15%;
     margin-top: 20px;
     margin-bottom: 20px;
 }
@@ -100,3 +127,9 @@ p.sub-infos {
 #fantasy {
     font-family: fantasy;
 }
+
+
+.code {
+    font-family: monospace;
+    font-size: 15px;
+}      

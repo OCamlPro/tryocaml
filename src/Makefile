@@ -6,8 +6,8 @@ all: depend tuto $(NAME).js
 
 include ../Makefile.conf
 
-#COMP=../compiler/$(COMPILER)
-COMP=$(LIBRARY)
+COMP=../compiler/$(COMPILER)
+# COMP=$(LIBRARY)
 JSFILES=../runtime/runtime.js ../runtime/weak.js toplevel_runtime.js
 OCAMLC=ocamlfind ocamlc -annot -package lwt,str -pp "camlp4o ../lib/syntax/pa_js.cmo" -I ../lib -I ../compiler
 STDLIB= ../lib/$(LIBNAME).cma ../compiler/compiler.cma  toplevellib.cma
