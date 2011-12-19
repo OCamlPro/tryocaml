@@ -18,7 +18,7 @@ MAN=$(DOCS_DIR)/man
 
 .SUFFIXES: .ml .mli .cmo .cmi .cmx
 
-all: byte opt doc
+all: byte opt docs
 
 byte: depend $(EXEC)
 
@@ -40,13 +40,14 @@ $(EXEC).opt: $(SOURCES:.ml=.cmx)
 	$(OCAMLFIND0) $(OCAMLC) $(OPTIONS) -c $<
 
 docs:
+	mkdir -p $(HTML) $(LATEX) $(MAN)
 	$(OCAMLFIND) $(OCAMLDOC) -html -d $(HTML) $(SOURCES)
 	$(OCAMLFIND) $(OCAMLDOC) -latex -d $(LATEX) -o $(LATEX)/tutorial.tex $(SOURCES)
 	$(OCAMLFIND) $(OCAMLDOC) -man -d $(MAN) $(SOURCES)
 
 clean:
 	rm -f *.cm[aiox] *.o *.annot tutorial tutorial.opt 
-	rm -f doc/html/* doc/latex/* doc/man/*
+	rm -rf doc/* doc/
 
 depend:
 	$(OCAMLDEP) *.mli *.ml > .depend
