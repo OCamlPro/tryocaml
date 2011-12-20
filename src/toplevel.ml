@@ -154,18 +154,20 @@ let run _ =
   let output_area =
     Js.Opt.get (doc##getElementById (Js.string "output-area")) (fun () -> assert false) in
   
+  let history = ref [] in
   let history_bckwrd = ref [] in
   let history_frwrd = ref [] in
-  Html.document##onkeyup <-
+  Html.document##onkeydown <-
     (Html.handler
        (fun e -> match e##keyCode with
          | 13 -> (* ENTER key *)
-           let str = textbox##value in
-	   let s = Js.to_string str in
-	   history_bckwrd := Js.string (
-	     String.sub s 0 ((String.length s) - 1)):: !history_bckwrd;
+           let s = Js.to_string textbox##value in
+	   (* let s = String.sub str 0 ((String.length str) - 1) in *)
+	   if s <> "" then history := Js.string s :: !history;
+	   history_bckwrd := !history;
+	   history_frwrd := [];
            textbox##value <- Js.string "";
-           loop (Js.to_string str) ppf;
+           loop s ppf;
            textbox##focus();
            container##scrollTop <- container##scrollHeight;
            Js._false
@@ -173,8 +175,8 @@ let run _ =
 	   match !history_bckwrd with 
 	       [] -> Js._true
 	     | s :: l -> 
-	       let str = textbox##value in
-	       history_frwrd := str :: !history_frwrd ;
+	       let str = Js.to_string textbox##value in
+	       history_frwrd := Js.string str :: !history_frwrd ;
 	       textbox##value <- s;
 	       history_bckwrd := l;
 	       Js._false
@@ -183,8 +185,8 @@ let run _ =
 	   match !history_frwrd with 
 	       [] -> Js._true
 	     | s :: l -> 
-	       let str = textbox##value in
-	       history_bckwrd := str :: !history_bckwrd ;
+	       let str = Js.to_string textbox##value in
+	       history_bckwrd := Js.string str :: !history_bckwrd ;
 	       textbox##value <- s;
 	       history_frwrd := l;
 	       Js._false
