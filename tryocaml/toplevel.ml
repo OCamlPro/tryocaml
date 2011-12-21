@@ -110,7 +110,11 @@ let ensure_at_bol ppf =
   end
 
 let loop s ppf buffer =
-  let s = s ^ ";;" in
+  let need_terminator = ref true in
+  for i = 0 to String.length s - 2 do
+    if s.[i] = ';' && s.[i+1] = ';' then need_terminator := false;
+  done;
+  let s = if !need_terminator then s ^ ";;" else s in
   let lb = Lexing.from_function (refill_lexbuf s (ref 0) ppf) in
   begin try
     while true do
