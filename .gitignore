@@ -12,3 +12,5 @@ tryocaml/log
 tryocaml/toplevel.byte
 tryocaml/tutorial/doc/
 tryocaml/tutorial/tutorial
+tryocaml/tutorial/lessons.ml
+tryocaml/tutorial/make_lessons
