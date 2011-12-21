@@ -6,7 +6,7 @@
 
 #container { 
     margin-left: 10%;
-    margin-right: 15%;
+    margin-right: 10%;
     overflow: auto;
     overflow-x: hidden;
     border:1;
@@ -128,8 +128,8 @@ p.sub-infos {
     font-family: fantasy;
 }
 
-
 .code {
     font-family: monospace;
     font-size: 15px;
 }      
+
