@@ -1,26 +1,11 @@
-all: compiler library runtime tutorial src
-
-include Makefile.conf
-
-.PHONY: compiler library runtime tutorial src
-
-src:
-	$(MAKE) -C src
-
-compiler:
-	$(MAKE) -C compiler
-
-library:
-	$(MAKE) -C lib
-
-runtime:
-	$(MAKE) -C runtime
+all:
+	$(MAKE) -C tryocaml
 
 clean:
-	$(MAKE) -C src clean
-	$(MAKE) -C compiler clean
-	$(MAKE) -C lib clean
-	$(MAKE) -C runtime clean
+	$(MAKE) -C clean
 
-realclean: clean
-	find . -name "*~" -print | xargs rm -f
+depend:
+	$(MAKE) -C depend
+
+install:
+	@echo What the fuck do you want to install '????'

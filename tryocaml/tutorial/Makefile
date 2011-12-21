@@ -1,11 +1,10 @@
 
-include ../../Makefile.conf
-
+COMPILER=js_of_ocaml
 OCAMLC = ocamlc
 OCAMLOPT = ocamlopt
 OCAMLDEP = ocamldep
 OCAMLDOC = ocamldoc
-OCAMLFIND = ocamlfind 
+OCAMLFIND = ocamlfind
 EXEC=tutorial
 LIBS=unix.cma str.cma
 SOURCES=utils.ml \
@@ -46,7 +45,7 @@ docs:
 	$(OCAMLFIND) $(OCAMLDOC) -man -d $(MAN) $(SOURCES)
 
 clean:
-	rm -f *.cm[aiox] *.o *.annot tutorial tutorial.opt 
+	rm -f *.cm[aiox] *.o *.annot tutorial tutorial.opt
 	rm -rf doc/* doc/
 
 depend:

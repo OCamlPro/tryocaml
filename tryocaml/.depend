@@ -1,0 +1,5 @@
+toplevel.cmo: js_of_ocaml-patched/compiler/pretty_print.cmi errors.cmi \
+    js_of_ocaml-patched/compiler/driver.cmi
+toplevel.cmx: js_of_ocaml-patched/compiler/pretty_print.cmx errors.cmi \
+    js_of_ocaml-patched/compiler/driver.cmx
+errors.cmi:
