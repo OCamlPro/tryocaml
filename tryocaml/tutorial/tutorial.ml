@@ -23,6 +23,8 @@ let lessons =
   ) Lessons.lessons;
   all_lessons
 
+let warning = ref true
+
 let rec step num =
   if num < 1 then lesson (!this_lesson-1) else
     if num >= Array.length !this_lesson_steps then
@@ -31,6 +33,7 @@ let rec step num =
       match (!this_lesson_steps).(num) with
           None -> step (num+1)
         | Some (step_txt, step_check) ->
+          warning := false;
           this_step := num;
           this_step_txt := step_txt;
           this_step_check := step_check
@@ -60,7 +63,11 @@ let check_step ppf input output =
       Format.fprintf ppf "Congratulations ! You moved to the next step !@.";
       step (!this_step + 1)
   end else
-    Format.fprintf ppf "Try again...@."
+    if !warning then
+      Format.fprintf ppf "Try again...@."
+    else
+      Format.fprintf ppf "You have moved to lesson %d, step %d.@." !this_lesson !this_step;
+  warning := true
 
 
 let debug d = debug := d
