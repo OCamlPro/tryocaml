@@ -1,7 +1,7 @@
 === Overview ===
 TryOCaml is the easiest way to learn how to code in OCaml language. A funny way
 to learn the language.
-TryOCaml is based on (http://ocsigen.org/js_of_ocaml/files/toplevel/index.html) built 
+TryOCaml is based on (http://ocsigen.org/js_of_ocaml/files/toplevel/index.html) built
 with js_of_ocaml (see http://ocsigen.org/lwt/).
 
 === Requirements ===
@@ -9,7 +9,7 @@ with js_of_ocaml (see http://ocsigen.org/lwt/).
   * Findlib
   * Lwt (version 2.3.0** at least, see http://ocsigen.org/lwt/)
 
-=== Try it === 
+=== Try it ===
 
 0: make
 
@@ -21,9 +21,15 @@ Then, with your favorite browser launch tryocaml/index.html:
 
 To add new lessons:
  0: cd $TRYOCAML_PATH/lessons
- 1: mkdir -p lessonX/stepY   ##where x is a lesson number and y step number
- 2: touch lessonX/stepY/stepY.txt lessonX/stepY/stepY.ml
- 
+ 1: mkdir -p lessonX   ##where X is a lesson number
+ 2: cp -r lesson1/step1 lessonX/stepY ## where Y is a step number
+ 3: edit lessonX/stepY/step.html with the text of your lesson/step
+ 4: edit lessonX/stepY/step.ml  with the code to check the input and output entered by the user
+     (tryocaml will move to the next step only if the function returns true)
+
+ 5: touch lessons.txt ## NEEDED to trigger a rebuild after each modification
+ 6: make
+
 The file stepY.txt has to contain the tutorial message, whereas stepY.ml has
 to contain a test function.
 
