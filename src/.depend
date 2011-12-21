@@ -1,3 +1,0 @@
-toplevel.cmo: ../compiler/pretty_print.cmi errors.cmi ../compiler/driver.cmi
-toplevel.cmx: ../compiler/pretty_print.cmx errors.cmi ../compiler/driver.cmx
-errors.cmi:

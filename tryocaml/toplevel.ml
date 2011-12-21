@@ -108,8 +108,8 @@ let ensure_at_bol ppf =
     Format.fprintf ppf "@.";
     consume_nl := true; at_bol := true
   end
-      
-let loop s ppf =
+
+let loop s ppf buffer =
   (* XXX use a regexp instead of substring *)
   let lb = Lexing.from_function (refill_lexbuf s (ref 0) ppf) in
   begin try
@@ -117,7 +117,10 @@ let loop s ppf =
       try
         let phr = !Toploop.parse_toplevel_phrase lb in
         ensure_at_bol ppf;
-        ignore (Toploop.execute_phrase true ppf phr)
+        Buffer.clear buffer;
+        ignore (Toploop.execute_phrase true ppf phr);
+        let res = Buffer.contents buffer in
+        Format.fprintf ppf "FROM[%s] -> TO[%s]@." s res
       with
           End_of_file ->
             raise End_of_file
@@ -129,31 +132,35 @@ let loop s ppf =
   end
 
 let run _ =
-  let top = 
+  let top =
     Js.Opt.get (doc##getElementById (Js.string "toplevel")) (fun () -> assert false) in
   let output = Html.createDiv doc in
   output##id <- Js.string "output";
   output##style##whiteSpace <- Js.string "pre";
 
+  let buffer = Buffer.create 1000 in
+
   let ppf =
     Format.make_formatter
       (fun s i l ->
+        let s = String.sub s i l in
+        Buffer.add_string buffer s;
          Dom.appendChild output
-           (doc##createTextNode(Js.string (String.sub s i l))))
+           (doc##createTextNode(Js.string s)))
       (fun _ -> ())
   in
   let textbox = Html.createTextarea doc in
-  textbox##rows <- 7; 
+  textbox##rows <- 7;
   textbox##cols <- 70;
   textbox##value <- Js.string s;
   Dom.appendChild top textbox;
   textbox##focus();
   textbox##select();
-  let container = 
+  let container =
     Js.Opt.get (doc##getElementById (Js.string "container")) (fun () -> assert false) in
   let output_area =
     Js.Opt.get (doc##getElementById (Js.string "output-area")) (fun () -> assert false) in
-  
+
   let history = ref [] in
   let history_bckwrd = ref [] in
   let history_frwrd = ref [] in
@@ -167,14 +174,14 @@ let run _ =
 	   history_bckwrd := !history;
 	   history_frwrd := [];
            textbox##value <- Js.string "";
-           loop s ppf;
+           loop s ppf buffer;
            textbox##focus();
            container##scrollTop <- container##scrollHeight;
            Js._false
 	 | 38 -> (* UP ARROW key *) begin
-	   match !history_bckwrd with 
+	   match !history_bckwrd with
 	       [] -> Js._true
-	     | s :: l -> 
+	     | s :: l ->
 	       let str = Js.to_string textbox##value in
 	       history_frwrd := Js.string str :: !history_frwrd ;
 	       textbox##value <- s;
@@ -182,9 +189,9 @@ let run _ =
 	       Js._false
 	 end
 	 | 40 -> (* DOWN ARROW key *) begin
-	   match !history_frwrd with 
+	   match !history_frwrd with
 	       [] -> Js._true
-	     | s :: l -> 
+	     | s :: l ->
 	       let str = Js.to_string textbox##value in
 	       history_bckwrd := Js.string str :: !history_bckwrd ;
 	       textbox##value <- s;
@@ -205,5 +212,5 @@ let run _ =
   Dom.appendChild output_area output;
   start ppf;
   Js._false
-  
+
 let _ = Html.window##onload <- Html.handler run

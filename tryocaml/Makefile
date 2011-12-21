@@ -1,16 +1,22 @@
-
+COMPILER=js_of_ocaml
+LIBNAME=js_of_ocaml
 NAME=toplevel
 OBJS=tutorial/utils.cmo tutorial/tutorial.cmo toplevel.cmo
+JS=js_of_ocaml-patched
+INCLUDES= -I tutorial
 
-all: depend tuto $(NAME).js
+all: compiler tuto $(NAME).js
 
-include ../Makefile.conf
+compiler:
+	$(MAKE) -C $(JS) all
 
-COMP=../compiler/$(COMPILER)
-# COMP=$(LIBRARY)
-JSFILES=../runtime/runtime.js ../runtime/weak.js toplevel_runtime.js
-OCAMLC=ocamlfind ocamlc -annot -package lwt,str -pp "camlp4o ../lib/syntax/pa_js.cmo" -I ../lib -I ../compiler
-STDLIB= ../lib/$(LIBNAME).cma ../compiler/compiler.cma  toplevellib.cma
+#include $(JS)/Makefile.conf
+
+COMP=$(JS)/compiler/$(COMPILER)
+#COMP=$(LIBRARY)
+JSFILES=$(JS)/runtime/runtime.js $(JS)/runtime/weak.js toplevel_runtime.js
+OCAMLC=ocamlfind ocamlc -annot -package lwt,str -pp "camlp4o $(JS)/lib/syntax/pa_js.cmo" -I $(JS)/lib -I $(JS)/compiler
+STDLIB= $(JS)/lib/$(LIBNAME).cma $(JS)/compiler/compiler.cma  toplevellib.cma
 EXPUNGE=$(shell ocamlc -where)/expunge
 # Removed gc and sys
 STDLIB_MODULES=\
@@ -63,9 +69,9 @@ PERVASIVES=$(STDLIB_MODULES) outcometree topdirs toploop
 #	ocamlfind ocamlc -linkall -g -package str -linkpkg toplevellib.cma -o $@.tmp $^
 
 $(NAME).js: $(NAME).byte $(JSFILES)
-	$(COMP) -I tutorial -toplevel -noinline -noruntime $(JSFILES) $(NAME).byte $(OPTIONS)
+	$(COMP) $(INCLUDES) -toplevel -noinline -noruntime $(JSFILES) $(NAME).byte $(OPTIONS)
 
-$(NAME).byte: $(OBJS) ../compiler/compiler.cma
+$(NAME).byte: $(OBJS) $(JS)/compiler/compiler.cma
 	$(OCAMLC) -linkall -package str -linkpkg -o $@.tmp $(STDLIB) $(OBJS)
 	$(EXPUNGE) $@.tmp $@ $(PERVASIVES)
 	rm -f $@.tmp
@@ -73,10 +79,10 @@ $(NAME).byte: $(OBJS) ../compiler/compiler.cma
 %.cmo: %.ml
 	$(OCAMLC) -c $<
 
-%.cmi:../compiler/compiler.cma
+%.cmi:$(JS)/compiler/compiler.cma
 
-../compiler/compiler.cma:
-	$(MAKE) -C ../compiler compiler.cma
+$(JS)/compiler/compiler.cma:
+	$(MAKE) -C $(JS)/compiler compiler.cma
 
 errors.cmi: errors.mli
 	$(OCAMLC) -c $<
@@ -89,6 +95,6 @@ clean::
 	$(MAKE) -C tutorial clean
 
 depend:
-	ocamldep -pp "camlp4o ../lib/syntax/pa_js.cmo" -I ../compiler *.ml *.mli > .depend
+	ocamldep -pp "camlp4o $(JS)/lib/syntax/pa_js.cmo" -I $(JS)/compiler *.ml *.mli > .depend
 
 include .depend
