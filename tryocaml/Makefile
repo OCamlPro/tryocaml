@@ -91,7 +91,7 @@ tuto:
 	$(MAKE) -C tutorial
 
 clean::
-	rm -f *.cm[io] $(NAME).byte $(NAME).js *.annot
+	rm -f *.cm[io] $(NAME).byte *.annot
 	$(MAKE) -C tutorial clean
 	$(MAKE) -C $(JS) clean
 
