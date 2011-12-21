@@ -71,7 +71,7 @@ let exec ppf s =
 
 let start ppf =
   Format.fprintf ppf "        Try OCaml (v. %s)@.@." Sys.ocaml_version;
-  Format.fprintf ppf "Hi ! How are you ? Welcome to TryOCaml. Let'start with your name ?\nType it with quotes around it like this \"Cagdas\";;\n";
+  Format.fprintf ppf "Hi ! How are you ? Welcome to TryOCaml. Let'start with your name ?\nType it with quotes around it like this \"Cagdas\"@.";
   Toploop.initialize_toplevel_env ();
   Toploop.input_name := "";
   exec ppf "open Tutorial"
@@ -123,7 +123,6 @@ let loop s ppf buffer =
         ensure_at_bol ppf;
         Buffer.clear buffer;
         ignore (Toploop.execute_phrase true ppf phr);
-        (* Use this buffer to communicate with lessons and test values *)
         let res = Buffer.contents buffer in
         Tutorial.check_step ppf s res;
          let container =
@@ -156,13 +155,15 @@ let run _ =
   let buffer = Buffer.create 1000 in
 
   let ppf =
+    let b = Buffer.create 80 in
     Format.make_formatter
-      (fun s i l ->
-        let s = String.sub s i l in
-        Buffer.add_string buffer s;
+      (fun s i l -> 
+         Buffer.add_substring buffer s i l;
+         Buffer.add_substring b s i l)
+      (fun _ ->
          Dom.appendChild output
-           (doc##createTextNode(Js.string s)))
-      (fun _ -> ())
+           (doc##createTextNode(Js.string (Buffer.contents b)));
+         Buffer.clear b)
   in
   let textbox = Html.createTextarea doc in
   textbox##rows <- 7;
