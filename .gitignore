@@ -1,0 +1,14 @@
+*.cm?
+*.o
+*.opt
+*.annot
+*.so
+*~
+tryocaml/js_of_ocaml-patched/compiler/js_of_ocaml
+tryocaml/js_of_ocaml-patched/lib/libjs_of_ocaml.a
+tryocaml/js_of_ocaml-patched/lib/stubs.c
+tryocaml/js_of_ocaml-patched/runtime/runtime.js
+tryocaml/log
+tryocaml/toplevel.byte
+tryocaml/tutorial/doc/
+tryocaml/tutorial/tutorial
