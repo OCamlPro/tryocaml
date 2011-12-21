@@ -110,7 +110,6 @@ let ensure_at_bol ppf =
   end
 
 let loop s ppf buffer =
-  (* XXX use a regexp instead of substring *)
   let lb = Lexing.from_function (refill_lexbuf s (ref 0) ppf) in
   begin try
     while true do
@@ -118,9 +117,10 @@ let loop s ppf buffer =
         let phr = !Toploop.parse_toplevel_phrase lb in
         ensure_at_bol ppf;
         Buffer.clear buffer;
-        ignore (Toploop.execute_phrase true ppf phr);
-        let res = Buffer.contents buffer in
-        Format.fprintf ppf "FROM[%s] -> TO[%s]@." s res
+        ignore (Toploop.execute_phrase true ppf phr)
+        (* Use this buffer to communicate with lessons and test values *)
+        (* let res = Buffer.contents buffer in *)
+        (* Format.fprintf ppf "FROM[%s] -> TO[%s]@." s res *)
       with
           End_of_file ->
             raise End_of_file
@@ -133,7 +133,9 @@ let loop s ppf buffer =
 
 let run _ =
   let top =
-    Js.Opt.get (doc##getElementById (Js.string "toplevel")) (fun () -> assert false) in
+    Js.Opt.get (doc##getElementById (Js.string "toplevel")) 
+      (fun () -> assert false) 
+  in
   let output = Html.createDiv doc in
   output##id <- Js.string "output";
   output##style##whiteSpace <- Js.string "pre";
@@ -157,10 +159,13 @@ let run _ =
   textbox##focus();
   textbox##select();
   let container =
-    Js.Opt.get (doc##getElementById (Js.string "container")) (fun () -> assert false) in
+    Js.Opt.get (doc##getElementById (Js.string "container")) 
+      (fun () -> assert false) 
+  in
   let output_area =
-    Js.Opt.get (doc##getElementById (Js.string "output-area")) (fun () -> assert false) in
-
+    Js.Opt.get (doc##getElementById (Js.string "output-area")) 
+      (fun () -> assert false) 
+  in
   let history = ref [] in
   let history_bckwrd = ref [] in
   let history_frwrd = ref [] in
@@ -169,7 +174,6 @@ let run _ =
        (fun e -> match e##keyCode with
          | 13 -> (* ENTER key *)
            let s = Js.to_string textbox##value in
-	   (* let s = String.sub str 0 ((String.length str) - 1) in *)
 	   if s <> "" then history := Js.string s :: !history;
 	   history_bckwrd := !history;
 	   history_frwrd := [];
@@ -183,7 +187,7 @@ let run _ =
 	       [] -> Js._true
 	     | s :: l ->
 	       let str = Js.to_string textbox##value in
-	       history_frwrd := Js.string str :: !history_frwrd ;
+	       history_frwrd := Js.string str :: !history_frwrd;
 	       textbox##value <- s;
 	       history_bckwrd := l;
 	       Js._false
@@ -193,22 +197,13 @@ let run _ =
 	       [] -> Js._true
 	     | s :: l ->
 	       let str = Js.to_string textbox##value in
-	       history_bckwrd := Js.string str :: !history_bckwrd ;
+	       history_bckwrd := Js.string str :: !history_bckwrd;
 	       textbox##value <- s;
 	       history_frwrd := l;
 	       Js._false
 	 end
 	 | _ -> Js._true));
-  (* let b = *)
-  (*   button "Reset" *)
-  (*     (fun () -> *)
-  (*       ()                              (\* TODO xxx clear all the div ? *\) *)
-  (*     ) *)
-  (* in *)
   output_area##scrollTop <- output_area##scrollHeight;
-  (* let tryocaml =  *)
-  (*   Js.Opt.get (doc##getElementById (Js.string "tryocaml")) (fun () -> assert false) in *)
-  (* Dom.appendChild tryocaml b; *)
   Dom.appendChild output_area output;
   start ppf;
   Js._false

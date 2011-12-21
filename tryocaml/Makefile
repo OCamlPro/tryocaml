@@ -93,6 +93,7 @@ tuto:
 clean::
 	rm -f *.cm[io] $(NAME).byte $(NAME).js *.annot
 	$(MAKE) -C tutorial clean
+	$(MAKE) -C $(JS) clean
 
 depend:
 	ocamldep -pp "camlp4o $(JS)/lib/syntax/pa_js.cmo" -I $(JS)/compiler *.ml *.mli > .depend
