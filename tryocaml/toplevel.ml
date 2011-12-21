@@ -110,6 +110,11 @@ let ensure_at_bol ppf =
   end
 
 let loop s ppf buffer =
+  let need_terminator = ref true in
+  for i = 0 to String.length s - 2 do
+    if s.[i] = ';' && s.[i+1] = ';' then need_terminator := false;
+  done;
+  let s = if !need_terminator then s ^ ";;" else s in
   let lb = Lexing.from_function (refill_lexbuf s (ref 0) ppf) in
   begin try
     while true do
@@ -117,10 +122,18 @@ let loop s ppf buffer =
         let phr = !Toploop.parse_toplevel_phrase lb in
         ensure_at_bol ppf;
         Buffer.clear buffer;
-        ignore (Toploop.execute_phrase true ppf phr)
+        ignore (Toploop.execute_phrase true ppf phr);
         (* Use this buffer to communicate with lessons and test values *)
-        (* let res = Buffer.contents buffer in *)
-        (* Format.fprintf ppf "FROM[%s] -> TO[%s]@." s res *)
+        let res = Buffer.contents buffer in
+        Tutorial.check_step ppf s res;
+         let container =
+           Js.Opt.get (doc##getElementById (Js.string "lesson-step"))
+             (fun () -> assert false)
+         in
+         container##innerHTML <- Js.string
+           (Printf.sprintf "%s<p>You are at lesson %d, step %d. Use <code>lesson %d</code> for next lesson or <code>step %d</code> for next step.</p>" !Tutorial.this_step_txt
+              !Tutorial.this_lesson !Tutorial.this_step
+              (!Tutorial.this_lesson+1) (!Tutorial.this_step+1))
       with
           End_of_file ->
             raise End_of_file
@@ -133,8 +146,8 @@ let loop s ppf buffer =
 
 let run _ =
   let top =
-    Js.Opt.get (doc##getElementById (Js.string "toplevel")) 
-      (fun () -> assert false) 
+    Js.Opt.get (doc##getElementById (Js.string "toplevel"))
+      (fun () -> assert false)
   in
   let output = Html.createDiv doc in
   output##id <- Js.string "output";
@@ -159,12 +172,12 @@ let run _ =
   textbox##focus();
   textbox##select();
   let container =
-    Js.Opt.get (doc##getElementById (Js.string "container")) 
-      (fun () -> assert false) 
+    Js.Opt.get (doc##getElementById (Js.string "container"))
+      (fun () -> assert false)
   in
   let output_area =
-    Js.Opt.get (doc##getElementById (Js.string "output-area")) 
-      (fun () -> assert false) 
+    Js.Opt.get (doc##getElementById (Js.string "output-area"))
+      (fun () -> assert false)
   in
   let history = ref [] in
   let history_bckwrd = ref [] in

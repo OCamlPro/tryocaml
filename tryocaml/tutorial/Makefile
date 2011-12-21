@@ -1,52 +1,30 @@
 
-COMPILER=js_of_ocaml
+all: byte
+
 OCAMLC = ocamlc
-OCAMLOPT = ocamlopt
 OCAMLDEP = ocamldep
-OCAMLDOC = ocamldoc
-OCAMLFIND = ocamlfind
-EXEC=tutorial
-LIBS=unix.cma str.cma
-SOURCES=utils.ml \
-	tutorial.mli tutorial.ml
-OPTIONS=-annot
-DOCS_DIR=doc
-HTML=$(DOCS_DIR)/html
-LATEX=$(DOCS_DIR)/latex
-MAN=$(DOCS_DIR)/man
+SOURCES= lessons.mli lessons.ml tutorial.mli tutorial.ml
 
 .SUFFIXES: .ml .mli .cmo .cmi .cmx
 
-all: byte opt docs
+all: lessons.ml byte
 
-byte: depend $(EXEC)
+lessons.ml: make_lessons.ml ../../lessons.txt
+	ocamlc -o make_lessons unix.cma make_lessons.ml
+	./make_lessons > lessons.ml
 
-opt : depend $(EXEC).opt
+OBJS= $(SOURCES:.mli=.cmi) $(SOURCES:.ml=.cmo)
 
-$(EXEC): $(SOURCES:.mli=.cmi) $(SOURCES:.ml=.cmo)
-	$(OCAMLFIND) $(OCAMLC) -custom -o $(EXEC) $(LIBS)  $(SOURCES:.ml=.cmo)
-
-$(EXEC).opt: $(SOURCES:.ml=.cmx)
-	$(OCAMLOPT) $(OPTIONS) -o $(EXEC).opt $(LIBS:.cma=.cmxa) $(SOURCES:.ml=.cmx)
-
-.ml.cmx:
-	$(OCAMLFIND) $(OCAMLOPT) $(OPTIONS) -c $<
+byte: $(OBJS)
 
 .ml.cmo:
-	$(OCAMLFIND) $(OCAMLC) $(OPTIONS) -c $<
+	$(OCAMLC) -c $<
 
 .mli.cmi:
-	$(OCAMLFIND0) $(OCAMLC) $(OPTIONS) -c $<
-
-docs:
-	mkdir -p $(HTML) $(LATEX) $(MAN)
-	$(OCAMLFIND) $(OCAMLDOC) -html -d $(HTML) $(SOURCES)
-	$(OCAMLFIND) $(OCAMLDOC) -latex -d $(LATEX) -o $(LATEX)/tutorial.tex $(SOURCES)
-	$(OCAMLFIND) $(OCAMLDOC) -man -d $(MAN) $(SOURCES)
+	$(OCAMLC) -c $<
 
 clean:
-	rm -f *.cm[aiox] *.o *.annot tutorial tutorial.opt
-	rm -rf doc/* doc/
+	rm -f *.cm[aiox] *.o *.annot *~ lessons.ml make_lessons
 
-depend:
-	$(OCAMLDEP) *.mli *.ml > .depend
+depend: $(SOURCES)
+	$(OCAMLDEP) $(SOURCES) > .depend
