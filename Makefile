@@ -6,3 +6,7 @@ clean:
 
 depend:
 	$(MAKE) -C depend
+
+update-lessons:
+	touch lessons.html
+	$(MAKE) -C tryocaml
