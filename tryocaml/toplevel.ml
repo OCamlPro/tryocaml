@@ -70,7 +70,7 @@ let exec ppf s =
     | x    -> Errors.report_error ppf x
 
 let start ppf =
-  Format.fprintf ppf "Interactive OCaml ready.@.@.";
+  Format.fprintf ppf "        Welcome to TryOCaml (v. %s)@.@." Sys.ocaml_version;
   Toploop.initialize_toplevel_env ();
   Toploop.input_name := "";
   exec ppf "open Tutorial"
@@ -129,7 +129,7 @@ let loop s ppf buffer =
              (fun () -> assert false)
          in
          container##innerHTML <- Js.string
-           (Printf.sprintf "%s<p>You are at lesson %d, step %d. Use <code>lesson %d</code> for next lesson or <code>step %d</code> for next step.</p>" !Tutorial.this_step_txt
+           (Printf.sprintf "%s<p>You are at lesson <code>%d</code>, step <code>%d</code>. Use <code>lesson %d</code> for next lesson or <code>step %d</code> for next step.</p>" !Tutorial.this_step_txt
               !Tutorial.this_lesson !Tutorial.this_step
               (!Tutorial.this_lesson+1) (!Tutorial.this_step+1))
       with
