@@ -5,7 +5,6 @@
 }
 
 #container { 
-    float: left;             
     overflow: auto;
     overflow-x: hidden;
     border:1;
@@ -15,14 +14,13 @@
     font-size: 14px;
     font-family: "Courier New", Courier, monospace;
     height: 350px;
-    width: 68%;
     margin-bottom: 40px;
 }
 
 .commands { 
     background-color: #DCDCDC;
     float: left;
-    margin-left: 1%;
+
     border-width: 1; 
     border-style: solid; 
     border-color: #000000; 
@@ -30,6 +28,7 @@
     font-weight: bold;
     font-size: 18px;
     text-align: center;
+    margin-right: 20px;
  }
 
 td.command { 
@@ -40,10 +39,28 @@ td.command {
     clear: both;
     background-color: #DCDCDC;
     font-weight: bold;
+    border-style: solid; 
+    border-color: #000000;
+    margin-bottom: 40px;
+}
+
+.menu_lessons{ 
+    float: left;
+    background-color: #DCDCDC;
+    font-weight: bold;
+    font-size: 18px;
     border-width: 1; 
     border-style: solid; 
     border-color: #000000;
-    margin: auto;
+    overflow: hidden;
+    width: 65%;
+    margin-bottom: 40px;
+}
+
+object { 
+    height: 330px;
+    border:0;
+    overflow: auto;    
 }
 
 #output-area {
@@ -83,36 +100,11 @@ textarea {
     font-weight: bold;    
 }
 
-p.sub-infos {
-    text-align: center;
-    font-weight: bold;
-}
-
-#social-network {
-    text-align: center;
-    font-weight: bold;
-    margin-top: 20px;
-}
-
 #bottom {    
+    clear: both;
     text-align: center;
     font-weight: bold;
-    margin-top: 20px;
     margin-bottom: 20px;
     margin-left:30%;
     margin-right: 30%;
 }
-
-#fantasy {
-    font-family: fantasy;
-}
-
-table.footer {
-  margin-left: 30%;
-  margin-right: 30%;
-  text-align: center;
- }
-
-td.center { 
-            text-align:center;
-            }
