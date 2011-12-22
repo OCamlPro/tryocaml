@@ -70,8 +70,7 @@ let exec ppf s =
     | x    -> Errors.report_error ppf x
 
 let start ppf =
-  Format.fprintf ppf "        Try OCaml (v. %s)@.@." Sys.ocaml_version;
-  Format.fprintf ppf "Hi ! How are you ? Welcome to TryOCaml. Let'start with your name ?\nType it with quotes around it like this \"Cagdas\"@.";
+  Format.fprintf ppf "Interactive OCaml ready.@.@.";
   Toploop.initialize_toplevel_env ();
   Toploop.input_name := "";
   exec ppf "open Tutorial"
@@ -149,9 +148,6 @@ let run _ =
       (fun () -> assert false)
   in
   let output = Html.createDiv doc in
-  output##id <- Js.string "output";
-  output##style##whiteSpace <- Js.string "pre";
-
   let buffer = Buffer.create 1000 in
 
   let ppf =
@@ -166,14 +162,12 @@ let run _ =
          Buffer.clear b)
   in
   let textbox = Html.createTextarea doc in
-  textbox##rows <- 7;
-  textbox##cols <- 70;
   textbox##value <- Js.string s;
   Dom.appendChild top textbox;
   textbox##focus();
   textbox##select();
   let container =
-    Js.Opt.get (doc##getElementById (Js.string "container"))
+    Js.Opt.get (doc##getElementById (Js.string "toplevel-container"))
       (fun () -> assert false)
   in
   let output_area =
