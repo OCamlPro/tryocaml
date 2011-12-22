@@ -1,12 +1,11 @@
 #tryocaml {
-    margin-left: 15%;
-    margin-right: 15%;
+    margin-left: 10%;
+    margin-right: 10%;
     padding-top: 50px;
 }
 
 #container { 
-    margin-left: 10%;
-    margin-right: 10%;
+    float: left;             
     overflow: auto;
     overflow-x: hidden;
     border:1;
@@ -15,7 +14,36 @@
     font-weight: bold;    
     font-size: 14px;
     font-family: "Courier New", Courier, monospace;
-    height: 300px;
+    height: 350px;
+    width: 68%;
+    margin-bottom: 40px;
+}
+
+.commands { 
+    background-color: #DCDCDC;
+    float: left;
+    margin-left: 1%;
+    border-width: 1; 
+    border-style: solid; 
+    border-color: #000000; 
+    width: 28%;
+    font-weight: bold;
+    font-size: 18px;
+    text-align: center;
+ }
+
+td.command { 
+    font-weight: bold;             
+}
+
+.infos_lessons {
+    clear: both;
+    background-color: #DCDCDC;
+    font-weight: bold;
+    border-width: 1; 
+    border-style: solid; 
+    border-color: #000000;
+    margin: auto;
 }
 
 #output-area {
@@ -55,56 +83,6 @@ textarea {
     font-weight: bold;    
 }
 
-.infos {
-    background-color: gray;
-    font-weight: bold;
-    margin-top: 30px;
-    border-width: 2; 
-    border-style: solid; 
-    border-color: #000000; 
-}
-
-.infos_box {
-    background-color: #DCDCDC;
-    font-weight: bold;
-    margin-top: 30px;
-    border-width: 2; 
-    border-style: solid; 
-    border-color: #000000; 
-    width: 351px;
-    height: 230px;
-}
-
-.infos_caml {
-    background: url(images/ocaml_code.png);
-    background-repeat: no-repeat;
-    background-color: white;
-    font-weight: bold;
-    margin-top: 30px;
-    border-width: 2; 
-    border-style: solid; 
-    border-color: #000000; 
-    width: 351px;
-    height: 230px;
-}
-
-.infos_title {
-    padding-top: 15px;
-    padding-bottom: 10px;
-    text-align: center;
-    font-size: 25px;
-    font-weight: bold;
-}
-
-.infos_lessons {
-    background-color: #DCDCDC;
-    font-weight: bold;
-    margin-top: 15px;
-    border-width: 1; 
-    border-style: solid; 
-    border-color: #000000; 
-}
-
 p.sub-infos {
     text-align: center;
     font-weight: bold;
@@ -121,8 +99,20 @@ p.sub-infos {
     font-weight: bold;
     margin-top: 20px;
     margin-bottom: 20px;
+    margin-left:30%;
+    margin-right: 30%;
 }
 
 #fantasy {
     font-family: fantasy;
 }
+
+table.footer {
+  margin-left: 30%;
+  margin-right: 30%;
+  text-align: center;
+ }
+
+td.center { 
+            text-align:center;
+            }

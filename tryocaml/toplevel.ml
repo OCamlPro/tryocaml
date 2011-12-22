@@ -192,7 +192,10 @@ let run _ =
 	   history_bckwrd := !history;
 	   history_frwrd := [];
            textbox##value <- Js.string "";
-           loop s ppf buffer;
+           if s = "clear" then 
+             output##innerHTML <- (Js.string "")
+           else 
+             loop s ppf buffer;
            textbox##focus();
            container##scrollTop <- container##scrollHeight;
            Js._false

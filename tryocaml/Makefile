@@ -65,13 +65,11 @@ STDLIB_MODULES=\
   tutorial
 
 PERVASIVES=$(STDLIB_MODULES) outcometree topdirs toploop
-#toplevel.byte: $(OBJS:cmx=cmo) toplevel.cmo
-#	ocamlfind ocamlc -linkall -g -package str -linkpkg toplevellib.cma -o $@.tmp $^
 
 $(NAME).js: $(NAME).byte $(JSFILES)
 	$(COMP) $(INCLUDES) -toplevel -noinline -noruntime $(JSFILES) $(NAME).byte $(OPTIONS)
 
-$(NAME).byte: tuto $(OBJS) $(JS)/compiler/compiler.cma
+$(NAME).byte: $(OBJS) $(JS)/compiler/compiler.cma
 	$(OCAMLC) $(INCLUDES) -linkall -package str -linkpkg -o $@.tmp $(STDLIB) $(OBJS)
 	$(EXPUNGE) $@.tmp $@ $(PERVASIVES)
 	rm -f $@.tmp
