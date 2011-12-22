@@ -59,6 +59,7 @@ td.command {
 
 object { 
     height: 330px;
+    width: 100%;     
     border:0;
     overflow: auto;    
 }
