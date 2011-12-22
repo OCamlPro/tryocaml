@@ -26,12 +26,12 @@ let lessons =
 let warning = ref true
 
 let rec step num =
-  if num < 1 then lesson (!this_lesson-1) else
+  if num < 1 then lesson (!this_lesson - 1) else
     if num >= Array.length !this_lesson_steps then
-      lesson (!this_lesson+1)
+      lesson (!this_lesson + 1)
     else
       match (!this_lesson_steps).(num) with
-          None -> step (num+1)
+          None -> step (num + 1)
         | Some (step_txt, step_check) ->
           warning := false;
           this_step := num;
@@ -41,7 +41,7 @@ let rec step num =
 and lesson num =
   if num >= 1 && num < Array.length lessons then
     match lessons.(num) with
-        None -> lesson (num+1)
+        None -> lesson (num + 1)
       | Some steps ->
         this_lesson := num;
         this_lesson_steps := steps;
@@ -57,17 +57,19 @@ let check_step ppf input output =
   if !debug then
     Format.fprintf ppf "debug: input=[%s] output=[%s]@." (String.escaped input) (String.escaped output);
   let result =
-    try (!this_step_check) input output   with _ -> false
+    try (!this_step_check) input output with _ -> false
   in
-  if result then  begin
+  if result then begin
       Format.fprintf ppf "Congratulations ! You moved to the next step !@.";
       step (!this_step + 1)
   end else
     if !warning then
       Format.fprintf ppf "Try again...@."
     else
-      Format.fprintf ppf "You have moved to lesson %d, step %d.@." !this_lesson !this_step;
+      Format.ifprintf Format.err_formatter "You have moved to lesson %d, step %d.@." !this_lesson !this_step;
   warning := true
 
+let next () = step (!this_step + 1)
+let back () = step (!this_step - 1)
 
 let debug d = debug := d

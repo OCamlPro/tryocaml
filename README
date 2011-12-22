@@ -26,13 +26,12 @@ To add new lessons:
  3: edit lessonX/stepY/step.html with the text of your lesson/step
  4: edit lessonX/stepY/step.ml  with the code to check the input and output entered by the user
      (tryocaml will move to the next step only if the function returns true)
-
- 5: touch lessons.txt ## NEEDED to trigger a rebuild after each modification
+ 5: touch lessons.html ## NEEDED to trigger a rebuild after each modification
  6: make
 
 The file stepY.txt has to contain the tutorial message, whereas stepY.ml has
 to contain a test function.
+The file lessons.html is a summary of all lessons in the repository.
 
 === Online (beta) ===
-Be indulgent...
 http://try.ocamlpro.com/
