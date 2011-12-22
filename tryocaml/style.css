@@ -1,67 +1,66 @@
 #tryocaml {
-    margin-left: 10%;
-    margin-right: 10%;
+    margin-left: 7%;
+    margin-right: 7%;
     padding-top: 50px;
 }
 
-#container { 
+#container {
     overflow: auto;
     overflow-x: hidden;
     border:1;
     border-style: solid;
     background-color: #DCDCDC;
-    font-weight: bold;    
+    font-weight: bold;
     font-size: 14px;
     font-family: "Courier New", Courier, monospace;
     height: 350px;
     margin-bottom: 40px;
 }
 
-.commands { 
+.commands {
     background-color: #DCDCDC;
     float: left;
 
-    border-width: 1; 
-    border-style: solid; 
-    border-color: #000000; 
-    width: 28%;
+    border-width: 1;
+    border-style: solid;
+    border-color: #000000;
     font-weight: bold;
     font-size: 18px;
     text-align: center;
-    margin-right: 20px;
  }
 
-td.command { 
-    font-weight: bold;             
+td.command {
+    font-weight: bold;
 }
 
 .infos_lessons {
     clear: both;
     background-color: #DCDCDC;
     font-weight: bold;
-    border-style: solid; 
+    border-style: solid;
     border-color: #000000;
     margin-bottom: 40px;
 }
 
-.menu_lessons{ 
+.menu_lessons{
     float: left;
     background-color: #DCDCDC;
     font-weight: bold;
     font-size: 18px;
-    border-width: 1; 
-    border-style: solid; 
+    border-width: 1;
+    border-style: solid;
     border-color: #000000;
     overflow: hidden;
     width: 65%;
     margin-bottom: 40px;
+    margin-right: 1%;
 }
 
-object { 
+object {
     height: 330px;
-    width: 100%;     
+    width: 100%;
     border:0;
-    overflow: auto;    
+    overflow: auto;
 }
 
 #output-area {
@@ -98,14 +97,14 @@ textarea {
     margin-bottom: 30px;
     font-size: 25px;
     font-family:  Arial, Verdana, serif;
-    font-weight: bold;    
+    font-weight: bold;
 }
 
-#bottom {    
+#bottom {
     clear: both;
     text-align: center;
     font-weight: bold;
     margin-bottom: 20px;
-    margin-left:30%;
-    margin-right: 30%;
+    margin-left:20%;
+    margin-right: 20%;
 }
