@@ -154,6 +154,27 @@ let make_code_clickable () =
       Js._true)
   ) codes
 
+
+let update_debug_message =
+  let b = Buffer.create 100 in
+  Tutorial.debug_fun := (fun s -> Buffer.add_string b s);
+  function () ->
+    let s = Buffer.contents b in
+    Buffer.clear b;
+    try
+      let container =
+        Js.Opt.get (doc##getElementById (Js.string "lesson-debug"))
+          (fun () -> assert false)
+      in
+      if s = "" then
+        container##innerHTML <- Js.string ""
+      else
+        container##innerHTML <- Js.string
+          (Printf.sprintf
+             "<div class=\"alert-message block-message warning\">%s</div>" s)
+    with _ -> ()
+
+
 let loop s ppf buffer =
   let need_terminator = ref true in
   for i = 0 to String.length s - 2 do
@@ -173,6 +194,7 @@ let loop s ppf buffer =
         update_lesson_text ();
         update_lesson_number ();
         update_lesson_step_number ();
+        update_debug_message ();
         make_code_clickable ();
       with
           End_of_file ->
@@ -184,22 +206,6 @@ let loop s ppf buffer =
     with End_of_file -> ()
   end
 
-
-let _ =
-  Tutorial.debug_fun := (fun s ->
-    try
-      let container =
-        Js.Opt.get (doc##getElementById (Js.string "lesson-debug"))
-          (fun () -> assert false)
-      in
-      if s = "" then
-        container##innerHTML <- Js.string ""
-      else
-        container##innerHTML <- Js.string
-          (Printf.sprintf
-             "<div class=\"alert-message block-message warning\">%s</div>" s)
-    with _ -> ()
-  )
 
 let _ =
   Tutorial.message_fun := (fun s ->

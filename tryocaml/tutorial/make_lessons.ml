@@ -90,9 +90,9 @@ let _ =
         (String.escaped step_title) (String.escaped step_html);
       Printf.printf "# 0 \"%s\"\n" ml_filename;
       Printf.printf "%s\n" step_ml;
-      Printf.printf "\t\t));"
+      Printf.printf "\t\t));\n"
     ) steps;
-    Printf.printf "\t]);";
+    Printf.printf "\t]);\n";
   ) lessons;
   Printf.printf "];;\n";
   ()
