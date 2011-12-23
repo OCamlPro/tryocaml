@@ -137,6 +137,25 @@ let update_lesson_step_number () =
       (Printf.sprintf "<span class=\"step\">Step %d</span>" !Tutorial.this_step)
   with _ -> ()
 
+let make_code_clickable () =
+  let textbox =
+    Js.Opt.get (doc##getElementById(Js.string "console")) (fun () -> assert false) in
+  let textbox = match Js.Opt.to_option (Html.CoerceTo.textarea textbox) with
+    | None   -> assert false
+    | Some t -> t in
+  let codes = Dom.list_of_nodeList (doc##getElementsByTagName(Js.string "code")) in
+  Tutorial.debug true;
+  !Tutorial.debug_fun (Printf.sprintf "codes=%d" (List.length codes));
+  List.iter (fun code ->
+    let value = match Js.Opt.to_option code##nodeValue with
+      | None   -> Js.string "XXX"
+      | Some v -> v in
+    code##onclick <- Html.handler (fun _ ->
+      !Tutorial.debug_fun (Printf.sprintf "code=%s" (Js.to_string value));
+      textbox##value <- value;
+      Js._true)
+  ) codes
+
 let loop s ppf buffer =
   let need_terminator = ref true in
   for i = 0 to String.length s - 2 do
@@ -156,6 +175,7 @@ let loop s ppf buffer =
         update_lesson_text ();
         update_lesson_number ();
         update_lesson_step_number ();
+        make_code_clickable ();
       with
           End_of_file ->
             raise End_of_file
@@ -218,7 +238,8 @@ let run _ =
          Buffer.clear b)
   in
   let textbox = Html.createTextarea doc in
-  textbox##value <- Js.string s;
+  textbox##value <- Js.string "";
+  textbox##id <- Js.string "console";
   Dom.appendChild top textbox;
   textbox##focus();
   textbox##select();
@@ -269,6 +290,7 @@ let run _ =
 	 | _ -> Js._true));
   output_area##scrollTop <- output_area##scrollHeight;
   Dom.appendChild output_area output;
+  make_code_clickable ();
   start ppf;
   Js._false
 
