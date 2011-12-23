@@ -1,30 +1,31 @@
 <h3>Computing Conditions</h3>
 
 <p>Boolean values in OCaml can be either <code>true</code>
-or <code>false</code>. They can be computed by comparing other
+or <code>false</code>. They are often created from comparing other
 values. For example:</p>
 
 <p><code>1 &gt; 2</code></p>
 <br />
 
-<p>Comparison operators cannot only be used on numerical values, but
-on any values, even complex values (you will see them later). For now,
-we can compare strings:</p>
+<p>OCaml's comparison operators can be used on values of any type, 
+not only on numerical values. We can compare strings and characters 
+too:</p>
 
 <p><code>"aaaaaa" &lt; "bbb"</code></p>
 <p><code>"3" &lt; "22"</code></p>
+<p><code>'a' &lt; 'z'</code></p>
 <br />
 
 <p>There are different comparison operators, strict ones
 like <quote>&lt;</quote> and <quote>&gt;</quote>, and non-strict ones
 like <quote>&lt;=</quote> and <quote>&gt;=</quote>. For example:</p>
 
-<p><code>'a' &lt;= 'b'</code></p>
-<p><code>'b' &lt;= 'b'</code></p>
-<p><code>'c' &lt;= 'b'</code></p>
+<p><code>1 &lt;= 2</code></p>
+<p><code>2 &lt;= 2</code></p>
+<p><code>3 &lt;= 2</code></p>
 <br />
 
-<p>For equality, you can use <quote>=</quote>, and for inequality, there
+<p>To test equality, you can use <quote>=</quote>, and for inequality, there
 is <quote>&lt;&gt;</quote>. For example:</p>
 
 <p><code>1 = 1</code></p>
@@ -33,7 +34,7 @@ is <quote>&lt;&gt;</quote>. For example:</p>
 
 <br />
 
-<p>Oups, OCaml does not allow you to compare values with different
+<p>Oops, OCaml does not allow you to compare values with different
 types, so we must be more careful:</p>
 
 <p><code>"1" = string_of_int 1</code></p>
