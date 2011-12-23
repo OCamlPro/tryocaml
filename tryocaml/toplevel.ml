@@ -201,10 +201,13 @@ let run _ =
     Js.Opt.get (doc##getElementById (Js.string "toplevel"))
       (fun () -> assert false)
   in
-  let output = Html.createDiv doc in
+  let output_area =
+    Js.Opt.get (doc##getElementById (Js.string "output"))
+      (fun () -> assert false)
+  in
   let buffer = Buffer.create 1000 in
 
-  Tutorial.clear_fun := (fun _ -> output##innerHTML <- (Js.string ""));
+  Tutorial.clear_fun := (fun _ -> output_area##innerHTML <- (Js.string ""));
 
   let ppf =
     let b = Buffer.create 80 in
@@ -213,7 +216,7 @@ let run _ =
          Buffer.add_substring buffer s i l;
          Buffer.add_substring b s i l)
       (fun _ ->
-         Dom.appendChild output
+         Dom.appendChild output_area
            (doc##createTextNode(Js.string (Buffer.contents b)));
          Buffer.clear b)
   in
@@ -224,10 +227,6 @@ let run _ =
   textbox##select();
   let container =
     Js.Opt.get (doc##getElementById (Js.string "toplevel-container"))
-      (fun () -> assert false)
-  in
-  let output_area =
-    Js.Opt.get (doc##getElementById (Js.string "output-area"))
       (fun () -> assert false)
   in
   let history = ref [] in
@@ -268,7 +267,7 @@ let run _ =
 	 end
 	 | _ -> Js._true));
   output_area##scrollTop <- output_area##scrollHeight;
-  Dom.appendChild output_area output;
+  (* Dom.appendChild output_area doc; *)
   start ppf;
   Js._false
 
