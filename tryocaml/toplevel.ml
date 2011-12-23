@@ -148,9 +148,7 @@ let make_code_clickable () =
     | Some t -> t in
   let codes = Dom.list_of_nodeList (doc##getElementsByTagName(Js.string "code")) in
   List.iter (fun code ->
-    let value = match Js.Opt.to_option code##nodeValue with
-      | None   -> Js.string "XXX"
-      | Some v -> v in
+    let value =  code##innerHTML in
     code##onclick <- Html.handler (fun _ ->
       textbox##value <- value;
       Js._true)
