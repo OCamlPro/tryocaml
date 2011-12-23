@@ -1,13 +1,39 @@
-<h3>OCaml Boolean Expressions</h3>
+<h3>Computing Conditions</h3>
 
-<p>You can easily compute simple boolean constants, for example:</p>
-<p><code>true</code></p>
+<p>Boolean values in OCaml can be either <code>true</code>
+or <code>false</code>. They can be computed by comparing other
+values. For example:</p>
+
+<p><code>1 &gt; 2</code></p>
+<br />
+
+<p>Comparison operators cannot only be used on numerical values, but
+on any values, even complex values (you will see them later). For now,
+we can compare strings:</p>
+
+<p><code>"aaaaaa" &lt; "bbb"</code></p>
+<p><code>"3" &lt; "22"</code></p>
+<br />
+
+<p>There are different comparison operators, strict ones
+like <code>&lt;</code> and <code>&gt;</code>, and non-strict ones
+like <code>&lt;=</code> and <code>&gt;=</code>. For example:</p>
+
+<p><code>'a' &lt;= 'b'</code></p>
+<p><code>'b' &lt;= 'b'</code></p>
+<p><code>'c' &lt;= 'b'</code></p>
+<br />
+
+<p>For equality, you can use <code>=</code>, and for inequality, there
+is <code>&lt;&gt;</code>. For example:</p>
+
+<p><code>1 = 1</code></p>
+<p><code>1 &lt;&gt; 1</code></p>
+<p><code>"1" = 1</code></p>
 
 <br />
-<p>Or even something like this:</p>
-<p><code>(1 < 2) = true</code></p>
 
-<br />
-<p class="notes">Notes: "<code>==</code>" is used to test physical equality, whereas
-"<code>=</code>" is used to test structural equality</p>
+<p>Oups, OCaml does not allow you to compare values with different
+types, so we must be more careful:</p>
 
+<p><code>"1" = string_of_int 1</code></p>
