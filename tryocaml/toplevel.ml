@@ -114,7 +114,7 @@ let update_lesson_text () =
       Js.Opt.get (doc##getElementById (Js.string "lesson-step"))
         (fun () -> assert false)
     in
-    container##innerHTML <- Js.string !Tutorial.this_step_txt
+    container##innerHTML <- Js.string !Tutorial.this_step_html
   with _ -> ()
 
 let update_lesson_number () =

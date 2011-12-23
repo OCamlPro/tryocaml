@@ -26,6 +26,23 @@ let string_of_file filename =
     close_in ic;
     Buffer.contents b
 
+let find_substring s to_find =
+  let to_find_len = String.length to_find in
+  let rec iter s i to_find to_find_len =
+    if String.sub s i to_find_len = to_find then i
+    else iter s (i+1) to_find to_find_len
+  in
+  iter s 0 to_find to_find_len
+
+let get_title html =
+  try
+    let pos1 = find_substring html "<h3>" in
+    let pos2 = find_substring html "</h3>" in
+    String.sub html (pos1+4) (pos2-pos1-4)
+  with e ->
+    Printf.fprintf stderr "Warning: could not find title between <h3>...</h3>\n%!";
+    raise e
+
 let _ =
   let lessons_dir = "../../lessons" in
   let lesson_dirs = list_directory lessons_dir in
@@ -35,6 +52,8 @@ let _ =
     try
       assert ( String.sub lesson 0 6 = "lesson" );
       let lesson_num = int_of_string (String.sub lesson 6 (String.length lesson - 6)) in
+      let lesson_html = string_of_file (Filename.concat lesson_dir "lesson.html") in
+      let lesson_title = get_title lesson_html in
       let step_dirs = list_directory lesson_dir in
       let steps = ref [] in
       List.iter (fun step ->
@@ -42,17 +61,18 @@ let _ =
         try
           assert (String.sub step 0 4 = "step" );
           let step_num = int_of_string (String.sub step 4 (String.length step - 4)) in
-          let step_txt = string_of_file (Filename.concat step_dir "step.html") in
+          let step_html = string_of_file (Filename.concat step_dir "step.html") in
+          let step_title = get_title step_html in
           let ml_filename = Filename.concat step_dir "step.ml" in
           let step_ml = string_of_file ml_filename in
-          steps := (step_num, step_txt, ml_filename, step_ml) :: !steps;
+          steps := (step_num, step_title, step_html, ml_filename, step_ml) :: !steps;
         with e ->
           Printf.fprintf stderr "Warning: exception %s while inspecting %s\n%!"
             (Printexc.to_string e) step_dir;
           Printf.fprintf stderr "Discarding step directory !\n%!"
       ) step_dirs;
       let steps = List.sort compare !steps in
-      lessons := (lesson_num, steps) :: !lessons
+      lessons := (lesson_num, lesson_title, lesson_html, steps) :: !lessons
     with e ->
       Printf.fprintf stderr "Warning: exception %s while inspecting %s\n%!"
         (Printexc.to_string e) lesson_dir;
@@ -62,10 +82,12 @@ let _ =
   let lessons = List.sort compare !lessons in
 
   Printf.printf "let lessons = [\n";
-  List.iter (fun (lesson_num, steps) ->
-    Printf.printf "\t(%d, [\n" lesson_num;
-    List.iter (fun (step_num, step_txt, ml_filename, step_ml) ->
-      Printf.printf "\t\t(%d, \"%s\", (\n" step_num (String.escaped step_txt);
+  List.iter (fun (lesson_num, lesson_title, lesson_html, steps) ->
+    Printf.printf "\t(%d, \"%s\", \"%s\", [\n" lesson_num
+      (String.escaped lesson_title) (String.escaped lesson_html);
+    List.iter (fun (step_num, step_title, step_html, ml_filename, step_ml) ->
+      Printf.printf "\t\t(%d, \"%s\", \"%s\", (\n" step_num
+        (String.escaped step_title) (String.escaped step_html);
       Printf.printf "# 0 \"%s\"\n" ml_filename;
       Printf.printf "%s\n" step_ml;
       Printf.printf "\t\t));"
