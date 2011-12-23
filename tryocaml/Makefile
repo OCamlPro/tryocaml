@@ -5,14 +5,10 @@ OBJS=tutorial/lessons.cmo tutorial/tutorial.cmo toplevel.cmo
 JS=js_of_ocaml-patched
 INCLUDES= -I tutorial
 
-all: compiler tuto $(NAME).js index.html
+all: compiler tuto $(NAME).js
 
 compiler:
 	$(MAKE) -C $(JS) all
-
-index.html: index.html.in ../lessons.html
-	cd .. && sed '/<!--LESSONS-->/ r lessons.html' tryocaml/index.html.in \
-	> tryocaml/index.html
 
 #include $(JS)/Makefile.conf
 
