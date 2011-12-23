@@ -65,7 +65,7 @@ and lesson_back num =
         this_lesson_steps := steps;
         this_lesson_title := lesson_title;
         this_lesson_html := lesson_html;
-        step 1
+        step (Array.length steps - 1)
 
 let debug = ref false
 
