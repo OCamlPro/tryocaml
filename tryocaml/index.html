@@ -6,54 +6,56 @@
     <title>Try OCaml</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <script type="text/javascript" src="toplevel.js"></script>
-    <link type="text/css" href="style.css" rel="stylesheet" />
     <link type="text/css" href="bootstrap.css" rel="stylesheet" />
+    <link type="text/css" href="style.css" rel="stylesheet" />
     </head>
     <body>
+    <div class="content"><div class="container">
+      <div class="row">
 
-      <div id="tryocaml">
-
-        <div id="tryocaml-title">
-          TryOCaml : the easiest way to learn how to code in OCaml
+       <div class="span7">
+          <h3>Try OCaml</h3>
+          <p>OCaml is a strongly typed functional language. It is concise
+             and efficient, enabling you to improve your coding efficiency
+             while producing code with higher quality.
+            So, let's begin learning with OCaml!
+          <div class="lesson alert-message block-message info" id="lesson-step">
+            Type <code>lesson 1</code> to start the tutorial.
+          </div>
         </div>
 
-        <div id="container">
-          <div id="output-area"></div>
-          <div id="sharp"></div><div id="toplevel"></div>
-        </div>
+        <div class="span9 ocaml">
+          <div id="toplevel-container">
+            <pre><div id="output-area"></div></pre>
+            <div id="sharp"></div>
+            <div id="toplevel"></div>
+          </div>
 
-        <div class="infos_lessons" id="lesson-step">
-          <h4>Type <code>lesson 1</code> to start the tutorial.</h4>
-        </div>
-
-        <div class="menu_lessons">
-          <object data="../lessons.html" type="text/html"></object>
-        </div>
-
-        <div class="commands">
-          Shortcuts
-          <table>
-            <tr><td class="command">Enter / Return </td> <td>Submit the code</td></tr>
-            <tr><td class="command">Up / Down</td><td>Navigate in the
-          history of typed code</td></tr>
-          </table><table>
-          Commands
-            <tr><td class="command"><code>clear</code></td> <td>Clear the toplevel</td></tr>
-            <tr><td class="command"><code>lesson x</code></td> <td>Move to lesson x (where x is a number)</td></tr>
-            <tr><td class="command"><code>step x</code></td> <td>Move to step x (where x is a number)</td></tr>
-            <tr><td class="command"><code>next ()</code></td> <td>Move to next step</td></tr>
-            <tr><td class="command"><code>back ()</code></td> <td>Return to previous step</td></tr>
+          <table class="zebra-striped">
+            <thead><tr><th>Commands</th><th>Effects</th></tr></thead>
+            <tr><td>Enter / Return</td> <td>Submit code</td></tr>
+            <tr><td>Up / Down</td><td>Cycle through submitted code</td></tr>
+            <tr><td><code>clear</code></td> <td>Clear the editor view</td></tr>
+            <tr><td><code>lesson i</code></td> <td>Move to lesson number i</td></tr>
+            <tr><td><code>step i</code></td> <td>Move to step number i</td></tr>
           </table>
         </div>
 
-        <div id="bottom">
-          © 2011 OCamlPro |
-          <a href="http://ocamlpro.com/">OCamlPro</a> |
+      </div>
+    </div></div>
+
+    <div class="footer">
+      <div class="container">
+        <div class="ressources">
           <a href="https://github.com/OCamlPro/tryocaml">Contribute</a> |
-          <a href="http://ocsigen.org/js_of_ocaml/">Js_of_ocaml</a> |
           <a href="http://caml.inria.fr/">OCaml</a> |
-          <a href="mailto:contact@ocamlpro.com">Contact</a>
+          <a href="http://ocsigen.org/js_of_ocaml/">Js_of_ocaml</a>
+        </div>
+        <div class="copyright">
+          © 2011 <a href="http://ocamlpro.com/">OCamlPro</a> SAS, All rights reserved.
+          <a href="mailto:contact@ocamlpro.com">Contact an administrator</a>
         </div>
       </div>
+    </div>
   </body>
 </html>
