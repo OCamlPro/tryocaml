@@ -1,30 +1,16 @@
-<h3>Operations on Characters and Strings</h3>
+<h3>More Operations on Strings</h3>
 
-<p>You can use predefined functions on chars. Like getting the ASCII code:</p>
-<p><code>Char.code 'a'</code></p>
-
-<br />
-<p>Or converting a character to its equivalent uppercase character:</p>
-<p><code>Char.uppercase 'c'</code></p>
+<p>There are many operations available on strings, so let's see some simple examples:</p>
+<p><code>String.lowercase "MARY"</code></p>
 
 <br />
-<p>You can use predefined functions on strings. Like getting the length
-of a string</p>
-<p><code>String.length "John"</code></p>
+<p>Here's a more practical example, generating a filename from components: </p>
+<p><code>String.concat "/" [""; "usr"; "local"; "bin"]</code></p>
+<p>The second argument is a list of strings.  Lists will be covered more later.</p>
+
 
 <br />
-<p>Or something more fun like concatenate a list of string by adding a
-separator:</p>
-<p><code>String.concat "-" ["a"; "b"; "c"; "d"]</code></p>
-
-<br />
-<p>And more cool stuff on
-<a
-href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/String.html">Module
-Char</a>, 
-<a
-href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/String.html">Module
-String</a> and <a
-href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Str.html">Module
-Str</a></p>
+<p>It is sometimes useful to extract an integer from a string. This is
+easy in OCaml:</p>
+<p><code>int_of_string "546"</code></p>
 

@@ -24,3 +24,4 @@ val clear : unit -> unit
 
 val lessons : unit -> unit
 val steps : unit -> unit
+val print_debug : string -> unit

@@ -1,8 +1,8 @@
 <h3>Variables</h3>
 
-<p>If you need to use a value more than once, you can define a
-variable. To do that, we use the <code>let</code> syntax which allows for local
-variable declaration:</p>
+<p>If you need to use a value more than once, you can give it a name, 
+so it can be referred to. To do that, we use the <code>let</code> syntax 
+which associates the result of some computation with a name:</p>
 <p><code>let x = 6 * 7</code></p>
 
 <br />
@@ -12,21 +12,3 @@ variable declaration:</p>
 <br />
 <p>And use it:</p>
 <p><code>let y = x + 1</code></p>
-
-<br />
-<p>But a variable in OCaml is immutable, you will never be able to
-change the value of <code>x</code>, its value is fixed:</p>
-<p><code>x := x + 1</code></p>
-
-<br />
-<p>That is a strengh of OCaml. So to change the value of a variable,
-you can use mutable varaible:</p>
-<p><code>let x = 6 * 7</code></p>
-
-<br />
-<p>You can then change the value of <code>x</code></p>
-<p><code>x := 56</code></p>
-
-<br />
-<p><code>!</code> allows you to access the contents of the mutable variable:</p>
-<p><code>x := !x + 1</code></p>

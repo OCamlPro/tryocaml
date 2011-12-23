@@ -9,7 +9,7 @@ SOURCES= lessons.mli lessons.ml tutorial.mli tutorial.ml
 
 all: lessons.ml byte
 
-lessons.ml: make_lessons.ml ../../lessons.html
+lessons.ml: make_lessons.ml ../../lessons/goodies.ml
 	ocamlc -o make_lessons unix.cma make_lessons.ml
 	./make_lessons > lessons.ml
 

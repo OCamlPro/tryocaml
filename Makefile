@@ -8,5 +8,5 @@ depend:
 	$(MAKE) -C depend
 
 update-lessons:
-	touch lessons.html
+	touch lessons/goodies.ml
 	$(MAKE) -C tryocaml

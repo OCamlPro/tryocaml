@@ -1,0 +1,18 @@
+<h3>Mutable Variables</h3>
+
+
+<p>A variable in OCaml is immutable, you will never be able to
+change the value associated with <code>x</code> (you get an error):</p>
+<p><code>x := x + 1</code></p>
+
+<br />
+<p>To get a traditional mutable variable, OCaml provides references:</p>
+<p><code>let x = ref 42</code></p>
+
+<br />
+<p>You can then change the value of <code>x</code></p>
+<p><code>x := 56</code></p>
+
+<br />
+<p>The operator <code>!</code> allows you to access the contents of a reference variable:</p>
+<p><code>let y = !x + 1</code></p>
