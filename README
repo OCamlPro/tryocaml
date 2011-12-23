@@ -17,21 +17,39 @@ Then, with your favorite browser launch tryocaml/index.html:
 
 1: chromium-browser tryocaml/index.html
 
-=== Submit your lessons ===
+=== Contribute lessons/steps/fixes ===
 
-To add new lessons:
- 0: cd $TRYOCAML_PATH/lessons
- 1: mkdir -p lessonX   ##where X is a lesson number
- 2: cp -r lesson1/step1 lessonX/stepY ## where Y is a step number
- 3: edit lessonX/stepY/step.html with the text of your lesson/step
- 4: edit lessonX/stepY/step.ml  with the code to check the input and output entered by the user
-     (tryocaml will move to the next step only if the function returns true)
- 5: touch lessons.html ## NEEDED to trigger a rebuild after each modification
- 6: make
+Lessons are in the "lessons/" top directory.
 
-The file stepY.txt has to contain the tutorial message, whereas stepY.ml has
-to contain a test function.
-The file lessons.html is a summary of all lessons in the repository.
+Each lesson is a sub-directory "lessonN", where N is the lesson
+number, and contains a file "lesson.html", with a title in a <h3> tag
+on the first line, and a set of steps. Each step is a sub-directory
+"stepM" of "lessons/lessonN", where M is the step number in the
+lesson.
+
+Each step is composed of two files:
+- "step.html": the text of the step. The first line MUST contain the step title,
+ in a <h3> tag. Code that should be copied in the terminal should be in
+ <code> tags.
+- "step.ml": the function testing if the step has been completed. It takes
+ the user input (a string) and the compiler output (a string) as arguments,
+ and returns a boolean, true if the user has succeeded, false otherwise.
+ "step.ml" can directly use functions defined in "lessons/goodies.ml"
+ (that is included, so NEVER use "open Goodies" or "Goodies.something),
+ in particular the "find_in" function.
+
+To recompile when you have done a modification:
+
+$ make update-lessons
+
+Failure to comply to the lesson/step specification will make the
+tryocaml/tutorial/make_lessons command fail.
+
+If you want to debug at some point, you can type "debug true" in
+the terminal to see what the input and output strings are.
+
+Once everything works, send a "pull request" via Github, or send us a
+patch. You can also come on #ocamlpro IRC channel to discuss with us.
 
 === Online (beta) ===
 http://try.ocamlpro.com/

@@ -1,6 +1,4 @@
-
-let good_output = "val abs : vect -> " in
 fun input output ->
-  String.sub output 0 (String.length good_output) = good_output
+  find_in "val abs : vect -> " output && find_in "_" input
 
 

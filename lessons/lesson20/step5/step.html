@@ -7,6 +7,7 @@ polymorphic.</p>
 they could already force a polymorphic type on a function:<p>
 
 <p><code>let f : 'a -> 'a = function x -> x + 1</code></p>
+<br />
 
 <p>Although you might have thought you were forcing a polymorphic type
 on the function, you were only enforcing a constraint of equality
@@ -16,6 +17,7 @@ between the argument type and the result type.</p>
 an error, of course):<p>
 
 <p><code>let f : 'a.'a -> 'a = function x -> x + 1</code></p>
+<br />
 
 <p>This notation can also be used to define really polymorphic
 recursive methods. </p>
@@ -23,10 +25,12 @@ recursive methods. </p>
 <p>Let's define a new tree type:</p>
 
 <p><code>type 'a t = Leaf of 'a | Node of ('a * 'a) t</code></p>
+<br />
 
 <p>If we try to compute the depth of that tree, OCaml will complain: <p>
 
 <p><code>let rec depth = function Leaf _ -> 1 | Node x -> 1 + depth x</code></p>
+<br />
 
 <p>Indeed, depth is a recursive function, and the typer does not allow
 to use it will two different types of arguments. But now, with

@@ -79,7 +79,7 @@ let check_step ppf input output =
   print_debug (Printf.sprintf  "debug: input=[%s] output=[%s]" (String.escaped input) (String.escaped output));
   if !user_navigation then begin
     user_navigation := false;
-    (!message_fun) "";
+    (!message_fun) (Printf.sprintf "You moved to lesson %d, step %d." !this_lesson !this_step)
   end else
   let result =
     try (!this_step_check) input output with _ -> false
@@ -95,8 +95,7 @@ let check_step ppf input output =
       if current_step < !this_step then
         (!message_fun) "Congratulations ! You moved to the next step."
   end else
-    if !user_navigation then
-      (!message_fun) (Printf.sprintf "You moved to lesson %d, step %d." !this_lesson !this_step)
+    (!message_fun) ""
 
 let next () = step (!this_step + 1)
 let back () = step (!this_step - 1)
