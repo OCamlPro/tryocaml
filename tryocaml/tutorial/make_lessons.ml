@@ -45,12 +45,13 @@ let get_title html =
 
 let _ =
   let lessons_dir = "../../lessons" in
+  let goodies = string_of_file (Filename.concat lessons_dir "goodies.ml") in
   let lesson_dirs = list_directory lessons_dir in
   let lessons = ref [] in
   List.iter (fun lesson ->
     let lesson_dir = Filename.concat lessons_dir lesson in
     try
-      assert ( String.sub lesson 0 6 = "lesson" );
+      if String.sub lesson 0 6 = "lesson" then
       let lesson_num = int_of_string (String.sub lesson 6 (String.length lesson - 6)) in
       let lesson_html = string_of_file (Filename.concat lesson_dir "lesson.html") in
       let lesson_title = get_title lesson_html in
@@ -59,13 +60,13 @@ let _ =
       List.iter (fun step ->
         let step_dir = Filename.concat lesson_dir step in
         try
-          assert (String.sub step 0 4 = "step" );
-          let step_num = int_of_string (String.sub step 4 (String.length step - 4)) in
-          let step_html = string_of_file (Filename.concat step_dir "step.html") in
-          let step_title = get_title step_html in
-          let ml_filename = Filename.concat step_dir "step.ml" in
-          let step_ml = string_of_file ml_filename in
-          steps := (step_num, step_title, step_html, ml_filename, step_ml) :: !steps;
+          if String.sub step 0 4 = "step" then
+            let step_num = int_of_string (String.sub step 4 (String.length step - 4)) in
+            let step_html = string_of_file (Filename.concat step_dir "step.html") in
+            let step_title = get_title step_html in
+            let ml_filename = Filename.concat step_dir "step.ml" in
+            let step_ml = string_of_file ml_filename in
+            steps := (step_num, step_title, step_html, ml_filename, step_ml) :: !steps;
         with e ->
           Printf.fprintf stderr "Warning: exception %s while inspecting %s\n%!"
             (Printexc.to_string e) step_dir;
@@ -81,6 +82,7 @@ let _ =
 
   let lessons = List.sort compare !lessons in
 
+  Printf.printf "%s\n" goodies;
   Printf.printf "let lessons = [\n";
   List.iter (fun (lesson_num, lesson_title, lesson_html, steps) ->
     Printf.printf "\t(%d, \"%s\", \"%s\", [\n" lesson_num

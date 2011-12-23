@@ -140,24 +140,44 @@ let update_lesson_step_number () =
       (Printf.sprintf "<span class=\"step\">Step %d</span>" !Tutorial.this_step)
   with _ -> ()
 
-let make_code_clickable () =
-  let textbox =
-    Js.Opt.get (doc##getElementById(Js.string "console")) (fun () -> assert false) in
-  let textbox = match Js.Opt.to_option (Html.CoerceTo.textarea textbox) with
-    | None   -> assert false
-    | Some t -> t in
-  let codes = Dom.list_of_nodeList (doc##getElementsByTagName(Js.string "code")) in
-  List.iter (fun code ->
-    let value =  code##innerHTML in
-    code##onclick <- Html.handler (fun _ ->
-      textbox##value <- value;
-      Js._true)
-  ) codes
+let extract_escaped_and_kill html i =
+  let len = String.length html in
+  let rec iter html i len =
+    if i = len then i else
+      match html.[i] with
+          ';' -> i+1
+        | _ -> iter html (i+1) len
+  in
+  let end_pos = iter html (i+1) len in
+  let s = String.sub html i (end_pos - i) in
+  for j = i to end_pos - 1 do
+    html.[j] <- '\000'
+  done;
+  s
+
+let text_of_html html =
+  let b = Buffer.create (String.length html) in
+  for i = 0 to String.length html - 1 do
+    match html.[i] with
+        '&' ->
+          begin
+            match extract_escaped_and_kill html i with
+              | "&gt;" -> Buffer.add_char b '>'
+              | "&lt;" -> Buffer.add_char b '<'
+              | "&amp;" -> Buffer.add_char b '&'
+              | _ -> ()
+          end
+      | '\000' -> ()
+      | c -> Buffer.add_char b c
+  done;
+  Buffer.contents b
+
+
 
 
 let update_debug_message =
   let b = Buffer.create 100 in
-  Tutorial.debug_fun := (fun s -> Buffer.add_string b s);
+  Tutorial.debug_fun := (fun s -> Buffer.add_string b s; Buffer.add_string  b "<br/>");
   function () ->
     let s = Buffer.contents b in
     Buffer.clear b;
@@ -184,24 +204,26 @@ let loop s ppf buffer =
   let lb = Lexing.from_function (refill_lexbuf s (ref 0) ppf) in
   begin try
     while true do
+      begin
       try
         let phr = !Toploop.parse_toplevel_phrase lb in
         ensure_at_bol ppf;
         Buffer.clear buffer;
+        Tutorial.print_debug s;
         ignore (Toploop.execute_phrase true ppf phr);
         let res = Buffer.contents buffer in
         Tutorial.check_step ppf s res;
         update_lesson_text ();
         update_lesson_number ();
         update_lesson_step_number ();
-        update_debug_message ();
-        make_code_clickable ();
       with
           End_of_file ->
             raise End_of_file
         | x ->
           ensure_at_bol ppf;
           Errors.report_error ppf x
+      end;
+      update_debug_message ();
     done
     with End_of_file -> ()
   end
@@ -238,12 +260,12 @@ let run _ =
     let b = Buffer.create 80 in
     Format.make_formatter
       (fun s i l ->
-         Buffer.add_substring buffer s i l;
-         Buffer.add_substring b s i l)
+        Buffer.add_substring buffer s i l;
+        Buffer.add_substring b s i l)
       (fun _ ->
-         Dom.appendChild output_area
-           (doc##createTextNode(Js.string (Buffer.contents b)));
-         Buffer.clear b)
+        Dom.appendChild output_area
+          (doc##createTextNode(Js.string (Buffer.contents b)));
+        Buffer.clear b)
   in
 
   let textbox = Html.createTextarea doc in
@@ -259,18 +281,41 @@ let run _ =
   let history = ref [] in
   let history_bckwrd = ref [] in
   let history_frwrd = ref [] in
+
+  let rec make_code_clickable () =
+    let textbox =
+      Js.Opt.get (doc##getElementById(Js.string "console")) (fun () -> assert false) in
+    let textbox = match Js.Opt.to_option (Html.CoerceTo.textarea textbox) with
+      | None   -> assert false
+      | Some t -> t in
+    let codes = Dom.list_of_nodeList (doc##getElementsByTagName(Js.string "code")) in
+    List.iter (fun code ->
+      let html =  code##innerHTML in
+      let txt = text_of_html (Js.to_string html) in
+      code##title <- Js.string "Click here to execute this code";
+      code##onclick <- Html.handler (fun _ ->
+        textbox##value <- Js.string txt;
+        execute ();
+        Js._true)
+    ) codes
+
+  and execute () =
+    let s = Js.to_string textbox##value in
+    if s <> "" then history := Js.string s :: !history;
+    history_bckwrd := !history;
+    history_frwrd := [];
+    textbox##value <- Js.string "";
+    loop s ppf buffer;
+    make_code_clickable ();
+    textbox##focus();
+    container##scrollTop <- container##scrollHeight;
+  in
+
   Html.document##onkeydown <-
     (Html.handler
        (fun e -> match e##keyCode with
          | 13 -> (* ENTER key *)
-           let s = Js.to_string textbox##value in
-	   if s <> "" then history := Js.string s :: !history;
-	   history_bckwrd := !history;
-	   history_frwrd := [];
-           textbox##value <- Js.string "";
-           loop s ppf buffer;
-           textbox##focus();
-           container##scrollTop <- container##scrollHeight;
+           execute ();
            Js._false
 	 | 38 -> (* UP ARROW key *) begin
 	   match !history_bckwrd with
