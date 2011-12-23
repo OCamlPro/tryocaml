@@ -111,7 +111,7 @@ let ensure_at_bol ppf =
 let update_lesson_text () =
   try
     let container =
-      Js.Opt.get (doc##getElementById (Js.string "lesson-step"))
+      Js.Opt.get (doc##getElementById (Js.string "lesson-text"))
         (fun () -> assert false)
     in
     container##innerHTML <- Js.string !Tutorial.this_step_html
@@ -123,16 +123,18 @@ let update_lesson_number () =
       Js.Opt.get (doc##getElementById (Js.string "lesson-number"))
         (fun () -> assert false)
     in
-    container##innerHTML <- Js.string (string_of_int !Tutorial.this_lesson)
+    container##innerHTML <- Js.string
+      (Printf.sprintf "<span class=\"lesson\">Lesson %d</span>" !Tutorial.this_lesson)
   with _ -> ()
 
 let update_lesson_step_number () =
   try
     let container =
-      Js.Opt.get (doc##getElementById (Js.string "lesson-step-number"))
+      Js.Opt.get (doc##getElementById (Js.string "lesson-step"))
         (fun () -> assert false)
     in
-    container##innerHTML <- Js.string (string_of_int !Tutorial.this_step)
+    container##innerHTML <- Js.string 
+      (Printf.sprintf "<span class=\"step\">Step %d</span>" !Tutorial.this_step)
   with _ -> ()
 
 let loop s ppf buffer =
@@ -176,7 +178,8 @@ let _ =
         container##innerHTML <- Js.string ""
       else
         container##innerHTML <- Js.string
-        (Printf.sprintf "<div class=\"lesson alert-message block-message info\">%s</div>" s)
+          (Printf.sprintf
+             "<div class=\"alert-message block-message warning\">%s</div>" s)
     with _ -> ()
   )
 
@@ -187,7 +190,9 @@ let _ =
         Js.Opt.get (doc##getElementById (Js.string "lesson-message"))
           (fun () -> assert false)
       in
-      container##innerHTML <- Js.string s
+      container##innerHTML <- Js.string
+        (Printf.sprintf
+           "<div class=\"alert-message block-message success\">%s</div>" s)
     with _ -> ()
   )
 

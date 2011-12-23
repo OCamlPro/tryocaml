@@ -117,3 +117,16 @@ dl dt {
     margin-bottom: 10px;
     margin-top: 10px;
 }
+
+.lesson {
+    font-weight: bold;
+    color: #404040;
+    font-size: 16px;
+    line-height: 36px;
+}
+
+.step {
+    font-weight: bold;
+    color: #808080;
+    font-size: 12px;
+}
