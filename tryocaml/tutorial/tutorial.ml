@@ -1,5 +1,10 @@
+let debug = ref false
 
 let debug_fun = ref (fun _ -> ())
+
+
+let print_debug s = if !debug then (!debug_fun) s
+
 let message_fun = ref (fun _ -> ())
 
 let this_lesson = ref 0
@@ -32,6 +37,7 @@ let lessons_table =
 let user_navigation = ref false
 
 let rec step num =
+  print_debug (Printf.sprintf "step %d\n" num);
   if num < 1 then lesson_back (!this_lesson - 1) else
     if num >= Array.length !this_lesson_steps then
       lesson (!this_lesson + 1)
@@ -46,6 +52,7 @@ let rec step num =
           this_step_check := step_check
 
 and lesson num =
+  print_debug (Printf.sprintf "lesson %d\n" num);
   if num >= 1 && num < Array.length lessons_table then
     match lessons_table.(num) with
         None -> lesson (num + 1)
@@ -57,6 +64,7 @@ and lesson num =
         step 1
 
 and lesson_back num =
+  print_debug (Printf.sprintf "lesson_back %d\n" num);
   if num >= 1 && num < Array.length lessons_table then
     match lessons_table.(num) with
         None -> lesson_back (num - 1)
@@ -67,10 +75,12 @@ and lesson_back num =
         this_lesson_html := lesson_html;
         step (Array.length steps - 1)
 
-let debug = ref false
-
 let check_step ppf input output =
-  if !debug then (!debug_fun (Printf.sprintf  "debug: input=[%s] output=[%s]" (String.escaped input) (String.escaped output)));
+  print_debug (Printf.sprintf  "debug: input=[%s] output=[%s]" (String.escaped input) (String.escaped output));
+  if !user_navigation then begin
+    user_navigation := false;
+    (!message_fun) "";
+  end else
   let result =
     try (!this_step_check) input output with _ -> false
   in
@@ -78,6 +88,7 @@ let check_step ppf input output =
     let current_lesson = !this_lesson in
     let current_step = !this_step in
     step (!this_step + 1);
+    user_navigation := false;
     if current_lesson < !this_lesson then
       (!message_fun) "Congratulations ! You moved to the next lesson."
     else
@@ -86,9 +97,6 @@ let check_step ppf input output =
   end else
     if !user_navigation then
       (!message_fun) (Printf.sprintf "You moved to lesson %d, step %d." !this_lesson !this_step)
-    else
-      (!message_fun) "";
-  user_navigation := false
 
 let next () = step (!this_step + 1)
 let back () = step (!this_step - 1)
