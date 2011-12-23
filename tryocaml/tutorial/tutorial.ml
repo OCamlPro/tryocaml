@@ -3,26 +3,29 @@ let debug_fun = ref (fun _ -> ())
 let message_fun = ref (fun _ -> ())
 
 let this_lesson = ref 1
+let this_lesson_title = ref ""
+let this_lesson_html = ref ""
 let this_lesson_steps = ref [||]
 let this_step = ref 1
 let this_step_check = ref (fun _ _ -> false)
-let this_step_txt = ref ""
+let this_step_title = ref ""
+let this_step_html = ref ""
 
-let lessons =
+let lessons_table =
   let all_lessons =
     let max_lesson = ref 1 in
-    List.iter (fun (num, _) -> if num > !max_lesson then max_lesson := num) Lessons.lessons;
+    List.iter (fun (num, _, _, _) -> if num > !max_lesson then max_lesson := num) Lessons.lessons;
     let all_lessons = Array.create (!max_lesson+1) None in
     all_lessons
   in
-  List.iter (fun (num, steps) ->
+  List.iter (fun (num, lesson_title, lesson_html, steps) ->
     let max_steps = ref 1 in
-    List.iter (fun (num,_, _) -> if num > !max_steps then max_steps := num) steps;
+    List.iter (fun (num,_,_, _) -> if num > !max_steps then max_steps := num) steps;
     let all_steps = Array.create (!max_steps+1) None in
-    List.iter (fun (num, step_txt, step_check) ->
-      all_steps.(num) <- Some (step_txt, step_check)
+    List.iter (fun (num, step_title, step_html, step_check) ->
+      all_steps.(num) <- Some (step_title, step_html, step_check)
     ) steps;
-    all_lessons.(num) <- Some all_steps
+    all_lessons.(num) <- Some (lesson_title, lesson_html, all_steps)
   ) Lessons.lessons;
   all_lessons
 
@@ -35,28 +38,33 @@ let rec step num =
     else
       match (!this_lesson_steps).(num) with
           None -> step (num + 1)
-        | Some (step_txt, step_check) ->
+        | Some (step_title, step_html, step_check) ->
           user_navigation := true;
           this_step := num;
-          this_step_txt := step_txt;
+          this_step_title := step_title;
+          this_step_html := step_html;
           this_step_check := step_check
 
 and lesson num =
-  if num >= 1 && num < Array.length lessons then
-    match lessons.(num) with
+  if num >= 1 && num < Array.length lessons_table then
+    match lessons_table.(num) with
         None -> lesson (num + 1)
-      | Some steps ->
+      | Some (lesson_title, lesson_html, steps) ->
         this_lesson := num;
+        this_lesson_title := lesson_title;
+        this_lesson_html := lesson_html;
         this_lesson_steps := steps;
         step 1
 
 and lesson_back num =
-  if num >= 1 && num < Array.length lessons then
-    match lessons.(num) with
+  if num >= 1 && num < Array.length lessons_table then
+    match lessons_table.(num) with
         None -> lesson_back (num - 1)
-      | Some steps ->
+      | Some (lesson_title, lesson_html, steps) ->
         this_lesson := num;
         this_lesson_steps := steps;
+        this_lesson_title := lesson_title;
+        this_lesson_html := lesson_html;
         step 1
 
 let _ =  lesson 1
@@ -90,3 +98,24 @@ let back () = step (!this_step - 1)
 let debug d =
   debug := d;
   if not d then (!debug_fun "")
+
+let clear_fun = ref (fun _ -> ())
+let clear () = !clear_fun ()
+
+let lessons () =
+  Printf.printf "All lessons:\n%!";
+  for i = 0 to Array.length lessons_table - 1 do
+    match lessons_table.(i) with
+        None -> ()
+      | Some (lesson_title, _, steps) ->
+        Printf.printf "%d\t%s\n%!" i lesson_title
+  done
+
+let steps () =
+  Printf.printf "All steps in lesson %d:\n%!" !this_lesson;
+  for i = 0 to Array.length !this_lesson_steps - 1 do
+    match (!this_lesson_steps).(i) with
+        None -> ()
+      | Some (step_title, _, _) ->
+        Printf.printf "%d\t%s\n%!" i step_title
+  done
