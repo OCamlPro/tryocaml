@@ -109,6 +109,7 @@ let ensure_at_bol ppf =
   end
 
 let update_lesson_text () =
+  if  !Tutorial.this_lesson <> 0 then
   try
     let container =
       Js.Opt.get (doc##getElementById (Js.string "lesson-text"))
@@ -118,7 +119,8 @@ let update_lesson_text () =
   with _ -> ()
 
 let update_lesson_number () =
-  try
+  if  !Tutorial.this_lesson <> 0 then
+    try
     let container =
       Js.Opt.get (doc##getElementById (Js.string "lesson-number"))
         (fun () -> assert false)
@@ -128,12 +130,13 @@ let update_lesson_number () =
   with _ -> ()
 
 let update_lesson_step_number () =
+  if  !Tutorial.this_lesson <> 0 then
   try
     let container =
       Js.Opt.get (doc##getElementById (Js.string "lesson-step"))
         (fun () -> assert false)
     in
-    container##innerHTML <- Js.string 
+    container##innerHTML <- Js.string
       (Printf.sprintf "<span class=\"step\">Step %d</span>" !Tutorial.this_step)
   with _ -> ()
 
@@ -185,6 +188,7 @@ let _ =
 
 let _ =
   Tutorial.message_fun := (fun s ->
+    if  !Tutorial.this_lesson <> 0 then
     try
       let container =
         Js.Opt.get (doc##getElementById (Js.string "lesson-message"))
@@ -220,6 +224,7 @@ let run _ =
            (doc##createTextNode(Js.string (Buffer.contents b)));
          Buffer.clear b)
   in
+
   let textbox = Html.createTextarea doc in
   textbox##value <- Js.string s;
   Dom.appendChild top textbox;
