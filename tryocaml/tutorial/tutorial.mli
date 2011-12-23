@@ -12,3 +12,6 @@ val check_step : Format.formatter -> string -> string -> unit
 val debug : bool -> unit
 
 val lessons : (string * (string -> string -> bool)) option array option array
+
+val debug_fun : (string -> unit) ref
+val message_fun : (string -> unit) ref
