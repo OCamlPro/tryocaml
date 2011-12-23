@@ -2,11 +2,11 @@
 let debug_fun = ref (fun _ -> ())
 let message_fun = ref (fun _ -> ())
 
-let this_lesson = ref 1
+let this_lesson = ref 0
 let this_lesson_title = ref ""
 let this_lesson_html = ref ""
 let this_lesson_steps = ref [||]
-let this_step = ref 1
+let this_step = ref 0
 let this_step_check = ref (fun _ _ -> false)
 let this_step_title = ref ""
 let this_step_html = ref ""
@@ -65,9 +65,7 @@ and lesson_back num =
         this_lesson_steps := steps;
         this_lesson_title := lesson_title;
         this_lesson_html := lesson_html;
-        step 1
-
-let _ =  lesson 1
+        step (Array.length steps - 1)
 
 let debug = ref false
 

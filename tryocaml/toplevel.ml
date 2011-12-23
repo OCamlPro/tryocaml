@@ -109,6 +109,7 @@ let ensure_at_bol ppf =
   end
 
 let update_lesson_text () =
+  if  !Tutorial.this_lesson <> 0 then
   try
     let container =
       Js.Opt.get (doc##getElementById (Js.string "lesson-text"))
@@ -118,7 +119,8 @@ let update_lesson_text () =
   with _ -> ()
 
 let update_lesson_number () =
-  try
+  if  !Tutorial.this_lesson <> 0 then
+    try
     let container =
       Js.Opt.get (doc##getElementById (Js.string "lesson-number"))
         (fun () -> assert false)
@@ -128,12 +130,13 @@ let update_lesson_number () =
   with _ -> ()
 
 let update_lesson_step_number () =
+  if  !Tutorial.this_lesson <> 0 then
   try
     let container =
       Js.Opt.get (doc##getElementById (Js.string "lesson-step"))
         (fun () -> assert false)
     in
-    container##innerHTML <- Js.string 
+    container##innerHTML <- Js.string
       (Printf.sprintf "<span class=\"step\">Step %d</span>" !Tutorial.this_step)
   with _ -> ()
 
@@ -202,6 +205,7 @@ let _ =
 
 let _ =
   Tutorial.message_fun := (fun s ->
+    if  !Tutorial.this_lesson <> 0 then
     try
       let container =
         Js.Opt.get (doc##getElementById (Js.string "lesson-message"))
@@ -218,10 +222,13 @@ let run _ =
     Js.Opt.get (doc##getElementById (Js.string "toplevel"))
       (fun () -> assert false)
   in
-  let output = Html.createDiv doc in
+  let output_area =
+    Js.Opt.get (doc##getElementById (Js.string "output"))
+      (fun () -> assert false)
+  in
   let buffer = Buffer.create 1000 in
 
-  Tutorial.clear_fun := (fun _ -> output##innerHTML <- (Js.string ""));
+  Tutorial.clear_fun := (fun _ -> output_area##innerHTML <- (Js.string ""));
 
   let ppf =
     let b = Buffer.create 80 in
@@ -230,10 +237,11 @@ let run _ =
          Buffer.add_substring buffer s i l;
          Buffer.add_substring b s i l)
       (fun _ ->
-         Dom.appendChild output
+         Dom.appendChild output_area
            (doc##createTextNode(Js.string (Buffer.contents b)));
          Buffer.clear b)
   in
+
   let textbox = Html.createTextarea doc in
   textbox##value <- Js.string "";
   textbox##id <- Js.string "console";
@@ -242,10 +250,6 @@ let run _ =
   textbox##select();
   let container =
     Js.Opt.get (doc##getElementById (Js.string "toplevel-container"))
-      (fun () -> assert false)
-  in
-  let output_area =
-    Js.Opt.get (doc##getElementById (Js.string "output-area"))
       (fun () -> assert false)
   in
   let history = ref [] in
@@ -286,8 +290,8 @@ let run _ =
 	 end
 	 | _ -> Js._true));
   output_area##scrollTop <- output_area##scrollHeight;
-  Dom.appendChild output_area output;
   make_code_clickable ();
+  (* Dom.appendChild output_area doc; *)
   start ppf;
   Js._false
 
