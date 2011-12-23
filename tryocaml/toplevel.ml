@@ -144,14 +144,11 @@ let make_code_clickable () =
     | None   -> assert false
     | Some t -> t in
   let codes = Dom.list_of_nodeList (doc##getElementsByTagName(Js.string "code")) in
-  Tutorial.debug true;
-  !Tutorial.debug_fun (Printf.sprintf "codes=%d" (List.length codes));
   List.iter (fun code ->
     let value = match Js.Opt.to_option code##nodeValue with
       | None   -> Js.string "XXX"
       | Some v -> v in
     code##onclick <- Html.handler (fun _ ->
-      !Tutorial.debug_fun (Printf.sprintf "code=%s" (Js.to_string value));
       textbox##value <- value;
       Js._true)
   ) codes
