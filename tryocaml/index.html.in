@@ -28,13 +28,17 @@
       <div class="row">
 
        <div class="span7">
-          <h3>Try OCaml</h3>
+          <h1>Try OCaml</h1>
           <p>OCaml is a strongly typed functional language. It is concise
              and efficient, enabling you to improve your coding efficiency
              while producing code with higher quality.
-            So, let's begin learning with OCaml!
-          <div class="lesson alert-message block-message info" id="lesson-step">
+            So, let's begin learning with OCaml!</p>
+          <div id="lesson-step"></div>
+          <div class="alert-message block-message info" id="lesson-text">
             Type <code>lesson 1</code> to start the tutorial.
+          </div>
+          <div class="menu-lessons">
+<!--LESSONS-->
           </div>
         </div>
 
@@ -50,8 +54,10 @@
             <tr><td>Enter / Return</td> <td>Submit code</td></tr>
             <tr><td>Up / Down</td><td>Cycle through submitted code</td></tr>
             <tr><td><code>clear</code></td> <td>Clear the editor view</td></tr>
-            <tr><td><code>lesson i</code></td> <td>Move to lesson number i</td></tr>
-            <tr><td><code>step i</code></td> <td>Move to step number i</td></tr>
+            <tr><td><code>lesson i</code></td> <td>Move to lesson number <em>i</em></td></tr>
+            <tr><td><code>step i</code></td> <td>Move to step number <em>i</em></td></tr>
+            <tr><td><code>next ()</code></td> <td>Move to the next step</td></tr>
+            <tr><td><code>back ()</code></td> <td>Move to the previous step</td></tr>
           </table>
         </div>
 

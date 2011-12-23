@@ -124,14 +124,16 @@ let loop s ppf buffer =
         ignore (Toploop.execute_phrase true ppf phr);
         let res = Buffer.contents buffer in
         Tutorial.check_step ppf s res;
-         let container =
+         let lesson_step =
            Js.Opt.get (doc##getElementById (Js.string "lesson-step"))
-             (fun () -> assert false)
-         in
-         container##innerHTML <- Js.string
-           (Printf.sprintf "%s<p>You are at lesson <code>%d</code>, step <code>%d</code>. Use <code>lesson %d</code> for next lesson or <code>step %d</code> for next step.</p>" !Tutorial.this_step_txt
-              !Tutorial.this_lesson !Tutorial.this_step
-              (!Tutorial.this_lesson+1) (!Tutorial.this_step+1))
+             (fun () -> assert false) in
+         let lesson_text =
+           Js.Opt.get (doc##getElementById (Js.string "lesson-text"))
+             (fun () -> assert false) in
+         lesson_step##innerHTML <- Js.string (Printf.sprintf
+           "<h3>Lesson %d: Step %d<h3>"
+           !Tutorial.this_lesson !Tutorial.this_step);
+         lesson_text##innerHTML <- Js.string !Tutorial.this_step_txt;
       with
           End_of_file ->
             raise End_of_file
