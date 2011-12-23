@@ -19,8 +19,8 @@ body {
 }
 
 #toplevel textarea {
-    width: 800px;
-    height: 18px;
+    width: 460px;
+    height: 36px;
     border: 0;
     background: transparent;
     resize: none;
@@ -34,8 +34,8 @@ body {
 }
 
 #toplevel-container {
-   padding: 10px;                 
-   height: 300px;
+   padding: 10px;
+   height: 500px;
    overflow: auto;
    overflow-x: hidden;
    font-family: Courier, monospace;
@@ -49,6 +49,7 @@ body {
 
 .content {
   padding-top: 50px;
+  padding-bottom: 50px;
   min-height: 600px;
   background-color: white;
 }
@@ -70,6 +71,11 @@ table td {
     font-size: 12px;
     padding-top: 5px;
     padding-bottom: 5px;
+}
+
+table {
+   margin-top: 20px;
+   margin-bottom: 20px;
 }
 
 .copyright, .ressources {
