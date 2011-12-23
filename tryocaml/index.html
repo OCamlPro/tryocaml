@@ -19,6 +19,12 @@
              and efficient, enabling you to improve your coding efficiency
              while producing code with higher quality.
             So, let's begin learning with OCaml!
+            <div class="lesson alert-message block-message info">
+              Lesson <span  id="lesson-number"></span>
+            </div>
+            <div class="lesson alert-message block-message info">
+              Step <span  id="lesson-step-number"></span>
+            </div>
           <div class="lesson alert-message block-message info" id="lesson-step">
             Type <code>lesson 1</code> to start the tutorial.
           </div>
@@ -30,14 +36,20 @@
             <div id="sharp"></div>
             <div id="toplevel"></div>
           </div>
+          <div class="lesson alert-message block-message info" id="lesson-message">
+          </div>
+          <div id="lesson-debug">
+          </div>
 
           <table class="zebra-striped">
             <thead><tr><th>Commands</th><th>Effects</th></tr></thead>
             <tr><td>Enter / Return</td> <td>Submit code</td></tr>
             <tr><td>Up / Down</td><td>Cycle through submitted code</td></tr>
-            <tr><td><code>clear</code></td> <td>Clear the editor view</td></tr>
             <tr><td><code>lesson i</code></td> <td>Move to lesson number i</td></tr>
             <tr><td><code>step i</code></td> <td>Move to step number i</td></tr>
+            <tr><td><code>next ()</code></td> <td>Move to next step</td></tr>
+            <tr><td><code>back ()</code></td> <td>Move to previous step</td></tr>
+            <tr><td><code>clear ()</code></td> <td>Clear the editor view</td></tr>
           </table>
         </div>
 
@@ -49,6 +61,7 @@
         <div class="ressources">
           <a href="https://github.com/OCamlPro/tryocaml">Contribute</a> |
           <a href="http://caml.inria.fr/">OCaml</a> |
+          <a href="http://www.ocamlpro.com/">OCamlPro</a> |
           <a href="http://ocsigen.org/js_of_ocaml/">Js_of_ocaml</a>
         </div>
         <div class="copyright">

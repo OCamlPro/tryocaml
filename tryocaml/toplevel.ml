@@ -108,6 +108,33 @@ let ensure_at_bol ppf =
     consume_nl := true; at_bol := true
   end
 
+let update_lesson_text () =
+  try
+    let container =
+      Js.Opt.get (doc##getElementById (Js.string "lesson-step"))
+        (fun () -> assert false)
+    in
+    container##innerHTML <- Js.string !Tutorial.this_step_txt
+  with _ -> ()
+
+let update_lesson_number () =
+  try
+    let container =
+      Js.Opt.get (doc##getElementById (Js.string "lesson-number"))
+        (fun () -> assert false)
+    in
+    container##innerHTML <- Js.string (string_of_int !Tutorial.this_lesson)
+  with _ -> ()
+
+let update_lesson_step_number () =
+  try
+    let container =
+      Js.Opt.get (doc##getElementById (Js.string "lesson-step-number"))
+        (fun () -> assert false)
+    in
+    container##innerHTML <- Js.string (string_of_int !Tutorial.this_step)
+  with _ -> ()
+
 let loop s ppf buffer =
   let need_terminator = ref true in
   for i = 0 to String.length s - 2 do
@@ -124,14 +151,9 @@ let loop s ppf buffer =
         ignore (Toploop.execute_phrase true ppf phr);
         let res = Buffer.contents buffer in
         Tutorial.check_step ppf s res;
-         let container =
-           Js.Opt.get (doc##getElementById (Js.string "lesson-step"))
-             (fun () -> assert false)
-         in
-         container##innerHTML <- Js.string
-           (Printf.sprintf "%s<p>You are at lesson <code>%d</code>, step <code>%d</code>. Use <code>lesson %d</code> for next lesson or <code>step %d</code> for next step.</p>" !Tutorial.this_step_txt
-              !Tutorial.this_lesson !Tutorial.this_step
-              (!Tutorial.this_lesson+1) (!Tutorial.this_step+1))
+        update_lesson_text ();
+        update_lesson_number ();
+        update_lesson_step_number ();
       with
           End_of_file ->
             raise End_of_file
@@ -142,6 +164,33 @@ let loop s ppf buffer =
     with End_of_file -> ()
   end
 
+
+let _ =
+  Tutorial.debug_fun := (fun s ->
+    try
+      let container =
+        Js.Opt.get (doc##getElementById (Js.string "lesson-debug"))
+          (fun () -> assert false)
+      in
+      if s = "" then
+        container##innerHTML <- Js.string ""
+      else
+        container##innerHTML <- Js.string
+        (Printf.sprintf "<div class=\"lesson alert-message block-message info\">%s</div>" s)
+    with _ -> ()
+  )
+
+let _ =
+  Tutorial.message_fun := (fun s ->
+    try
+      let container =
+        Js.Opt.get (doc##getElementById (Js.string "lesson-message"))
+          (fun () -> assert false)
+      in
+      container##innerHTML <- Js.string s
+    with _ -> ()
+  )
+
 let run _ =
   let top =
     Js.Opt.get (doc##getElementById (Js.string "toplevel"))
@@ -150,10 +199,12 @@ let run _ =
   let output = Html.createDiv doc in
   let buffer = Buffer.create 1000 in
 
+  Tutorial.clear_fun := (fun _ -> output##innerHTML <- (Js.string ""));
+
   let ppf =
     let b = Buffer.create 80 in
     Format.make_formatter
-      (fun s i l -> 
+      (fun s i l ->
          Buffer.add_substring buffer s i l;
          Buffer.add_substring b s i l)
       (fun _ ->
@@ -186,10 +237,7 @@ let run _ =
 	   history_bckwrd := !history;
 	   history_frwrd := [];
            textbox##value <- Js.string "";
-           if s = "clear" then 
-             output##innerHTML <- (Js.string "")
-           else 
-             loop s ppf buffer;
+           loop s ppf buffer;
            textbox##focus();
            container##scrollTop <- container##scrollHeight;
            Js._false
