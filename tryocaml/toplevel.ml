@@ -368,7 +368,7 @@ let run _ =
       let txt = text_of_html (Js.to_string html) in
       code##title <- Js.string "Click here to execute this code";
       code##onclick <- Html.handler (fun _ ->
-        textbox##value <- Js.string txt;
+        textbox##value <- Js.string ( txt ^ ";;" );
         execute ();
         Js._true)
     ) codes
