@@ -19,6 +19,7 @@
  *)
 
 let debug = Util.debug "main"
+let linkall = ref false
 
 let f paths js_files input_file output_file =
   List.iter Linker.add_file js_files;
@@ -34,7 +35,8 @@ let f paths js_files input_file output_file =
         close_in ch;
         p
   in
-  let output_program = Driver.f p in
+  let linkall = !linkall in
+  let output_program = Driver.f ~linkall p in
   match output_file with
     None ->
       output_program (Pretty_print.to_out_channel stdout)
@@ -56,6 +58,7 @@ let _ =
       Arg.String Util.set_disabled, "<name> disable optimization <name>");
      ("-pretty", Arg.Unit Driver.set_pretty, " pretty print the output");
      ("-noinline", Arg.Unit Inline.disable_inlining, " disable inlining");
+     ("-linkall", Arg.Set linkall, " link all primitives");
      ("-noruntime", Arg.Unit (fun () -> no_runtime := true),
       " do not include the standard runtime");
      ("-toplevel", Arg.Unit Parse.build_toplevel,

@@ -67,7 +67,7 @@ STDLIB_MODULES=\
 PERVASIVES=$(STDLIB_MODULES) outcometree topdirs toploop
 
 $(NAME).js: $(NAME).byte $(JSFILES)
-	$(COMP) $(INCLUDES) -toplevel -noinline -noruntime $(JSFILES) $(NAME).byte $(OPTIONS)
+	$(COMP) $(INCLUDES) -toplevel -linkall -noinline -noruntime $(JSFILES) $(NAME).byte $(OPTIONS)
 
 $(NAME).byte: $(OBJS) $(JS)/compiler/compiler.cma
 	$(OCAMLC) $(INCLUDES) -linkall -package str -linkpkg -o $@.tmp $(STDLIB) $(OBJS)
