@@ -78,29 +78,44 @@ let start ppf =
 let at_bol = ref true
 let consume_nl = ref false
 
-let refill_lexbuf s p ppf buffer len =
-  if !consume_nl then begin
-    let l = String.length s in
-    if (!p < l && s.[!p] = '\n') then
-      incr p
-    else if (!p + 1 < l && s.[!p] = '\r' && s.[!p + 1] = '\n') then
-      p := !p + 2;
-    consume_nl := false
-  end;
-  if !p = String.length s then
-    0
-  else begin
-    let c = s.[!p] in
-    incr p;
-    buffer.[0] <- c;
-    if !at_bol then Format.fprintf ppf "# ";
-    at_bol := (c = '\n');
-    if c = '\n' then
-      Format.fprintf ppf "@."
-    else
-      Format.fprintf ppf "%c" c;
-    1
-  end
+let input = ref []
+let output = ref []
+
+let rec refill_lexbuf s p ppf buffer len =
+  match !input with
+    | '\000' :: tail ->
+      input := tail;
+      refill_lexbuf s p ppf buffer len
+    | c :: tail ->
+      input := tail;
+      output := c :: !output;
+      buffer.[0] <- c;
+      1
+    | [] ->
+      if !consume_nl then begin
+        let l = String.length s in
+        if (!p < l && s.[!p] = '\n') then
+          incr p
+        else if (!p + 1 < l && s.[!p] = '\r' && s.[!p + 1] = '\n') then
+          p := !p + 2;
+        consume_nl := false
+      end;
+      if !p = String.length s then begin
+        output := '\000' :: !output;
+        0
+      end else begin
+        let c = s.[!p] in
+        incr p;
+        buffer.[0] <- c;
+        if !at_bol then Format.fprintf ppf "# ";
+        at_bol := (c = '\n');
+        if c = '\n' then
+          Format.fprintf ppf "@."
+        else
+          Format.fprintf ppf "%c" c;
+        output := c :: !output;
+        1
+      end
 
 let ensure_at_bol ppf =
   if not !at_bol then begin
@@ -138,6 +153,15 @@ let update_lesson_step_number () =
     in
     container##innerHTML <- Js.string
       (Printf.sprintf "<span class=\"step\">Step %d</span>" !Tutorial.this_step)
+  with _ -> ()
+
+let update_prompt prompt =
+  try
+    let container =
+      Js.Opt.get (doc##getElementById (Js.string "sharp"))
+        (fun () -> assert false)
+    in
+    container##innerHTML <- Js.string prompt
   with _ -> ()
 
 let extract_escaped_and_kill html i =
@@ -194,38 +218,88 @@ let update_debug_message =
              "<div class=\"alert-message block-message warning\">%s</div>" s)
     with _ -> ()
 
+exception End_of_input
+
+let string_of_char_list list =
+  let len = List.length list in
+  let s = String.create len in
+  let rec iter s i list =
+    match list with
+        [] -> s
+      | c :: tail ->
+        s.[i] <- c;
+        iter s (i+1) tail
+  in
+  iter s 0 list
 
 let loop s ppf buffer =
-  let need_terminator = ref true in
-  for i = 0 to String.length s - 2 do
-    if s.[i] = ';' && s.[i+1] = ';' then need_terminator := false;
-  done;
-  let s = if !need_terminator then s ^ ";;" else s in
+  let s =
+    if !Tutorial.use_multiline then begin
+      input := List.rev ('\n' :: !output);
+      output := [];
+      s
+    end else begin
+      let need_terminator = ref true in
+      for i = 0 to String.length s - 2 do
+        if s.[i] = ';' && s.[i+1] = ';' then need_terminator := false;
+      done;
+      output := [];
+      if !need_terminator then s ^ ";;" else s
+    end
+  in
   let lb = Lexing.from_function (refill_lexbuf s (ref 0) ppf) in
   begin try
     while true do
       begin
       try
-        let phr = !Toploop.parse_toplevel_phrase lb in
+        let phr = try
+                    !Toploop.parse_toplevel_phrase lb
+          with End_of_file -> raise End_of_input
+        in
+        let input = string_of_char_list (List.rev !output) in
+        if !Tutorial.use_multiline then begin
+          match !output with
+              ';' :: ';' :: _ -> output := []
+            | _ -> assert false
+        end else output := [];
         ensure_at_bol ppf;
         Buffer.clear buffer;
         Tutorial.print_debug s;
         ignore (Toploop.execute_phrase true ppf phr);
         let res = Buffer.contents buffer in
-        Tutorial.check_step ppf s res;
+        Tutorial.check_step ppf input res;
         update_lesson_text ();
         update_lesson_number ();
         update_lesson_step_number ();
       with
-          End_of_file ->
-            raise End_of_file
+          End_of_input ->
+            ensure_at_bol ppf;
+            raise End_of_input
         | x ->
-          ensure_at_bol ppf;
-          Errors.report_error ppf x
+          let do_report_error =
+            if !Tutorial.use_multiline then
+              match !output with
+                  '\000' :: _ -> false
+                | _ -> true
+            else true
+          in
+          if do_report_error then begin
+            output := [];
+            ensure_at_bol ppf;
+            Errors.report_error ppf x
+          end
       end;
       update_debug_message ();
     done
-    with End_of_file -> ()
+    with End_of_input ->
+      match !output with
+          [] | [ '\000' ] ->
+            output := []; update_prompt "#"
+        | _ ->
+          let s = string_of_char_list (List.rev !output) in
+          let len = String.length s in
+          let s = if len >= 5 then String.sub s 0 5 else s in
+          update_prompt (Printf.sprintf "[%s]> " s)
   end
 
 
