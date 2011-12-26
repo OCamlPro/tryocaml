@@ -130,3 +130,6 @@ let steps () =
       | Some (step_title, _, _) ->
         Printf.printf "%d\t%s\n%!" i step_title
   done
+
+let use_multiline = ref false
+let multiline flag = use_multiline := flag
