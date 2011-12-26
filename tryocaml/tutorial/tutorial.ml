@@ -109,12 +109,18 @@ let clear () = !clear_fun ()
 
 let lessons () =
   Printf.printf "All lessons:\n%!";
+  let left = ref true in
   for i = 0 to Array.length lessons_table - 1 do
     match lessons_table.(i) with
         None -> ()
       | Some (lesson_title, _, steps) ->
-        Printf.printf "%d\t%s\n%!" i lesson_title
-  done
+        if !left then
+          Printf.printf "%2d   %-30s" i lesson_title
+        else
+          Printf.printf "%2d   %-30s\n" i lesson_title;
+        left := not !left
+  done;
+  if not !left then Printf.printf "\n%!"
 
 let steps () =
   Printf.printf "All steps in lesson %d:\n%!" !this_lesson;
