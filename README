@@ -1,8 +1,13 @@
 === Overview ===
-TryOCaml is the easiest way to learn how to code in OCaml language. A funny way
-to learn the language.
-TryOCaml is based on (http://ocsigen.org/js_of_ocaml/files/toplevel/index.html) built
-with js_of_ocaml (see http://ocsigen.org/lwt/).
+
+TryOCaml is the easiest way to learn how to code in OCaml language. A
+funny way to learn the language. It is available here:
+
+http://try.ocamlpro.com/
+
+TryOCaml is based on
+(http://ocsigen.org/js_of_ocaml/files/toplevel/index.html) built with
+js_of_ocaml (see http://ocsigen.org/lwt/).
 
 === Requirements ===
 
@@ -51,5 +56,5 @@ the terminal to see what the input and output strings are.
 Once everything works, send a "pull request" via Github, or send us a
 patch. You can also come on #ocamlpro IRC channel to discuss with us.
 
-=== Online (beta) ===
+=== Online ===
 http://try.ocamlpro.com/
