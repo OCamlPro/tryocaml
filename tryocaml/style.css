@@ -10,8 +10,9 @@ body {
     float: left;
 }
 
-#sharp:before {
-    content: "#";
+#sharp {
+/*    content: "#"; */
+    text-width: 10px;
     margin-left: 8px;
     float: left;
     color: #CCC;
@@ -92,7 +93,7 @@ table {
     color: black;
 }
 
-.menu-lessons { 
+.menu-lessons {
     overflow: hidden;
     width: 100%;
     height: 500px;

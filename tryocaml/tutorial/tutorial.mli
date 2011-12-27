@@ -25,3 +25,6 @@ val clear : unit -> unit
 val lessons : unit -> unit
 val steps : unit -> unit
 val print_debug : string -> unit
+
+val use_multiline : bool ref
+val multiline : bool -> unit
