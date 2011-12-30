@@ -51,7 +51,7 @@ module Html = Dom_html
 let s = ""
 
 let doc = Html.document
-let button_type = Js.string "reset"
+let button_type = Js.string "button"
 let button txt action =
   let b = Dom_html.createInput ~_type:button_type doc in
   b##value <- Js.string txt;
@@ -412,6 +412,8 @@ let run _ =
 	       Js._false
 	 end
 	 | _ -> Js._true));
+  let b = button "Send" (fun () -> execute ()) in
+  Dom.appendChild top b;
   output_area##scrollTop <- output_area##scrollHeight;
   make_code_clickable ();
   (* Dom.appendChild output_area doc; *)
