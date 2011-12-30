@@ -14,7 +14,7 @@ val check_step : Format.formatter -> string -> string -> unit
 
 val debug : bool -> unit
 
-val lessons_table : ( string * string * (string * string * (string -> string -> bool)) option array ) option array
+val lessons_table : (string * string * (string * (string * string)) list * (string * string * (string * (string * string)) list * (string -> string -> bool)) option array) option array
 
 val debug_fun : (string -> unit) ref
 val message_fun : (string -> unit) ref
@@ -28,3 +28,6 @@ val print_debug : string -> unit
 
 val use_multiline : bool ref
 val multiline : bool -> unit
+
+val set_lang : string -> unit
+val lang : unit -> string

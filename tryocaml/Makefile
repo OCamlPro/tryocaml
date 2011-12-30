@@ -3,7 +3,7 @@ LIBNAME=js_of_ocaml
 NAME=toplevel
 OBJS=tutorial/lessons.cmo tutorial/tutorial.cmo toplevel.cmo
 JS=js_of_ocaml-patched
-INCLUDES= -I tutorial
+INCLUDES= -I $(JS)/lib -I $(JS)/compiler -I tutorial
 
 all: compiler tuto $(NAME).js
 
@@ -15,7 +15,7 @@ compiler:
 COMP=$(JS)/compiler/$(COMPILER)
 #COMP=$(LIBRARY)
 JSFILES=$(JS)/runtime/runtime.js $(JS)/runtime/weak.js toplevel_runtime.js
-OCAMLC=ocamlfind ocamlc -annot -package lwt,str -pp "camlp4o $(JS)/lib/syntax/pa_js.cmo" -I $(JS)/lib -I $(JS)/compiler -I tutorial
+OCAMLC=ocamlfind ocamlc -annot -package lwt,str -pp "camlp4o $(JS)/lib/syntax/pa_js.cmo"
 STDLIB= $(JS)/lib/$(LIBNAME).cma $(JS)/compiler/compiler.cma  toplevellib.cma
 EXPUNGE=$(shell ocamlc -where)/expunge
 # Removed gc and sys
@@ -75,7 +75,7 @@ $(NAME).byte: $(OBJS) $(JS)/compiler/compiler.cma
 	rm -f $@.tmp
 
 %.cmo: %.ml
-	$(OCAMLC) -c $<
+	$(OCAMLC) $(INCLUDES) -c $<
 
 %.cmi:$(JS)/compiler/compiler.cma
 
@@ -83,7 +83,7 @@ $(JS)/compiler/compiler.cma:
 	$(MAKE) -C $(JS)/compiler compiler.cma
 
 errors.cmi: errors.mli
-	$(OCAMLC) -c $<
+	$(OCAMLC) $(INCLUDES) -c $<
 
 tuto:
 	$(MAKE) -C tutorial all
@@ -94,6 +94,6 @@ clean::
 	$(MAKE) -C $(JS) clean
 
 depend:
-	ocamldep -pp "camlp4o $(JS)/lib/syntax/pa_js.cmo" -I $(JS)/compiler *.ml *.mli > .depend
+	ocamldep -pp "camlp4o $(JS)/lib/syntax/pa_js.cmo" $(INCLUDES) *.ml *.mli > .depend
 
 include .depend
