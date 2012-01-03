@@ -287,7 +287,7 @@ diff -C 3 -r ocaml-3.12.1/toplevel/topdirs.mli ocaml-3.12.1-orig/toplevel/topdir
   (* For topmain.ml. Maybe shouldn't be there *)
   val load_file : formatter -> string -> bool
 diff -C 3 -r ocaml-3.12.1/toplevel/toploop.ml ocaml-3.12.1-orig/toplevel/toploop.ml
-*** ocaml-3.12.1/toplevel/toploop.ml	2012-01-03 15:09:33.483538999 +0100
+*** ocaml-3.12.1/toplevel/toploop.ml	2012-01-03 16:13:52.713539000 +0100
 --- ocaml-3.12.1-orig/toplevel/toploop.ml	2009-01-25 23:46:15.000000000 +0100
 ***************
 *** 95,102 ****
@@ -301,12 +301,12 @@ diff -C 3 -r ocaml-3.12.1/toplevel/toploop.ml ocaml-3.12.1-orig/toplevel/toploop
   
 --- 95,100 ----
 ***************
-*** 437,510 ****
+*** 437,563 ****
     toplevel_env := Compile.initial_env();
     Sys.interactive := false;
     use_silently ppf name
 - 
-- let rec find_type env ty =
+- let rec find_type2 env ty =
 -   match (Ctype.repr ty).desc with
 -     | Tconstr(path, ty_list, _) ->
 -       begin
@@ -319,22 +319,47 @@ diff -C 3 -r ocaml-3.12.1/toplevel/toploop.ml ocaml-3.12.1-orig/toplevel/toploop
 -               | _ -> raise Not_found
 -           end
 -         | {type_kind = Type_abstract; type_manifest = Some body} ->
--           find_type env
+-           find_type2 env
 -             ( Ctype.apply env decl.type_params body ty_list )
 -         | _ -> raise Not_found
 -       end
 -     | _ -> raise Not_found
 - 
-- let find_type env ty =
+- let find_type2 env ty =
 -   try
--     find_type env ty
+-     find_type2 env ty
 -   with _ ->
 -     (Genprintval.abstract_type, Genprintval.abstract_type)
+- 
+- let rec find_type1 env ty =
+-   match (Ctype.repr ty).desc with
+-     | Tconstr(path, ty_list, _) ->
+-       begin
+-       let decl = Env.find_type path env in
+-       match decl with
+-         | {type_kind = Type_abstract; type_manifest = None} ->
+-           begin
+-             match ty_list with
+-                 [ty1] -> ty1
+-               | _ -> raise Not_found
+-           end
+-         | {type_kind = Type_abstract; type_manifest = Some body} ->
+-           find_type1 env
+-             ( Ctype.apply env decl.type_params body ty_list )
+-         | _ -> raise Not_found
+-       end
+-     | _ -> raise Not_found
+- 
+- let find_type1 env ty =
+-   try
+-     find_type1 env ty
+-   with _ ->
+-     Genprintval.abstract_type
 - 
 - let stringers = [
 -   Predef.type_int, (fun i -> string_of_int (Obj.magic i));
 -   Predef.type_float, (fun i -> string_of_float (Obj.magic i));
--   Predef.type_string, (fun i -> Obj.magic i);
+-   Predef.type_string, (fun i -> Printf.sprintf "\"%s\"" (String.escaped (Obj.magic i)));
 -   Predef.type_char, (fun i -> String.make 1 (Obj.magic i));
 -   Predef.type_int32, (fun i -> Int32.to_string (Obj.magic i));
 -   Predef.type_int64, (fun i -> Int64.to_string (Obj.magic i));
@@ -347,7 +372,7 @@ diff -C 3 -r ocaml-3.12.1/toplevel/toploop.ml ocaml-3.12.1-orig/toplevel/toploop
 -       if Ctype.moregeneral env false ty' ty then stringer else find_stringer env ty tail
 - 
 - let print_hashtbl env ty t =
--   let (t1, t2) = find_type env ty in
+-   let (t1, t2) = find_type2 env ty in
 -   let stringer =
 -     try
 -       find_stringer env t1 stringers
@@ -359,9 +384,35 @@ diff -C 3 -r ocaml-3.12.1/toplevel/toploop.ml ocaml-3.12.1-orig/toplevel/toploop
 -   ) t;
 -   Oval_record (List.rev !list)
 - 
+- let print_queue env ty t =
+-   let t1 = find_type1 env ty in
+-   let list = ref [] in
+-   Queue.iter (fun v ->
+-     list := (outval_of_value env (Obj.repr v) t1) :: !list
+-   ) t;
+-   Oval_list (List.rev !list)
+- 
+- let print_stack env ty t =
+-   let t1 = find_type1 env ty in
+-   let list = ref [] in
+-   Stack.iter (fun v ->
+-     list := (outval_of_value env (Obj.repr v) t1) :: !list
+-   ) t;
+-   Oval_list (List.rev !list)
+- 
+- let print_lazy env ty t =
+-   let t1 = find_type1 env ty in
+-   if Lazy.lazy_is_val t then
+-     let v = Lazy.force t in
+-     Oval_constr (Oide_ident "lazy", [outval_of_value env (Obj.repr v) t1])
+-   else
+-     Oval_stuff "<not evaluated>"
 - 
 - (*
 -  #install_printer Toploop.print_hashtbl;;
+-  #install_printer Toploop.print_queue;;
+-  #install_printer Toploop.print_stack;;
+-  #install_printer Toploop.print_lazy;;
 - 
 -  let of_list list =
 -   let t = Hashtbl.create 13 in
@@ -372,13 +423,15 @@ diff -C 3 -r ocaml-3.12.1/toplevel/toploop.ml ocaml-3.12.1-orig/toplevel/toploop
 - of_list [ "a", [1]; "b", [1;2] ];;
 - of_list [ (1,1) , [1] ];;
 - 
-- 
-- 
+- let x = lazy (4 * 4);;
+- x;;
+- Lazy.force x;;
+- x;;
 - 
 - *)
 --- 435,437 ----
 diff -C 3 -r ocaml-3.12.1/toplevel/toploop.mli ocaml-3.12.1-orig/toplevel/toploop.mli
-*** ocaml-3.12.1/toplevel/toploop.mli	2012-01-03 14:36:10.343539000 +0100
+*** ocaml-3.12.1/toplevel/toploop.mli	2012-01-03 16:02:46.373538999 +0100
 --- ocaml-3.12.1-orig/toplevel/toploop.mli	2007-12-04 14:38:58.000000000 +0100
 ***************
 *** 72,81 ****
@@ -399,8 +452,8 @@ diff -C 3 -r ocaml-3.12.1/toplevel/toploop.mli ocaml-3.12.1-orig/toplevel/toploo
   
   val may_trace : bool ref
 - 
-- val print_hashtbl :
--   Env.t ->
--   Types.type_expr ->
--   ('a, 'b) Hashtbl.t -> Outcometree.out_value
+- val print_hashtbl : Env.t -> Types.type_expr -> ('a, 'b) Hashtbl.t -> Outcometree.out_value
+- val print_stack : Env.t -> Types.type_expr -> 'a Stack.t -> Outcometree.out_value
+- val print_queue : Env.t -> Types.type_expr -> 'a Queue.t -> Outcometree.out_value
+- val print_lazy : Env.t -> Types.type_expr -> 'a Lazy.t -> Outcometree.out_value
 --- 110,112 ----
