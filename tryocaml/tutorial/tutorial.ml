@@ -41,7 +41,7 @@ let user_navigation = ref false
 
 let update_lesson () =
   match lessons_table.(!this_lesson) with
-      None -> assert false
+      None -> ()
     | Some (lesson_title, lesson_html, lesson_langs, steps) ->
       begin try
               let (title, html) = List.assoc !current_lang lesson_langs in
@@ -55,6 +55,7 @@ let update_lesson () =
       ()
 
 let update_step () =
+  if !this_lesson_steps <> [||] then 
   match (!this_lesson_steps).(!this_step) with
       None -> assert false
     | Some (step_title, step_html, step_langs, step_check) ->
