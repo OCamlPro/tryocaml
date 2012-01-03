@@ -1,1 +1,4 @@
+2012-01-03: Fabrice
+ * Added a generic printer for Hashtbl.t, based on a patch of ocaml-3.12.1
+
 2012-01-03: start of ChangeLog.txt
