@@ -73,7 +73,9 @@ let start ppf =
   Format.fprintf ppf "        Welcome to TryOCaml (v. %s)@.@." Sys.ocaml_version;
   Toploop.initialize_toplevel_env ();
   Toploop.input_name := "";
-  exec ppf "open Tutorial"
+  exec ppf "open Tutorial";
+  exec ppf "#install_printer Toploop.print_hashtbl";
+  ()
 
 let at_bol = ref true
 let consume_nl = ref false

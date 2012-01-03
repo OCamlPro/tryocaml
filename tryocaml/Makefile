@@ -1,9 +1,12 @@
+# remove this variable to use the default ocaml toplevel
+TOPLEVELLIB= -I toplevellib
+
 COMPILER=js_of_ocaml
 LIBNAME=js_of_ocaml
 NAME=toplevel
 OBJS=tutorial/lessons.cmo tutorial/tutorial.cmo toplevel.cmo
 JS=js_of_ocaml-patched
-INCLUDES= -I $(JS)/lib -I $(JS)/compiler -I tutorial
+INCLUDES= -I $(JS)/lib -I $(JS)/compiler -I tutorial $(TOPLEVELLIB)
 
 all: compiler tuto $(NAME).js
 
