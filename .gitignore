@@ -1,4 +1,4 @@
-*.cm?
+*.cm*
 *.o
 *.opt
 *.annot
