@@ -199,8 +199,6 @@ let text_of_html html =
   Buffer.contents b
 
 
-
-
 let update_debug_message =
   let b = Buffer.create 100 in
   Tutorial.debug_fun := (fun s -> Buffer.add_string b s; Buffer.add_string  b "<br/>");
@@ -330,8 +328,6 @@ let run _ =
   in
   let buffer = Buffer.create 1000 in
 
-  Tutorial.clear_fun := (fun _ -> output_area##innerHTML <- (Js.string ""));
-
   let ppf =
     let b = Buffer.create 80 in
     Format.make_formatter
@@ -387,35 +383,74 @@ let run _ =
     container##scrollTop <- container##scrollHeight;
   in
 
+  let shift_pressed = ref false in
+  let tbox_init_size = textbox##style##height in
   Html.document##onkeydown <-
     (Html.handler
        (fun e -> match e##keyCode with
-         | 13 -> (* ENTER key *)
-           execute ();
+         | 13 -> (* ENTER key *)     
+           if !shift_pressed then
+             let rows_height = textbox##scrollHeight / textbox##rows in
+             let h = string_of_int (rows_height * (textbox##rows + 1)) ^ "px" in
+             textbox##style##height <- Js.string h;
+             Js._true
+           else begin      
+             execute ();
+             textbox##style##height <- tbox_init_size;
+             Js._false
+           end
+         | 16 -> (* SHIFT key *)
+           shift_pressed := true;
            Js._false
 	 | 38 -> (* UP ARROW key *) begin
 	   match !history_bckwrd with
-	       [] -> Js._true
-	     | s :: l ->
+	     | s :: l when not !shift_pressed ->
 	       let str = Js.to_string textbox##value in
 	       history_frwrd := Js.string str :: !history_frwrd;
 	       textbox##value <- s;
 	       history_bckwrd := l;
 	       Js._false
+	     | _ -> Js._true
 	 end
 	 | 40 -> (* DOWN ARROW key *) begin
 	   match !history_frwrd with
-	       [] -> Js._true
-	     | s :: l ->
+	     | s :: l when not !shift_pressed ->
 	       let str = Js.to_string textbox##value in
 	       history_bckwrd := Js.string str :: !history_bckwrd;
 	       textbox##value <- s;
 	       history_frwrd := l;
 	       Js._false
+	     | _ -> Js._true
 	 end
 	 | _ -> Js._true));
-  let b = button "Send" (fun () -> execute ()) in
-  Dom.appendChild top b;
+  Tutorial.clear_fun := (fun _ -> 
+    output_area##innerHTML <- (Js.string "");
+    textbox##focus();
+    textbox##select()
+  );
+  Tutorial.reset_fun := (fun _ -> 
+    output_area##innerHTML <- (Js.string "");
+    Toploop.initialize_toplevel_env ();
+    Toploop.input_name := "";
+    exec ppf "open Tutorial";
+    textbox##focus();
+    textbox##select()
+  );
+  Html.document##onkeyup <- 
+    (Html.handler
+       (fun e -> match e##keyCode with 
+         | 16 -> shift_pressed := false; Js._false | _ -> Js._true));
+
+  let send_button = button "Send" (fun () -> execute ()) in
+  let clear_button = button "Clear" (fun () -> Tutorial.clear ()) in
+  let reset_button = button "Reset" (fun () -> Tutorial.reset ()) in
+  let buttons =
+      Js.Opt.get (doc##getElementById (Js.string "buttons"))
+        (fun () -> assert false)
+  in 
+  Dom.appendChild buttons send_button;
+  Dom.appendChild buttons clear_button;
+  Dom.appendChild buttons reset_button;
   output_area##scrollTop <- output_area##scrollHeight;
   make_code_clickable ();
   (* Dom.appendChild output_area doc; *)
