@@ -134,6 +134,9 @@ let debug d =
 let clear_fun = ref (fun _ -> ())
 let clear () = !clear_fun ()
 
+let reset_fun = ref (fun _ -> ())
+let reset () = !reset_fun ()
+
 let lessons () =
   Printf.printf "All lessons:\n%!";
   let left = ref true in

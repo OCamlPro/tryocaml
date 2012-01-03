@@ -37,7 +37,6 @@ body {
 
 #toplevel-container {
    padding: 10px;
-   padding-bottom: 25px;
    height: 500px;
    overflow: auto;
    overflow-x: hidden;
@@ -136,5 +135,13 @@ dl dt {
 input { 
     background-color: #101010;
     border: 1;
-    border-color: gray;
+    border-color: white;
+    margin-top: 10px;
+    margin-right: 10px;
+    padding: 7px;
+    color: white;
  }
+
+#buttons { 
+    text-align: center;
+}

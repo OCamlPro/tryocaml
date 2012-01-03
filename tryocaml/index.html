@@ -48,20 +48,21 @@
             <div id="sharp">#</div>
             <div id="toplevel"></div>
           </div>
+          <div id="buttons"></div>
           <div id="lesson-debug"></div>
 
           <table class="zebra-striped">
             <thead><tr><th>Commands</th><th>Effects</th></tr></thead>
             <tr><td>Enter / Return</td> <td>Submit code</td></tr>
             <tr><td>Up / Down</td><td>Cycle through history</td></tr>
+            <tr><td>Shift + Enter</td><td>Multiline edition</td></tr>
             <tr><td><code>lesson 1</code></td> <td>Move to lesson 1</td></tr>
             <tr><td><code>step 1</code></td> <td>Move to step 1 of the current lesson</td></tr>
             <tr><td><code>lessons ()</code></td> <td>See available lessons</td></tr>
             <tr><td><code>steps ()</code></td> <td>See available steps in the current lesson</td></tr>
             <tr><td><code>next ()</code></td> <td>Move to the next step</td></tr>
-            <tr><td><code>back ()</code></td> <td>Move to the previous step</td></tr>
-            <tr><td><code>clear ()</code></td> <td>Clear the editor view</td></tr>
-            <tr><td><code>multiline true</code></td> <td>Use ;; as end of input instead of newline</td></tr>
+            <tr><td><code>back ()</code></td> <td>Move to the previous step</td></tr> 
+            <tr><td><code>multiline true</code></td> <td>Use ;; as end of input (deprecated, use shift+enter)</td></tr>
           </table>
         </div>
 
