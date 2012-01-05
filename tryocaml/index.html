@@ -40,6 +40,36 @@
             <em>(click on the code to insert)</em>
           </div>
           <div id="menu-lessons"></div>
+
+<script src="http://widgets.twimg.com/j/2/widget.js"></script>
+<script>
+new TWTR.Widget({
+  version: 2,
+  type: 'profile',
+  rpp: 4,
+  interval: 30000,
+  width: 'auto',
+  height: 300,
+  theme: {
+    shell: {
+      background: '#ffffff',
+      color: '#000000'
+    },
+    tweets: {
+      background: '#ebe6eb',
+      color: '#15156b',
+      links: '#0a0f07'
+    }
+  },
+  features: {
+    scrollbar: true,
+    loop: false,
+    live: false,
+    behavior: 'default'
+  }
+}).render().setUser('tryocaml').start();
+</script>
+
         </div>
 
         <div class="span9 ocaml">
@@ -61,7 +91,7 @@
             <tr><td><code>lessons ()</code></td> <td>See available lessons</td></tr>
             <tr><td><code>steps ()</code></td> <td>See available steps in the current lesson</td></tr>
             <tr><td><code>next ()</code></td> <td>Move to the next step</td></tr>
-            <tr><td><code>back ()</code></td> <td>Move to the previous step</td></tr> 
+            <tr><td><code>back ()</code></td> <td>Move to the previous step</td></tr>
             <tr><td><code>multiline true</code></td> <td>Use ;; as end of input (deprecated, use shift+enter)</td></tr>
           </table>
         </div>
