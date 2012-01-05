@@ -138,6 +138,9 @@ let clear () = !clear_fun ()
 let reset_fun = ref (fun _ -> ())
 let reset () = !reset_fun ()
 
+let set_cols_fun = ref (fun (_ : int) -> ())
+let set_cols i = !set_cols_fun i
+
 let lessons () =
   Printf.printf "All lessons:\n%!";
   let left = ref true in
