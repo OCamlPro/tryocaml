@@ -11,7 +11,6 @@ body {
 }
 
 #sharp {
-/*    content: "#"; */
     text-width: 10px;
     margin-left: 8px;
     float: left;
@@ -19,9 +18,7 @@ body {
 }
 
 #toplevel textarea {
-    width: 460px;
-    height: 36px;
-    border: 0;
+    border: 1;
     background: transparent;
     padding-top: 0;
     padding-bottom: 0;
@@ -38,6 +35,7 @@ body {
 #toplevel-container {
    padding: 10px;
    height: 500px;
+   width: 600px;
    overflow: auto;
    overflow-x: hidden;
    color: #CCC;
@@ -142,6 +140,6 @@ input {
     color: white;
  }
 
-#buttons { 
+#buttons {
     text-align: center;
 }

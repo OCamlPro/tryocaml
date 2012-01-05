@@ -302,7 +302,6 @@ let loop s ppf buffer =
           update_prompt (Printf.sprintf "[%s]> " s)
   end
 
-
 let _ =
   Tutorial.message_fun := (fun s ->
     if  !Tutorial.this_lesson <> 0 then
@@ -342,7 +341,7 @@ let run _ =
 
   let textbox = Html.createTextarea doc in
   textbox##value <- Js.string "";
-  textbox##id <- Js.string "console";
+  textbox##id <- Js.string "console"; 
   Dom.appendChild top textbox;
   textbox##focus();
   textbox##select();
@@ -383,15 +382,20 @@ let run _ =
     container##scrollTop <- container##scrollHeight;
   in
 
-  let shift_pressed = ref false in
   let tbox_init_size = textbox##style##height in
   Html.document##onkeydown <-
     (Html.handler
        (fun e -> match e##keyCode with
          | 13 -> (* ENTER key *)     
-           if !shift_pressed then
-             let rows_height = textbox##scrollHeight / textbox##rows in
-             let h = string_of_int (rows_height * (textbox##rows + 1)) ^ "px" in
+           let keyEv = match Js.Opt.to_option (Html.CoerceTo.keyboardEvent e) with
+             | None   -> assert false
+             | Some t -> t in 
+           (* Special handling of ctrl key *)
+           if keyEv##ctrlKey = Js._true then    
+             textbox##value <- Js.string ((Js.to_string textbox##value) ^ "\n");
+           if keyEv##ctrlKey = Js._true || keyEv##shiftKey = Js._true then
+             let rows_height = textbox##scrollHeight / (textbox##rows + 1) in
+             let h = string_of_int (rows_height * (textbox##rows + 1) + 20) ^ "px" in
              textbox##style##height <- Js.string h;
              Js._true
            else begin      
@@ -399,12 +403,9 @@ let run _ =
              textbox##style##height <- tbox_init_size;
              Js._false
            end
-         | 16 -> (* SHIFT key *)
-           shift_pressed := true;
-           Js._false
 	 | 38 -> (* UP ARROW key *) begin
 	   match !history_bckwrd with
-	     | s :: l when not !shift_pressed ->
+	     | s :: l ->
 	       let str = Js.to_string textbox##value in
 	       history_frwrd := Js.string str :: !history_frwrd;
 	       textbox##value <- s;
@@ -414,7 +415,7 @@ let run _ =
 	 end
 	 | 40 -> (* DOWN ARROW key *) begin
 	   match !history_frwrd with
-	     | s :: l when not !shift_pressed ->
+	     | s :: l ->
 	       let str = Js.to_string textbox##value in
 	       history_bckwrd := Js.string str :: !history_bckwrd;
 	       textbox##value <- s;
@@ -436,11 +437,9 @@ let run _ =
     textbox##focus();
     textbox##select()
   );
-  Html.document##onkeyup <- 
-    (Html.handler
-       (fun e -> match e##keyCode with 
-         | 16 -> shift_pressed := false; Js._false | _ -> Js._true));
-
+  Tutorial.set_cols_fun := (fun i -> 
+    textbox##style##width <- Js.string ((string_of_int (i * 7)) ^ "px"));
+  
   let send_button = button "Send" (fun () -> execute ()) in
   let clear_button = button "Clear" (fun () -> Tutorial.clear ()) in
   let reset_button = button "Reset" (fun () -> Tutorial.reset ()) in
@@ -448,6 +447,7 @@ let run _ =
       Js.Opt.get (doc##getElementById (Js.string "buttons"))
         (fun () -> assert false)
   in 
+  Tutorial.set_cols 80;
   Dom.appendChild buttons send_button;
   Dom.appendChild buttons clear_button;
   Dom.appendChild buttons reset_button;
