@@ -55,6 +55,7 @@ let button_type = Js.string "button"
 let button txt action =
   let b = Dom_html.createInput ~_type:button_type doc in
   b##value <- Js.string txt;
+  b##className <- Js.string "btn";
   b##onclick <- Dom_html.handler (fun _ -> action (); Js._true);
   b
 
