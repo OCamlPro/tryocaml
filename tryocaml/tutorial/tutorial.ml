@@ -55,7 +55,7 @@ let update_lesson () =
       ()
 
 let update_step () =
-  if !this_lesson_steps <> [||] then 
+  if !this_lesson_steps <> [||] then
   match (!this_lesson_steps).(!this_step) with
       None -> assert false
     | Some (step_title, step_html, step_langs, step_check) ->
@@ -174,3 +174,15 @@ let set_lang lang =
   update_step ()
 
 let lang () = !current_lang
+
+
+external int_of_int : int -> int = "%identity"
+external nativeint_of_nativeint : nativeint -> nativeint = "%identity"
+external float_of_float : float -> float = "%identity"
+external int32_of_int32 : int32 -> int32 = "%identity"
+external int64_of_int64 : int64 -> int64 = "%identity"
+
+module Tutorial = struct end
+
+let init () =
+  N.init ()

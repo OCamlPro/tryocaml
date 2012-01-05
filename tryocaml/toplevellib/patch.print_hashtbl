@@ -1,6 +1,6 @@
 diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.mly
 *** ocaml-3.12.1-orig/parsing/parser.mly	2011-04-29 06:56:21.000000000 +0200
---- ocaml-3.12.1/parsing/parser.mly	2012-01-03 23:24:49.333538980 +0100
+--- ocaml-3.12.1/parsing/parser.mly	2012-01-05 15:38:50.612043006 +0100
 ***************
 *** 83,100 ****
     then String.sub f 1 (String.length f - 1)
@@ -21,23 +21,29 @@ diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.ml
     | _ ->
         mkexp(Pexp_apply(mkoperator ("~" ^ name) 1, ["", arg]))
   
---- 83,116 ----
+--- 83,122 ----
     then String.sub f 1 (String.length f - 1)
     else "-" ^ f
   
 + let pexp_constant cst =
 +   if !Clflags.wrap_constants then
-+     let name = match cst with
-+         Const_string _ -> "string"
-+       | Const_nativeint _ -> "nativeint"
-+       | Const_int64 _ -> "int64"
-+       | Const_int32 _ -> "int32"
-+       | Const_float _ -> "float"
-+       | Const_char _ -> "char"
-+       | Const_int _ -> "int"
-+     in
-+     Pexp_apply(ghexp(Pexp_ident (Lident (Printf.sprintf "%s_of_%s" name name))),
-+                          ["", mkexp (Pexp_constant cst)])
++     match cst with
++         Const_string _
++       | Const_char _ ->
++         Pexp_constant cst
++       | _ ->
++         let name =
++           match cst with
++               Const_string _
++             | Const_char _ -> assert false
++             | Const_nativeint _ -> "nativeint"
++             | Const_int64 _ -> "int64"
++             | Const_int32 _ -> "int32"
++             | Const_float _ -> "float"
++             | Const_int _ -> "int"
++         in
++         Pexp_apply(ghexp(Pexp_ident (Lident (Printf.sprintf "%s_of_%s" name name))),
++                    ["", mkexp (Pexp_constant cst)])
 +   else
 +     Pexp_constant cst
 + 
@@ -65,7 +71,7 @@ diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.ml
     | constr_longident %prec prec_constant_constructor
         { mkexp(Pexp_construct($1, None, false)) }
     | name_tag %prec prec_constant_constructor
---- 972,978 ----
+--- 978,984 ----
       val_longident
         { mkexp(Pexp_ident $1) }
     | constant
@@ -264,7 +270,7 @@ diff -C 3 -r ocaml-3.12.1-orig/toplevel/opttopdirs.ml ocaml-3.12.1/toplevel/optt
   let dir_remove_printer ppf lid =
 diff -C 3 -r ocaml-3.12.1-orig/toplevel/topdirs.ml ocaml-3.12.1/toplevel/topdirs.ml
 *** ocaml-3.12.1-orig/toplevel/topdirs.ml	2010-01-22 13:48:24.000000000 +0100
---- ocaml-3.12.1/toplevel/topdirs.ml	2012-01-03 14:24:11.473539015 +0100
+--- ocaml-3.12.1/toplevel/topdirs.ml	2012-01-05 15:45:54.462043007 +0100
 ***************
 *** 135,142 ****
   
@@ -332,7 +338,7 @@ diff -C 3 -r ocaml-3.12.1-orig/toplevel/topdirs.ml ocaml-3.12.1/toplevel/topdirs
 !       | 0 -> install_printer path ty_arg
 !           (fun formatter repr -> Obj.obj v (Obj.obj repr))
 !       | 1 -> install_printer path ty_arg
-!           (fun formatter repr -> Obj.obj v (Obj.obj repr))
+!           (fun formatter repr -> Obj.obj v formatter (Obj.obj repr))
 !       | 2 -> install_printer2 path ty_arg (Obj.obj v)
 !       | _ -> assert false
     with Exit -> ()

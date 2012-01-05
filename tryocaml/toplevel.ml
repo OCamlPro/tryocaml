@@ -73,11 +73,13 @@ let start ppf =
   Format.fprintf ppf "        Welcome to TryOCaml (v. %s)@.@." Sys.ocaml_version;
   Toploop.initialize_toplevel_env ();
   Toploop.input_name := "";
+  exec ppf "Toploop.set_wrap true";
   exec ppf "open Tutorial";
   exec ppf "#install_printer Toploop.print_hashtbl";
   exec ppf "#install_printer Toploop.print_queue";
   exec ppf "#install_printer Toploop.print_stack";
   exec ppf "#install_printer Toploop.print_lazy";
+  exec ppf "#install_printer N.print";
   ()
 
 let at_bol = ref true
@@ -460,4 +462,4 @@ let run _ =
   start ppf;
   Js._false
 
-let _ = Html.window##onload <- Html.handler run
+let _ = Html.window##onload <- Html.handler run; Tutorial.init ()

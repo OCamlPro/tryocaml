@@ -3,7 +3,7 @@ all: byte
 
 OCAMLC = ocamlc
 OCAMLDEP = ocamldep
-SOURCES= lessons.mli lessons.ml tutorial.mli tutorial.ml
+SOURCES= lessons.ml n.ml tutorial.ml
 
 .SUFFIXES: .ml .mli .cmo .cmi .cmx
 
@@ -13,9 +13,12 @@ lessons.ml: make_lessons.ml ../../lessons/goodies.ml
 	ocamlc -o make_lessons unix.cma make_lessons.ml
 	./make_lessons > lessons.ml
 
-OBJS= $(SOURCES:.mli=.cmi) $(SOURCES:.ml=.cmo)
+CMOS= $(SOURCES:.ml=.cmo)
 
-byte: $(OBJS)
+byte: tutorial.cma
+
+tutorial.cma: $(CMOS)
+	$(OCAMLC) -a -o tutorial.cma $(CMOS)
 
 .ml.cmo:
 	$(OCAMLC) -c $<
@@ -28,3 +31,5 @@ clean:
 
 depend: $(SOURCES)
 	$(OCAMLDEP) $(SOURCES) > .depend
+
+-include .depend

@@ -4,7 +4,7 @@ INCLUDE_TOPLEVELLIB= -I toplevellib
 COMPILER=js_of_ocaml
 LIBNAME=js_of_ocaml
 NAME=toplevel
-OBJS=tutorial/lessons.cmo tutorial/tutorial.cmo toplevel.cmo
+OBJS=tutorial/tutorial.cma toplevel.cmo
 JS=js_of_ocaml-patched
 INCLUDES= -I $(JS)/lib -I $(JS)/compiler -I tutorial $(INCLUDE_TOPLEVELLIB)
 
@@ -65,6 +65,7 @@ STDLIB_MODULES=\
   string \
   stringLabels \
   weak \
+  n \
   tutorial
 
 PERVASIVES=$(STDLIB_MODULES) outcometree topdirs toploop
