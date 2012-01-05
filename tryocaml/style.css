@@ -18,7 +18,7 @@ body {
 }
 
 #toplevel textarea {
-    border: 1;
+    border: 0;
     background: transparent;
     padding-top: 0;
     padding-bottom: 0;
@@ -131,13 +131,9 @@ dl dt {
 }
 
 input { 
-    background-color: #101010;
-    border: 1;
-    border-color: white;
     margin-top: 10px;
     margin-right: 10px;
     padding: 7px;
-    color: white;
  }
 
 #buttons {
