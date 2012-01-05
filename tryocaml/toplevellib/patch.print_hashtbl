@@ -1,46 +1,140 @@
-diff -C 3 -r ocaml-3.12.1/toplevel/genprintval.ml ocaml-3.12.1-orig/toplevel/genprintval.ml
-*** ocaml-3.12.1/toplevel/genprintval.ml	2012-01-03 14:11:29.453539000 +0100
---- ocaml-3.12.1-orig/toplevel/genprintval.ml	2009-10-26 11:53:16.000000000 +0100
+diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.mly
+*** ocaml-3.12.1-orig/parsing/parser.mly	2011-04-29 06:56:21.000000000 +0200
+--- ocaml-3.12.1/parsing/parser.mly	2012-01-05 15:38:50.612043006 +0100
 ***************
-*** 45,53 ****
+*** 83,100 ****
+    then String.sub f 1 (String.length f - 1)
+    else "-" ^ f
+  
+  let mkuminus name arg =
+    match name, arg.pexp_desc with
+    | "-", Pexp_constant(Const_int n) ->
+!       mkexp(Pexp_constant(Const_int(-n)))
+    | "-", Pexp_constant(Const_int32 n) ->
+!       mkexp(Pexp_constant(Const_int32(Int32.neg n)))
+    | "-", Pexp_constant(Const_int64 n) ->
+!       mkexp(Pexp_constant(Const_int64(Int64.neg n)))
+    | "-", Pexp_constant(Const_nativeint n) ->
+!       mkexp(Pexp_constant(Const_nativeint(Nativeint.neg n)))
+    | ("-" | "-."), Pexp_constant(Const_float f) ->
+!       mkexp(Pexp_constant(Const_float(neg_float_string f)))
+    | _ ->
+        mkexp(Pexp_apply(mkoperator ("~" ^ name) 1, ["", arg]))
+  
+--- 83,122 ----
+    then String.sub f 1 (String.length f - 1)
+    else "-" ^ f
+  
++ let pexp_constant cst =
++   if !Clflags.wrap_constants then
++     match cst with
++         Const_string _
++       | Const_char _ ->
++         Pexp_constant cst
++       | _ ->
++         let name =
++           match cst with
++               Const_string _
++             | Const_char _ -> assert false
++             | Const_nativeint _ -> "nativeint"
++             | Const_int64 _ -> "int64"
++             | Const_int32 _ -> "int32"
++             | Const_float _ -> "float"
++             | Const_int _ -> "int"
++         in
++         Pexp_apply(ghexp(Pexp_ident (Lident (Printf.sprintf "%s_of_%s" name name))),
++                    ["", mkexp (Pexp_constant cst)])
++   else
++     Pexp_constant cst
++ 
+  let mkuminus name arg =
+    match name, arg.pexp_desc with
+    | "-", Pexp_constant(Const_int n) ->
+!       mkexp(pexp_constant(Const_int(-n)))
+    | "-", Pexp_constant(Const_int32 n) ->
+!       mkexp(pexp_constant(Const_int32(Int32.neg n)))
+    | "-", Pexp_constant(Const_int64 n) ->
+!       mkexp(pexp_constant(Const_int64(Int64.neg n)))
+    | "-", Pexp_constant(Const_nativeint n) ->
+!       mkexp(pexp_constant(Const_nativeint(Nativeint.neg n)))
+    | ("-" | "-."), Pexp_constant(Const_float f) ->
+!       mkexp(pexp_constant(Const_float(neg_float_string f)))
+    | _ ->
+        mkexp(Pexp_apply(mkoperator ("~" ^ name) 1, ["", arg]))
+  
+***************
+*** 956,962 ****
+      val_longident
+        { mkexp(Pexp_ident $1) }
+    | constant
+!       { mkexp(Pexp_constant $1) }
+    | constr_longident %prec prec_constant_constructor
+        { mkexp(Pexp_construct($1, None, false)) }
+    | name_tag %prec prec_constant_constructor
+--- 978,984 ----
+      val_longident
+        { mkexp(Pexp_ident $1) }
+    | constant
+!       { mkexp(pexp_constant $1) }
+    | constr_longident %prec prec_constant_constructor
+        { mkexp(Pexp_construct($1, None, false)) }
+    | name_tag %prec prec_constant_constructor
+diff -C 3 -r ocaml-3.12.1-orig/toplevel/genprintval.ml ocaml-3.12.1/toplevel/genprintval.ml
+*** ocaml-3.12.1-orig/toplevel/genprintval.ml	2009-10-26 11:53:16.000000000 +0100
+--- ocaml-3.12.1/toplevel/genprintval.ml	2012-01-03 14:11:29.453539000 +0100
+***************
+*** 45,50 ****
+--- 45,53 ----
       val install_printer :
             Path.t -> Types.type_expr -> (formatter -> t -> unit) -> unit
       val remove_printer : Path.t -> unit
--     val install_printer2 :
--           Path.t -> Types.type_expr -> (Env.t -> Types.type_expr -> t -> Outcometree.out_value) -> unit
--     val remove_printer2 : Path.t -> unit
++     val install_printer2 :
++           Path.t -> Types.type_expr -> (Env.t -> Types.type_expr -> t -> Outcometree.out_value) -> unit
++     val remove_printer2 : Path.t -> unit
       val outval_of_untyped_exception : t -> Outcometree.out_value
       val outval_of_value :
             int -> int ->
---- 45,50 ----
 ***************
-*** 55,66 ****
+*** 52,57 ****
+--- 55,66 ----
             Env.t -> t -> type_expr -> Outcometree.out_value
     end
   
-- 
--     (* An abstract type *)
-- 
-- let abstract_type =
--   Ctype.newty (Tconstr (Pident (Ident.create "abstract"), [], ref Mnil))
-- 
++ 
++     (* An abstract type *)
++ 
++ let abstract_type =
++   Ctype.newty (Tconstr (Pident (Ident.create "abstract"), [], ref Mnil))
++ 
   module Make(O : OBJ)(EVP : EVALPATH with type value = O.t) = struct
   
       type t = O.t
---- 52,57 ----
 ***************
-*** 170,198 ****
+*** 161,172 ****
+      and tree_of_label =
+        tree_of_qualified (fun lid env -> (Env.lookup_label lid env).lbl_res)
+  
+!     (* An abstract type *)
+  
+-     let abstract_type =
+-       Ctype.newty (Tconstr (Pident (Ident.create "abstract"), [], ref Mnil))
+  
+!     (* The main printing function *)
+  
+      let outval_of_value max_steps max_depth check_depth env obj ty =
+  
+--- 170,198 ----
       and tree_of_label =
         tree_of_qualified (fun lid env -> (Env.lookup_label lid env).lbl_res)
   
 !     (* The main printing function *)
-! 
-! 
-!     let printers2 = ref []
   
+  
+!     let printers2 = ref []
+! 
 !     let install_printer2 path ty fn =
 !       printers2 := (path, ty, fn) :: !printers2
-  
+! 
 !     let remove_printer2 path =
 !       let rec remove = function
 !       | [] -> raise Not_found
@@ -59,62 +153,58 @@ diff -C 3 -r ocaml-3.12.1/toplevel/genprintval.ml ocaml-3.12.1-orig/toplevel/gen
   
       let outval_of_value max_steps max_depth check_depth env obj ty =
   
---- 161,172 ----
-      and tree_of_label =
-        tree_of_qualified (fun lid env -> (Env.lookup_label lid env).lbl_res)
-  
-!     (* An abstract type *)
-  
-!     let abstract_type =
-!       Ctype.newty (Tconstr (Pident (Ident.create "abstract"), [], ref Mnil))
-  
-!     (* The main printing function *)
-  
-      let outval_of_value max_steps max_depth check_depth env obj ty =
-  
 ***************
-*** 205,213 ****
+*** 179,184 ****
+--- 205,213 ----
           try
             find_printer env ty obj
           with Not_found ->
--         try
--           find_printer2 env ty obj
--         with Not_found ->
++         try
++           find_printer2 env ty obj
++         with Not_found ->
             match (Ctype.repr ty).desc with
             | Tvar ->
                 Oval_stuff "<poly>"
---- 179,184 ----
-diff -C 3 -r ocaml-3.12.1/toplevel/genprintval.mli ocaml-3.12.1-orig/toplevel/genprintval.mli
-*** ocaml-3.12.1/toplevel/genprintval.mli	2012-01-03 14:11:41.053538998 +0100
---- ocaml-3.12.1-orig/toplevel/genprintval.mli	2002-04-18 09:27:47.000000000 +0200
+diff -C 3 -r ocaml-3.12.1-orig/toplevel/genprintval.mli ocaml-3.12.1/toplevel/genprintval.mli
+*** ocaml-3.12.1-orig/toplevel/genprintval.mli	2002-04-18 09:27:47.000000000 +0200
+--- ocaml-3.12.1/toplevel/genprintval.mli	2012-01-03 14:11:41.053538998 +0100
 ***************
-*** 17,24 ****
+*** 17,22 ****
+--- 17,24 ----
   open Types
   open Format
   
-- val abstract_type : Types.type_expr
-- 
++ val abstract_type : Types.type_expr
++ 
   module type OBJ =
     sig
       type t
---- 17,22 ----
 ***************
-*** 43,51 ****
+*** 41,46 ****
+--- 43,51 ----
       val install_printer :
             Path.t -> Types.type_expr -> (formatter -> t -> unit) -> unit
       val remove_printer : Path.t -> unit
--     val install_printer2 :
--           Path.t -> Types.type_expr -> (Env.t -> Types.type_expr -> t -> Outcometree.out_value) -> unit
--     val remove_printer2 : Path.t -> unit
++     val install_printer2 :
++           Path.t -> Types.type_expr -> (Env.t -> Types.type_expr -> t -> Outcometree.out_value) -> unit
++     val remove_printer2 : Path.t -> unit
       val outval_of_untyped_exception : t -> Outcometree.out_value
       val outval_of_value :
             int -> int ->
---- 41,46 ----
-diff -C 3 -r ocaml-3.12.1/toplevel/opttopdirs.ml ocaml-3.12.1-orig/toplevel/opttopdirs.ml
-*** ocaml-3.12.1/toplevel/opttopdirs.ml	2012-01-03 14:09:43.103539003 +0100
---- ocaml-3.12.1-orig/toplevel/opttopdirs.ml	2010-01-22 13:48:24.000000000 +0100
+diff -C 3 -r ocaml-3.12.1-orig/toplevel/opttopdirs.ml ocaml-3.12.1/toplevel/opttopdirs.ml
+*** ocaml-3.12.1-orig/toplevel/opttopdirs.ml	2010-01-22 13:48:24.000000000 +0100
+--- ocaml-3.12.1/toplevel/opttopdirs.ml	2012-01-03 14:09:43.103539003 +0100
 ***************
-*** 97,106 ****
+*** 97,104 ****
+  
+  (* Install, remove a printer *)
+  
+! type 'a printer_type_new = Format.formatter -> 'a -> unit
+! type 'a printer_type_old = 'a -> unit
+  
+  let match_printer_type ppf desc typename =
+    let (printer_type, _) =
+--- 97,106 ----
   
   (* Install, remove a printer *)
   
@@ -125,17 +215,18 @@ diff -C 3 -r ocaml-3.12.1/toplevel/opttopdirs.ml ocaml-3.12.1-orig/toplevel/optt
   
   let match_printer_type ppf desc typename =
     let (printer_type, _) =
---- 97,104 ----
-  
-  (* Install, remove a printer *)
-  
-! type 'a printer_type_new = Format.formatter -> 'a -> unit
-! type 'a printer_type_old = 'a -> unit
-  
-  let match_printer_type ppf desc typename =
-    let (printer_type, _) =
 ***************
-*** 124,135 ****
+*** 122,130 ****
+      let (path, desc) = Env.lookup_value lid !toplevel_env in
+      let (ty_arg, is_old_style) =
+        try
+!         (match_printer_type ppf desc "printer_type_new", false)
+        with Ctype.Unify _ ->
+!         (match_printer_type ppf desc "printer_type_old", true) in
+      (ty_arg, path, is_old_style)
+    with
+    | Not_found ->
+--- 124,135 ----
       let (path, desc) = Env.lookup_value lid !toplevel_env in
       let (ty_arg, is_old_style) =
         try
@@ -148,18 +239,21 @@ diff -C 3 -r ocaml-3.12.1/toplevel/opttopdirs.ml ocaml-3.12.1-orig/toplevel/optt
       (ty_arg, path, is_old_style)
     with
     | Not_found ->
---- 122,130 ----
-      let (path, desc) = Env.lookup_value lid !toplevel_env in
-      let (ty_arg, is_old_style) =
-        try
-!         (match_printer_type ppf desc "printer_type_new", false)
-        with Ctype.Unify _ ->
-!         (match_printer_type ppf desc "printer_type_old", true) in
-      (ty_arg, path, is_old_style)
-    with
-    | Not_found ->
 ***************
-*** 144,157 ****
+*** 139,150 ****
+    try
+      let (ty_arg, path, is_old_style) = find_printer_type ppf lid in
+      let v = eval_path path in
+!     let print_function =
+!       if is_old_style then
+!         (fun formatter repr -> Obj.obj v (Obj.obj repr))
+!       else
+!         (fun formatter repr -> Obj.obj v formatter (Obj.obj repr)) in
+!     install_printer path ty_arg print_function
+    with Exit -> ()
+  
+  let dir_remove_printer ppf lid =
+--- 144,157 ----
     try
       let (ty_arg, path, is_old_style) = find_printer_type ppf lid in
       let v = eval_path path in
@@ -174,24 +268,20 @@ diff -C 3 -r ocaml-3.12.1/toplevel/opttopdirs.ml ocaml-3.12.1-orig/toplevel/optt
     with Exit -> ()
   
   let dir_remove_printer ppf lid =
---- 139,150 ----
-    try
-      let (ty_arg, path, is_old_style) = find_printer_type ppf lid in
-      let v = eval_path path in
-!     let print_function =
-!       if is_old_style then
-!         (fun formatter repr -> Obj.obj v (Obj.obj repr))
-!       else
-!         (fun formatter repr -> Obj.obj v formatter (Obj.obj repr)) in
-!     install_printer path ty_arg print_function
-    with Exit -> ()
-  
-  let dir_remove_printer ppf lid =
-diff -C 3 -r ocaml-3.12.1/toplevel/topdirs.ml ocaml-3.12.1-orig/toplevel/topdirs.ml
-*** ocaml-3.12.1/toplevel/topdirs.ml	2012-01-03 14:24:11.473539015 +0100
---- ocaml-3.12.1-orig/toplevel/topdirs.ml	2010-01-22 13:48:24.000000000 +0100
+diff -C 3 -r ocaml-3.12.1-orig/toplevel/topdirs.ml ocaml-3.12.1/toplevel/topdirs.ml
+*** ocaml-3.12.1-orig/toplevel/topdirs.ml	2010-01-22 13:48:24.000000000 +0100
+--- ocaml-3.12.1/toplevel/topdirs.ml	2012-01-05 15:45:54.462043007 +0100
 ***************
-*** 135,144 ****
+*** 135,142 ****
+  
+  (* Install, remove a printer *)
+  
+! type 'a printer_type_new = Format.formatter -> 'a -> unit
+! type 'a printer_type_old = 'a -> unit
+  
+  let match_printer_type ppf desc typename =
+    let (printer_type, _) =
+--- 135,144 ----
   
   (* Install, remove a printer *)
   
@@ -202,17 +292,18 @@ diff -C 3 -r ocaml-3.12.1/toplevel/topdirs.ml ocaml-3.12.1-orig/toplevel/topdirs
   
   let match_printer_type ppf desc typename =
     let (printer_type, _) =
---- 135,142 ----
-  
-  (* Install, remove a printer *)
-  
-! type 'a printer_type_new = Format.formatter -> 'a -> unit
-! type 'a printer_type_old = 'a -> unit
-  
-  let match_printer_type ppf desc typename =
-    let (printer_type, _) =
 ***************
-*** 162,173 ****
+*** 160,168 ****
+      let (path, desc) = Env.lookup_value lid !toplevel_env in
+      let (ty_arg, is_old_style) =
+        try
+!         (match_printer_type ppf desc "printer_type_new", false)
+        with Ctype.Unify _ ->
+!         (match_printer_type ppf desc "printer_type_old", true) in
+      (ty_arg, path, is_old_style)
+    with
+    | Not_found ->
+--- 162,173 ----
       let (path, desc) = Env.lookup_value lid !toplevel_env in
       let (ty_arg, is_old_style) =
         try
@@ -225,32 +316,8 @@ diff -C 3 -r ocaml-3.12.1/toplevel/topdirs.ml ocaml-3.12.1-orig/toplevel/topdirs
       (ty_arg, path, is_old_style)
     with
     | Not_found ->
---- 160,168 ----
-      let (path, desc) = Env.lookup_value lid !toplevel_env in
-      let (ty_arg, is_old_style) =
-        try
-!         (match_printer_type ppf desc "printer_type_new", false)
-        with Ctype.Unify _ ->
-!         (match_printer_type ppf desc "printer_type_old", true) in
-      (ty_arg, path, is_old_style)
-    with
-    | Not_found ->
 ***************
-*** 182,194 ****
-    try
-      let (ty_arg, path, is_old_style) = find_printer_type ppf lid in
-      let v = eval_path path in
-!     match is_old_style with
-!       | 0 -> install_printer path ty_arg
-!           (fun formatter repr -> Obj.obj v (Obj.obj repr))
-!       | 1 -> install_printer path ty_arg
-!           (fun formatter repr -> Obj.obj v (Obj.obj repr))
-!       | 2 -> install_printer2 path ty_arg (Obj.obj v)
-!       | _ -> assert false
-    with Exit -> ()
-  
-  let dir_remove_printer ppf lid =
---- 177,188 ----
+*** 177,188 ****
     try
       let (ty_arg, path, is_old_style) = find_printer_type ppf lid in
       let v = eval_path path in
@@ -263,11 +330,34 @@ diff -C 3 -r ocaml-3.12.1/toplevel/topdirs.ml ocaml-3.12.1-orig/toplevel/topdirs
     with Exit -> ()
   
   let dir_remove_printer ppf lid =
-diff -C 3 -r ocaml-3.12.1/toplevel/topdirs.mli ocaml-3.12.1-orig/toplevel/topdirs.mli
-*** ocaml-3.12.1/toplevel/topdirs.mli	2012-01-03 14:15:48.883539002 +0100
---- ocaml-3.12.1-orig/toplevel/topdirs.mli	2002-04-18 09:27:47.000000000 +0200
+--- 182,194 ----
+    try
+      let (ty_arg, path, is_old_style) = find_printer_type ppf lid in
+      let v = eval_path path in
+!     match is_old_style with
+!       | 0 -> install_printer path ty_arg
+!           (fun formatter repr -> Obj.obj v (Obj.obj repr))
+!       | 1 -> install_printer path ty_arg
+!           (fun formatter repr -> Obj.obj v formatter (Obj.obj repr))
+!       | 2 -> install_printer2 path ty_arg (Obj.obj v)
+!       | _ -> assert false
+    with Exit -> ()
+  
+  let dir_remove_printer ppf lid =
+diff -C 3 -r ocaml-3.12.1-orig/toplevel/topdirs.mli ocaml-3.12.1/toplevel/topdirs.mli
+*** ocaml-3.12.1-orig/toplevel/topdirs.mli	2002-04-18 09:27:47.000000000 +0200
+--- ocaml-3.12.1/toplevel/topdirs.mli	2012-01-03 14:15:48.883539002 +0100
 ***************
-*** 27,35 ****
+*** 27,34 ****
+  val dir_untrace : formatter -> Longident.t -> unit
+  val dir_untrace_all : formatter -> unit -> unit
+  
+! type 'a printer_type_new = Format.formatter -> 'a -> unit
+! type 'a printer_type_old = 'a -> unit
+  
+  (* For topmain.ml. Maybe shouldn't be there *)
+  val load_file : formatter -> string -> bool
+--- 27,35 ----
   val dir_untrace : formatter -> Longident.t -> unit
   val dir_untrace_all : formatter -> unit -> unit
   
@@ -277,183 +367,200 @@ diff -C 3 -r ocaml-3.12.1/toplevel/topdirs.mli ocaml-3.12.1-orig/toplevel/topdir
   
   (* For topmain.ml. Maybe shouldn't be there *)
   val load_file : formatter -> string -> bool
---- 27,34 ----
-  val dir_untrace : formatter -> Longident.t -> unit
-  val dir_untrace_all : formatter -> unit -> unit
-  
-! type 'a printer_type_new = Format.formatter -> 'a -> unit
-! type 'a printer_type_old = 'a -> unit
-  
-  (* For topmain.ml. Maybe shouldn't be there *)
-  val load_file : formatter -> string -> bool
-diff -C 3 -r ocaml-3.12.1/toplevel/toploop.ml ocaml-3.12.1-orig/toplevel/toploop.ml
-*** ocaml-3.12.1/toplevel/toploop.ml	2012-01-03 16:13:52.713539000 +0100
---- ocaml-3.12.1-orig/toplevel/toploop.ml	2009-01-25 23:46:15.000000000 +0100
+diff -C 3 -r ocaml-3.12.1-orig/toplevel/toploop.ml ocaml-3.12.1/toplevel/toploop.ml
+*** ocaml-3.12.1-orig/toplevel/toploop.ml	2009-01-25 23:46:15.000000000 +0100
+--- ocaml-3.12.1/toplevel/toploop.ml	2012-01-03 23:28:43.033539001 +0100
 ***************
-*** 95,102 ****
+*** 95,100 ****
+--- 95,102 ----
   
   let install_printer = Printer.install_printer
   let remove_printer = Printer.remove_printer
-- let install_printer2 = Printer.install_printer2
-- let remove_printer2 = Printer.remove_printer2
++ let install_printer2 = Printer.install_printer2
++ let remove_printer2 = Printer.remove_printer2
   
   (* Hooks for parsing functions *)
   
---- 95,100 ----
 ***************
-*** 437,563 ****
+*** 435,437 ****
+--- 437,566 ----
     toplevel_env := Compile.initial_env();
     Sys.interactive := false;
     use_silently ppf name
-- 
-- let rec find_type2 env ty =
--   match (Ctype.repr ty).desc with
--     | Tconstr(path, ty_list, _) ->
--       begin
--       let decl = Env.find_type path env in
--       match decl with
--         | {type_kind = Type_abstract; type_manifest = None} ->
--           begin
--             match ty_list with
--                 [ty1; ty2] -> (ty1, ty2)
--               | _ -> raise Not_found
--           end
--         | {type_kind = Type_abstract; type_manifest = Some body} ->
--           find_type2 env
--             ( Ctype.apply env decl.type_params body ty_list )
--         | _ -> raise Not_found
--       end
--     | _ -> raise Not_found
-- 
-- let find_type2 env ty =
--   try
--     find_type2 env ty
--   with _ ->
--     (Genprintval.abstract_type, Genprintval.abstract_type)
-- 
-- let rec find_type1 env ty =
--   match (Ctype.repr ty).desc with
--     | Tconstr(path, ty_list, _) ->
--       begin
--       let decl = Env.find_type path env in
--       match decl with
--         | {type_kind = Type_abstract; type_manifest = None} ->
--           begin
--             match ty_list with
--                 [ty1] -> ty1
--               | _ -> raise Not_found
--           end
--         | {type_kind = Type_abstract; type_manifest = Some body} ->
--           find_type1 env
--             ( Ctype.apply env decl.type_params body ty_list )
--         | _ -> raise Not_found
--       end
--     | _ -> raise Not_found
-- 
-- let find_type1 env ty =
--   try
--     find_type1 env ty
--   with _ ->
--     Genprintval.abstract_type
-- 
-- let stringers = [
--   Predef.type_int, (fun i -> string_of_int (Obj.magic i));
--   Predef.type_float, (fun i -> string_of_float (Obj.magic i));
--   Predef.type_string, (fun i -> Printf.sprintf "\"%s\"" (String.escaped (Obj.magic i)));
--   Predef.type_char, (fun i -> String.make 1 (Obj.magic i));
--   Predef.type_int32, (fun i -> Int32.to_string (Obj.magic i));
--   Predef.type_int64, (fun i -> Int64.to_string (Obj.magic i));
-- ]
-- 
-- let rec find_stringer env ty list =
--   match list with
--       [] -> raise Not_found
--     | (ty', stringer) :: tail ->
--       if Ctype.moregeneral env false ty' ty then stringer else find_stringer env ty tail
-- 
-- let print_hashtbl env ty t =
--   let (t1, t2) = find_type2 env ty in
--   let stringer =
--     try
--       find_stringer env t1 stringers
--     with _ -> (fun _ -> "<too complex>")
--   in
--   let list = ref [] in
--   Hashtbl.iter (fun k v ->
--     list := (Oide_ident (stringer k), outval_of_value env (Obj.repr v) t2) :: !list
--   ) t;
--   Oval_record (List.rev !list)
-- 
-- let print_queue env ty t =
--   let t1 = find_type1 env ty in
--   let list = ref [] in
--   Queue.iter (fun v ->
--     list := (outval_of_value env (Obj.repr v) t1) :: !list
--   ) t;
--   Oval_list (List.rev !list)
-- 
-- let print_stack env ty t =
--   let t1 = find_type1 env ty in
--   let list = ref [] in
--   Stack.iter (fun v ->
--     list := (outval_of_value env (Obj.repr v) t1) :: !list
--   ) t;
--   Oval_list (List.rev !list)
-- 
-- let print_lazy env ty t =
--   let t1 = find_type1 env ty in
--   if Lazy.lazy_is_val t then
--     let v = Lazy.force t in
--     Oval_constr (Oide_ident "lazy", [outval_of_value env (Obj.repr v) t1])
--   else
--     Oval_stuff "<not evaluated>"
-- 
-- (*
--  #install_printer Toploop.print_hashtbl;;
--  #install_printer Toploop.print_queue;;
--  #install_printer Toploop.print_stack;;
--  #install_printer Toploop.print_lazy;;
-- 
--  let of_list list =
--   let t = Hashtbl.create 13 in
--   List.iter (fun (k,v) -> Hashtbl.add t k v) list;
--  t;;
-- 
-- of_list [1,1; 2,2 ];;
-- of_list [ "a", [1]; "b", [1;2] ];;
-- of_list [ (1,1) , [1] ];;
-- 
-- let x = lazy (4 * 4);;
-- x;;
-- Lazy.force x;;
-- x;;
-- 
-- *)
---- 435,437 ----
-diff -C 3 -r ocaml-3.12.1/toplevel/toploop.mli ocaml-3.12.1-orig/toplevel/toploop.mli
-*** ocaml-3.12.1/toplevel/toploop.mli	2012-01-03 16:02:46.373538999 +0100
---- ocaml-3.12.1-orig/toplevel/toploop.mli	2007-12-04 14:38:58.000000000 +0100
++ 
++ let rec find_type2 env ty =
++   match (Ctype.repr ty).desc with
++     | Tconstr(path, ty_list, _) ->
++       begin
++       let decl = Env.find_type path env in
++       match decl with
++         | {type_kind = Type_abstract; type_manifest = None} ->
++           begin
++             match ty_list with
++                 [ty1; ty2] -> (ty1, ty2)
++               | _ -> raise Not_found
++           end
++         | {type_kind = Type_abstract; type_manifest = Some body} ->
++           find_type2 env
++             ( Ctype.apply env decl.type_params body ty_list )
++         | _ -> raise Not_found
++       end
++     | _ -> raise Not_found
++ 
++ let find_type2 env ty =
++   try
++     find_type2 env ty
++   with _ ->
++     (Genprintval.abstract_type, Genprintval.abstract_type)
++ 
++ let rec find_type1 env ty =
++   match (Ctype.repr ty).desc with
++     | Tconstr(path, ty_list, _) ->
++       begin
++       let decl = Env.find_type path env in
++       match decl with
++         | {type_kind = Type_abstract; type_manifest = None} ->
++           begin
++             match ty_list with
++                 [ty1] -> ty1
++               | _ -> raise Not_found
++           end
++         | {type_kind = Type_abstract; type_manifest = Some body} ->
++           find_type1 env
++             ( Ctype.apply env decl.type_params body ty_list )
++         | _ -> raise Not_found
++       end
++     | _ -> raise Not_found
++ 
++ let find_type1 env ty =
++   try
++     find_type1 env ty
++   with _ ->
++     Genprintval.abstract_type
++ 
++ let stringers = [
++   Predef.type_int, (fun i -> string_of_int (Obj.magic i));
++   Predef.type_float, (fun i -> string_of_float (Obj.magic i));
++   Predef.type_string, (fun i -> Printf.sprintf "\"%s\"" (String.escaped (Obj.magic i)));
++   Predef.type_char, (fun i -> String.make 1 (Obj.magic i));
++   Predef.type_int32, (fun i -> Int32.to_string (Obj.magic i));
++   Predef.type_int64, (fun i -> Int64.to_string (Obj.magic i));
++ ]
++ 
++ let rec find_stringer env ty list =
++   match list with
++       [] -> raise Not_found
++     | (ty', stringer) :: tail ->
++       if Ctype.moregeneral env false ty' ty then stringer else find_stringer env ty tail
++ 
++ let print_hashtbl env ty t =
++   let (t1, t2) = find_type2 env ty in
++   let stringer =
++     try
++       find_stringer env t1 stringers
++     with _ -> (fun _ -> "<too complex>")
++   in
++   let list = ref [] in
++   Hashtbl.iter (fun k v ->
++     list := (Oide_ident (stringer k), outval_of_value env (Obj.repr v) t2) :: !list
++   ) t;
++   Oval_record (List.rev !list)
++ 
++ let print_queue env ty t =
++   let t1 = find_type1 env ty in
++   let list = ref [] in
++   Queue.iter (fun v ->
++     list := (outval_of_value env (Obj.repr v) t1) :: !list
++   ) t;
++   Oval_list (List.rev !list)
++ 
++ let print_stack env ty t =
++   let t1 = find_type1 env ty in
++   let list = ref [] in
++   Stack.iter (fun v ->
++     list := (outval_of_value env (Obj.repr v) t1) :: !list
++   ) t;
++   Oval_list (List.rev !list)
++ 
++ let print_lazy env ty t =
++   let t1 = find_type1 env ty in
++   if Lazy.lazy_is_val t then
++     let v = Lazy.force t in
++     Oval_constr (Oide_ident "lazy", [outval_of_value env (Obj.repr v) t1])
++   else
++     Oval_stuff "<not evaluated>"
++ 
++ (*
++  #install_printer Toploop.print_hashtbl;;
++  #install_printer Toploop.print_queue;;
++  #install_printer Toploop.print_stack;;
++  #install_printer Toploop.print_lazy;;
++ 
++  let of_list list =
++   let t = Hashtbl.create 13 in
++   List.iter (fun (k,v) -> Hashtbl.add t k v) list;
++  t;;
++ 
++ of_list [1,1; 2,2 ];;
++ of_list [ "a", [1]; "b", [1;2] ];;
++ of_list [ (1,1) , [1] ];;
++ 
++ let x = lazy (4 * 4);;
++ x;;
++ Lazy.force x;;
++ x;;
++ 
++ *)
++ 
++ let set_wrap x = Clflags.wrap_constants := x
++ 
+diff -C 3 -r ocaml-3.12.1-orig/toplevel/toploop.mli ocaml-3.12.1/toplevel/toploop.mli
+*** ocaml-3.12.1-orig/toplevel/toploop.mli	2007-12-04 14:38:58.000000000 +0100
+--- ocaml-3.12.1/toplevel/toploop.mli	2012-01-03 23:28:28.503538999 +0100
 ***************
-*** 72,81 ****
+*** 72,77 ****
+--- 72,81 ----
     Path.t -> Types.type_expr -> (formatter -> Obj.t -> unit) -> unit
   val remove_printer : Path.t -> unit
   
-- val outval_of_value : Env.t -> Obj.t -> Types.type_expr -> Outcometree.out_value
-- val install_printer2 : Path.t -> Types.type_expr -> (Env.t -> Types.type_expr -> Obj.t -> Outcometree.out_value) -> unit
-- val remove_printer2 : Path.t -> unit
-- 
++ val outval_of_value : Env.t -> Obj.t -> Types.type_expr -> Outcometree.out_value
++ val install_printer2 : Path.t -> Types.type_expr -> (Env.t -> Types.type_expr -> Obj.t -> Outcometree.out_value) -> unit
++ val remove_printer2 : Path.t -> unit
++ 
   val max_printer_depth: int ref
   val max_printer_steps: int ref
   
---- 72,77 ----
 ***************
-*** 114,121 ****
+*** 110,112 ****
+--- 114,123 ----
   (* Used by Trace module *)
   
   val may_trace : bool ref
-- 
-- val print_hashtbl : Env.t -> Types.type_expr -> ('a, 'b) Hashtbl.t -> Outcometree.out_value
-- val print_stack : Env.t -> Types.type_expr -> 'a Stack.t -> Outcometree.out_value
-- val print_queue : Env.t -> Types.type_expr -> 'a Queue.t -> Outcometree.out_value
-- val print_lazy : Env.t -> Types.type_expr -> 'a Lazy.t -> Outcometree.out_value
---- 110,112 ----
++ 
++ val print_hashtbl : Env.t -> Types.type_expr -> ('a, 'b) Hashtbl.t -> Outcometree.out_value
++ val print_stack : Env.t -> Types.type_expr -> 'a Stack.t -> Outcometree.out_value
++ val print_queue : Env.t -> Types.type_expr -> 'a Queue.t -> Outcometree.out_value
++ val print_lazy : Env.t -> Types.type_expr -> 'a Lazy.t -> Outcometree.out_value
++ 
++ val set_wrap : bool -> unit
+diff -C 3 -r ocaml-3.12.1-orig/utils/clflags.ml ocaml-3.12.1/utils/clflags.ml
+*** ocaml-3.12.1-orig/utils/clflags.ml	2009-12-09 10:17:12.000000000 +0100
+--- ocaml-3.12.1/utils/clflags.ml	2012-01-03 23:13:13.323538983 +0100
+***************
+*** 92,94 ****
+--- 92,96 ----
+  
+  let shared = ref false (* -shared *)
+  let dlcode = ref true (* not -nodynlink *)
++ 
++ let wrap_constants = ref false
+diff -C 3 -r ocaml-3.12.1-orig/utils/clflags.mli ocaml-3.12.1/utils/clflags.mli
+*** ocaml-3.12.1-orig/utils/clflags.mli	2009-12-09 10:17:12.000000000 +0100
+--- ocaml-3.12.1/utils/clflags.mli	2012-01-03 23:13:03.933539001 +0100
+***************
+*** 76,78 ****
+--- 76,79 ----
+  val std_include_dir : unit -> string list
+  val shared : bool ref
+  val dlcode : bool ref
++ val wrap_constants : bool ref
