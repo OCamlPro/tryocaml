@@ -74,8 +74,13 @@ let start ppf =
   Format.fprintf ppf "        Welcome to TryOCaml (v. %s)@.@." Sys.ocaml_version;
   Toploop.initialize_toplevel_env ();
   Toploop.input_name := "";
+  exec ppf "Toploop.set_wrap true";
   exec ppf "open Tutorial";
   exec ppf "#install_printer Toploop.print_hashtbl";
+  exec ppf "#install_printer Toploop.print_queue";
+  exec ppf "#install_printer Toploop.print_stack";
+  exec ppf "#install_printer Toploop.print_lazy";
+  exec ppf "#install_printer N.print";  
   ()
 
 let at_bol = ref true
@@ -316,7 +321,7 @@ let _ =
            "<div class=\"alert-message block-message success\">%s</div>" s)
     with _ -> ()
   )
-
+  
 let run _ =
   let top =
     Js.Opt.get (doc##getElementById (Js.string "toplevel"))
@@ -339,7 +344,6 @@ let run _ =
           (doc##createTextNode(Js.string (Buffer.contents b)));
         Buffer.clear b)
   in
-
   let textbox = Html.createTextarea doc in
   textbox##value <- Js.string "";
   textbox##id <- Js.string "console"; 
@@ -402,6 +406,8 @@ let run _ =
            else begin      
              execute ();
              textbox##style##height <- tbox_init_size;
+             textbox##value <- Js.string "";
+  (* Html.window##alert (output_area##innerHTML); *)
              Js._false
            end
 	 | 38 -> (* UP ARROW key *) begin
@@ -440,10 +446,27 @@ let run _ =
   );
   Tutorial.set_cols_fun := (fun i -> 
     textbox##style##width <- Js.string ((string_of_int (i * 7)) ^ "px"));
-  
+
   let send_button = button "Send" (fun () -> execute ()) in
   let clear_button = button "Clear" (fun () -> Tutorial.clear ()) in
   let reset_button = button "Reset" (fun () -> Tutorial.reset ()) in
+  let save_button =  button "Save" (fun () -> 
+    let content = Js.to_string output_area##innerHTML in
+    let l = Regexp.split (Regexp.regexp ("\n")) content in
+    let content = 
+      Js.string (
+        let l = List.filter (fun x -> 
+          try x.[0] = '#' with _ -> false) l in
+        let l = List.map  (fun x -> String.sub x 2 ((String.length x) - 2)) l in
+        String.concat "\n" l)
+    in
+    let uriContent =
+      Js.string ("data:application/octet-stream," ^
+                    (Js.to_string (Js.encodeURI content))) in
+    Html.window##open_(uriContent, Js.string "Try OCaml", Js.null);
+    Html.window##close ()
+  )
+  in
   let buttons =
       Js.Opt.get (doc##getElementById (Js.string "buttons"))
         (fun () -> assert false)
@@ -452,10 +475,11 @@ let run _ =
   Dom.appendChild buttons send_button;
   Dom.appendChild buttons clear_button;
   Dom.appendChild buttons reset_button;
+  Dom.appendChild buttons save_button;
   output_area##scrollTop <- output_area##scrollHeight;
   make_code_clickable ();
   (* Dom.appendChild output_area doc; *)
   start ppf;
   Js._false
 
-let _ = Html.window##onload <- Html.handler run
+let _ = Html.window##onload <- Html.handler run; Tutorial.init ()

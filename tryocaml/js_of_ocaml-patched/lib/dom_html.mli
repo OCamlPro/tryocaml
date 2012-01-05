@@ -905,6 +905,9 @@ class type window = object
   method onfocus : (window t, event t) event_listener prop
   method onresize : (window t, event t) event_listener prop
   method onpopstate : (window t, popStateEvent t) event_listener prop
+
+  method open_ : js_string t -> js_string t -> js_string t opt -> unit meth
+  method close : unit meth
 end
 
 val window : window t
