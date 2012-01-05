@@ -73,6 +73,7 @@ let start ppf =
   Format.fprintf ppf "        Welcome to TryOCaml (v. %s)@.@." Sys.ocaml_version;
   Toploop.initialize_toplevel_env ();
   Toploop.input_name := "";
+  exec ppf "Toploop.set_wrap true";
   exec ppf "open Tutorial";
   exec ppf "#install_printer Toploop.print_hashtbl";
   ()
@@ -388,13 +389,13 @@ let run _ =
   Html.document##onkeydown <-
     (Html.handler
        (fun e -> match e##keyCode with
-         | 13 -> (* ENTER key *)     
+         | 13 -> (* ENTER key *)
            if !shift_pressed then
              let rows_height = textbox##scrollHeight / textbox##rows in
              let h = string_of_int (rows_height * (textbox##rows + 1)) ^ "px" in
              textbox##style##height <- Js.string h;
              Js._true
-           else begin      
+           else begin
              execute ();
              textbox##style##height <- tbox_init_size;
              Js._false
@@ -423,12 +424,12 @@ let run _ =
 	     | _ -> Js._true
 	 end
 	 | _ -> Js._true));
-  Tutorial.clear_fun := (fun _ -> 
+  Tutorial.clear_fun := (fun _ ->
     output_area##innerHTML <- (Js.string "");
     textbox##focus();
     textbox##select()
   );
-  Tutorial.reset_fun := (fun _ -> 
+  Tutorial.reset_fun := (fun _ ->
     output_area##innerHTML <- (Js.string "");
     Toploop.initialize_toplevel_env ();
     Toploop.input_name := "";
@@ -436,9 +437,9 @@ let run _ =
     textbox##focus();
     textbox##select()
   );
-  Html.document##onkeyup <- 
+  Html.document##onkeyup <-
     (Html.handler
-       (fun e -> match e##keyCode with 
+       (fun e -> match e##keyCode with
          | 16 -> shift_pressed := false; Js._false | _ -> Js._true));
 
   let send_button = button "Send" (fun () -> execute ()) in
@@ -447,7 +448,7 @@ let run _ =
   let buttons =
       Js.Opt.get (doc##getElementById (Js.string "buttons"))
         (fun () -> assert false)
-  in 
+  in
   Dom.appendChild buttons send_button;
   Dom.appendChild buttons clear_button;
   Dom.appendChild buttons reset_button;
@@ -457,4 +458,4 @@ let run _ =
   start ppf;
   Js._false
 
-let _ = Html.window##onload <- Html.handler run
+let _ = Html.window##onload <- Html.handler run; Tutorial.init ()

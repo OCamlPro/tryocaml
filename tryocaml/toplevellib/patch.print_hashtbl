@@ -1,3 +1,78 @@
+diff -C 3 -r ocaml-3.12.1/parsing/parser.mly ocaml-3.12.1-orig/parsing/parser.mly
+*** ocaml-3.12.1/parsing/parser.mly	2012-01-03 23:24:49.333538980 +0100
+--- ocaml-3.12.1-orig/parsing/parser.mly	2011-04-29 06:56:21.000000000 +0200
+***************
+*** 83,116 ****
+    then String.sub f 1 (String.length f - 1)
+    else "-" ^ f
+  
+- let pexp_constant cst =
+-   if !Clflags.wrap_constants then
+-     let name = match cst with
+-         Const_string _ -> "string"
+-       | Const_nativeint _ -> "nativeint"
+-       | Const_int64 _ -> "int64"
+-       | Const_int32 _ -> "int32"
+-       | Const_float _ -> "float"
+-       | Const_char _ -> "char"
+-       | Const_int _ -> "int"
+-     in
+-     Pexp_apply(ghexp(Pexp_ident (Lident (Printf.sprintf "%s_of_%s" name name))),
+-                          ["", mkexp (Pexp_constant cst)])
+-   else
+-     Pexp_constant cst
+- 
+  let mkuminus name arg =
+    match name, arg.pexp_desc with
+    | "-", Pexp_constant(Const_int n) ->
+!       mkexp(pexp_constant(Const_int(-n)))
+    | "-", Pexp_constant(Const_int32 n) ->
+!       mkexp(pexp_constant(Const_int32(Int32.neg n)))
+    | "-", Pexp_constant(Const_int64 n) ->
+!       mkexp(pexp_constant(Const_int64(Int64.neg n)))
+    | "-", Pexp_constant(Const_nativeint n) ->
+!       mkexp(pexp_constant(Const_nativeint(Nativeint.neg n)))
+    | ("-" | "-."), Pexp_constant(Const_float f) ->
+!       mkexp(pexp_constant(Const_float(neg_float_string f)))
+    | _ ->
+        mkexp(Pexp_apply(mkoperator ("~" ^ name) 1, ["", arg]))
+  
+--- 83,100 ----
+    then String.sub f 1 (String.length f - 1)
+    else "-" ^ f
+  
+  let mkuminus name arg =
+    match name, arg.pexp_desc with
+    | "-", Pexp_constant(Const_int n) ->
+!       mkexp(Pexp_constant(Const_int(-n)))
+    | "-", Pexp_constant(Const_int32 n) ->
+!       mkexp(Pexp_constant(Const_int32(Int32.neg n)))
+    | "-", Pexp_constant(Const_int64 n) ->
+!       mkexp(Pexp_constant(Const_int64(Int64.neg n)))
+    | "-", Pexp_constant(Const_nativeint n) ->
+!       mkexp(Pexp_constant(Const_nativeint(Nativeint.neg n)))
+    | ("-" | "-."), Pexp_constant(Const_float f) ->
+!       mkexp(Pexp_constant(Const_float(neg_float_string f)))
+    | _ ->
+        mkexp(Pexp_apply(mkoperator ("~" ^ name) 1, ["", arg]))
+  
+***************
+*** 972,978 ****
+      val_longident
+        { mkexp(Pexp_ident $1) }
+    | constant
+!       { mkexp(pexp_constant $1) }
+    | constr_longident %prec prec_constant_constructor
+        { mkexp(Pexp_construct($1, None, false)) }
+    | name_tag %prec prec_constant_constructor
+--- 956,962 ----
+      val_longident
+        { mkexp(Pexp_ident $1) }
+    | constant
+!       { mkexp(Pexp_constant $1) }
+    | constr_longident %prec prec_constant_constructor
+        { mkexp(Pexp_construct($1, None, false)) }
+    | name_tag %prec prec_constant_constructor
 diff -C 3 -r ocaml-3.12.1/toplevel/genprintval.ml ocaml-3.12.1-orig/toplevel/genprintval.ml
 *** ocaml-3.12.1/toplevel/genprintval.ml	2012-01-03 14:11:29.453539000 +0100
 --- ocaml-3.12.1-orig/toplevel/genprintval.ml	2009-10-26 11:53:16.000000000 +0100
@@ -287,7 +362,7 @@ diff -C 3 -r ocaml-3.12.1/toplevel/topdirs.mli ocaml-3.12.1-orig/toplevel/topdir
   (* For topmain.ml. Maybe shouldn't be there *)
   val load_file : formatter -> string -> bool
 diff -C 3 -r ocaml-3.12.1/toplevel/toploop.ml ocaml-3.12.1-orig/toplevel/toploop.ml
-*** ocaml-3.12.1/toplevel/toploop.ml	2012-01-03 16:13:52.713539000 +0100
+*** ocaml-3.12.1/toplevel/toploop.ml	2012-01-03 23:28:43.033539001 +0100
 --- ocaml-3.12.1-orig/toplevel/toploop.ml	2009-01-25 23:46:15.000000000 +0100
 ***************
 *** 95,102 ****
@@ -301,7 +376,7 @@ diff -C 3 -r ocaml-3.12.1/toplevel/toploop.ml ocaml-3.12.1-orig/toplevel/toploop
   
 --- 95,100 ----
 ***************
-*** 437,563 ****
+*** 437,566 ****
     toplevel_env := Compile.initial_env();
     Sys.interactive := false;
     use_silently ppf name
@@ -429,9 +504,12 @@ diff -C 3 -r ocaml-3.12.1/toplevel/toploop.ml ocaml-3.12.1-orig/toplevel/toploop
 - x;;
 - 
 - *)
+- 
+- let set_wrap x = Clflags.wrap_constants := x
+- 
 --- 435,437 ----
 diff -C 3 -r ocaml-3.12.1/toplevel/toploop.mli ocaml-3.12.1-orig/toplevel/toploop.mli
-*** ocaml-3.12.1/toplevel/toploop.mli	2012-01-03 16:02:46.373538999 +0100
+*** ocaml-3.12.1/toplevel/toploop.mli	2012-01-03 23:28:28.503538999 +0100
 --- ocaml-3.12.1-orig/toplevel/toploop.mli	2007-12-04 14:38:58.000000000 +0100
 ***************
 *** 72,81 ****
@@ -447,7 +525,7 @@ diff -C 3 -r ocaml-3.12.1/toplevel/toploop.mli ocaml-3.12.1-orig/toplevel/toploo
   
 --- 72,77 ----
 ***************
-*** 114,121 ****
+*** 114,123 ****
   (* Used by Trace module *)
   
   val may_trace : bool ref
@@ -456,4 +534,27 @@ diff -C 3 -r ocaml-3.12.1/toplevel/toploop.mli ocaml-3.12.1-orig/toplevel/toploo
 - val print_stack : Env.t -> Types.type_expr -> 'a Stack.t -> Outcometree.out_value
 - val print_queue : Env.t -> Types.type_expr -> 'a Queue.t -> Outcometree.out_value
 - val print_lazy : Env.t -> Types.type_expr -> 'a Lazy.t -> Outcometree.out_value
+- 
+- val set_wrap : bool -> unit
 --- 110,112 ----
+diff -C 3 -r ocaml-3.12.1/utils/clflags.ml ocaml-3.12.1-orig/utils/clflags.ml
+*** ocaml-3.12.1/utils/clflags.ml	2012-01-03 23:13:13.323538983 +0100
+--- ocaml-3.12.1-orig/utils/clflags.ml	2009-12-09 10:17:12.000000000 +0100
+***************
+*** 92,96 ****
+  
+  let shared = ref false (* -shared *)
+  let dlcode = ref true (* not -nodynlink *)
+- 
+- let wrap_constants = ref false
+--- 92,94 ----
+diff -C 3 -r ocaml-3.12.1/utils/clflags.mli ocaml-3.12.1-orig/utils/clflags.mli
+*** ocaml-3.12.1/utils/clflags.mli	2012-01-03 23:13:03.933539001 +0100
+--- ocaml-3.12.1-orig/utils/clflags.mli	2009-12-09 10:17:12.000000000 +0100
+***************
+*** 76,79 ****
+  val std_include_dir : unit -> string list
+  val shared : bool ref
+  val dlcode : bool ref
+- val wrap_constants : bool ref
+--- 76,78 ----

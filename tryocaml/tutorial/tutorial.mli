@@ -33,3 +33,18 @@ val multiline : bool -> unit
 
 val set_lang : string -> unit
 val lang : unit -> string
+
+
+
+
+external int_of_int : int -> int = "%identity"
+external nativeint_of_nativeint : nativeint -> nativeint = "%identity"
+external float_of_float : float -> float = "%identity"
+external int32_of_int32 : int32 -> int32 = "%identity"
+external int64_of_int64 : int64 -> int64 = "%identity"
+external char_of_char : char -> char = "%identity"
+external string_of_string : string -> string = "%identity"
+
+module Tutorial : sig end
+
+val init : unit -> unit
