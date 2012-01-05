@@ -1,12 +1,12 @@
 # remove this variable to use the default ocaml toplevel
-TOPLEVELLIB= -I toplevellib
+INCLUDE_TOPLEVELLIB= -I toplevellib
 
 COMPILER=js_of_ocaml
 LIBNAME=js_of_ocaml
 NAME=toplevel
 OBJS=tutorial/lessons.cmo tutorial/tutorial.cmo toplevel.cmo
 JS=js_of_ocaml-patched
-INCLUDES= -I $(JS)/lib -I $(JS)/compiler -I tutorial $(TOPLEVELLIB)
+INCLUDES= -I $(JS)/lib -I $(JS)/compiler -I tutorial $(INCLUDE_TOPLEVELLIB)
 
 all: compiler tuto $(NAME).js
 
@@ -69,10 +69,10 @@ STDLIB_MODULES=\
 
 PERVASIVES=$(STDLIB_MODULES) outcometree topdirs toploop
 
-$(NAME).js: $(NAME).byte $(JSFILES)
+$(NAME).js: $(NAME).byte $(JSFILES) toplevellib/toplevellib.cma
 	$(COMP) $(INCLUDES) -toplevel -linkall -noinline -noruntime $(JSFILES) $(NAME).byte $(OPTIONS)
 
-$(NAME).byte: $(OBJS) $(JS)/compiler/compiler.cma
+$(NAME).byte: $(OBJS) $(JS)/compiler/compiler.cma toplevellib/toplevellib.cma
 	$(OCAMLC) $(INCLUDES) -linkall -package str -linkpkg -o $@.tmp $(STDLIB) $(OBJS)
 	$(EXPUNGE) $@.tmp $@ $(PERVASIVES)
 	rm -f $@.tmp
@@ -98,5 +98,7 @@ clean::
 
 depend:
 	ocamldep -pp "camlp4o $(JS)/lib/syntax/pa_js.cmo" $(INCLUDES) *.ml *.mli > .depend
+
+toplevel.cmo: toplevellib/*.cmi
 
 include .depend
