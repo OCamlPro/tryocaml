@@ -15,6 +15,17 @@
 
 open Int_misc
 
+module String = struct
+  include String
+
+  let blit src src_pos dst dst_pos len =
+    Printf.printf "blit %d[%d] %d[%d] %d\n" src_pos (String.length src)
+      dst_pos (String.length dst) len;
+    blit src src_pos dst dst_pos len
+
+
+end
+
 type nat = int array
 
 (* All operations are supposed to happen on signed integers, so we
@@ -85,9 +96,11 @@ let rec incr_nat nat ofs alen carry =
       incr_nat nat (ofs+1) (alen-1) 1
 
 let rec add_nat nat1 ofs1 len1 nat2 ofs2 len2 carry =
+  Printf.printf "add_nat %d %d %d %d %d\n"
+    ofs1 len1 ofs2 len2 carry;
   if len1 = 0 then carry else
     let tmp1 = nat1.(ofs1) in
-    let tmp2 = if len2 = 0 then 0 else nat2.(ofs2) in
+    let tmp2 = if len2 <= 0 then 0 else nat2.(ofs2) in
     let tmp3 = (tmp1 + tmp2) land mask in
     let tmp4 = (tmp3 + carry) land mask in
     nat1.(ofs1) <- tmp4;
@@ -123,7 +136,26 @@ let div_digit_nat
     natr ofsr
     nat1 ofs1 len1
     nat2 ofs2 =
-   failwith "div_digit_nat"
+  Printf.printf "div_digit_nat\n";
+  print_nat natq ofsq 0;
+  print_nat natr ofsr 0;
+  print_nat nat1 ofs1 len1;
+  print_nat nat2 ofs2 0;
+  let d = Int64.of_int nat2.(ofs2) in
+  let rec iter len1 r =
+    if len1 = 0 then r else
+      let num = Int64.of_int nat1.(ofs1 + len1 - 1) in
+      let num = Int64.add num (Int64.shift_left r length_of_digit) in
+      let quo = Int64.div num d in
+      let r = Int64.sub num (Int64.mul d quo) in
+      natq.(ofsq + len1 - 1) <- Int64.to_int quo;
+      iter (len1 - 1) r
+  in
+  let r = iter (len1-1) (Int64.of_int nat1.(ofs1 + len1 - 1)) in
+  natr.(ofsr) <- Int64.to_int r;
+  Printf.printf "done\n";
+  print_nat natq ofsq 0;
+  print_nat natr ofsr 0
 
 let rec compare_nat nat1 ofs1 len1 nat2 ofs2 len2 =
 
@@ -359,16 +391,14 @@ match length_of_digit with
       ignore
         (mult_digit_nat power_base_max 0 2
            power_base_max 0 1 (nat_of_int 9) 0)
-  | 32 | 31 -> set_digit_nat power_base_max 0 1_000_000_000
-  | 30 -> set_digit_nat power_base_max 0        100_000_000
+  | 32 | 31 | 30 -> set_digit_nat power_base_max 0 1_000_000_000
   | _ -> assert false
 ;;
 
 let pmax =
   match length_of_digit with
   | 64 -> 19
-  | 32 | 31 -> 8
-  | 30 -> 7
+  | 32 | 31 | 30 -> 9
   | _ -> assert false
 ;;
 
@@ -376,7 +406,7 @@ let max_superscript_10_power_in_int =
   match length_of_digit with
   | 64 -> 18
   | 32| 31 -> 9
-  | 30 -> 9
+  | 30 -> 8
   | _ -> assert false
 ;;
 let max_power_10_power_in_int =
@@ -588,12 +618,14 @@ let unadjusted_string_of_nat nat off len_nat =
          if len > biggest_int / (succ pmax)
             then failwith "number too long"
             else let len_s = (succ pmax) * len in
+                 Printf.printf "String.length = %d\n" len_s;
                  let s = String.make len_s '0'
                  and pos_ref = ref len_s in
                    len_copy := pred !len_copy;
                    blit_nat copy1 0 nat off len;
                    set_digit_nat copy1 len 0;
                    while not (is_zero_nat copy1 0 !len_copy) do
+                     Printf.printf "pos_ref = %d\n" !pos_ref;
                       div_digit_nat copy2 0
                                      rest_digit 0
                                      copy1 0 (succ !len_copy)
