@@ -81,6 +81,7 @@ let start ppf =
   exec ppf "#install_printer Toploop.print_stack";
   exec ppf "#install_printer Toploop.print_lazy";
   exec ppf "#install_printer N.print";
+  exec ppf "#install_printer Big.print";
   ()
 
 let at_bol = ref true
@@ -464,3 +465,10 @@ let run _ =
   Js._false
 
 let _ = Html.window##onload <- Html.handler run; Tutorial.init ()
+
+(* Force some dependencies to be linked : *)
+let _ =
+  N.init ();
+  Big_int.init ();
+  Num.init ();
+  Big.init ();

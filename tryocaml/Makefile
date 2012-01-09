@@ -4,11 +4,11 @@ INCLUDE_TOPLEVELLIB= -I toplevellib
 COMPILER=js_of_ocaml
 LIBNAME=js_of_ocaml
 NAME=toplevel
-OBJS=tutorial/tutorial.cma toplevel.cmo
+OBJS=tutorial/tutorial.cma ocaml-num/ocaml-num.cma toplevel.cmo
 JS=js_of_ocaml-patched
-INCLUDES= -I $(JS)/lib -I $(JS)/compiler -I tutorial $(INCLUDE_TOPLEVELLIB)
+INCLUDES= -I $(JS)/lib -I $(JS)/compiler -I tutorial $(INCLUDE_TOPLEVELLIB) -I ocaml-num
 
-all: compiler tuto $(NAME).js
+all: compiler tuto num $(NAME).js
 
 compiler:
 	$(MAKE) -C $(JS) all
@@ -66,7 +66,10 @@ STDLIB_MODULES=\
   stringLabels \
   weak \
   n \
-  tutorial
+  big_int \
+  num \
+  big \
+  tutorial \
 
 PERVASIVES=$(STDLIB_MODULES) outcometree topdirs toploop
 
@@ -91,6 +94,9 @@ errors.cmi: errors.mli
 
 tuto:
 	$(MAKE) -C tutorial all
+
+num:
+	$(MAKE) -C ocaml-num all
 
 clean::
 	rm -f *.cm[io] $(NAME).byte *.annot *~
