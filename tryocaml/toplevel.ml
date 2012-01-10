@@ -484,5 +484,5 @@ let run _ =
 
 let _ =
   (* Html.window##onload <- Html.handler *)
-  run ();
+  ignore (run ());
   Tutorial.init ()
