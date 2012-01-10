@@ -119,7 +119,11 @@ let add_nat nat1 ofs1 len1 nat2 ofs2 len2 carry =
   Printf.printf "carry = %d\n" carry;
   carry
 
-let complement_nat nat int int= failwith "complement_nat"
+let complement_nat nat ofs len =
+  for i = 0 to len - 1 do
+    nat.(ofs+i) <- (lnot nat.(ofs + i)) land mask
+  done
+
 let decr_nat nat int int int = failwith "decr_nat"
 let sub_nat nat int int nat int int int = failwith "sub_nat"
 let mult_digit_nat nat int int nat int int nat int = failwith "mult_digit_nat"
@@ -128,7 +132,13 @@ let square_nat nat int int nat int int = failwith "square_nat"
 let shift_left_nat nat int int nat int int= failwith "shift_left_nat"
 let div_nat nat int int nat int int= failwith "div_nat"
 let shift_right_nat nat int int nat int int= failwith "shift_right_nat"
-let compare_digits_nat nat int nat int = failwith "compare_digits_nat"
+
+
+let compare_digits_nat nat1 ofs1 nat2 ofs2 =
+  let d1 = nat1.(ofs1) in
+  let d2 = nat2.(ofs2) in
+  if d1 > d2 then 1 else
+    if d1 < d2 then -1 else 0
 
 
 let div_digit_nat
