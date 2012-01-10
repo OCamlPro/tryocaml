@@ -15,6 +15,9 @@
 
 open Int_misc
 
+let debug = false
+
+(*
 module String = struct
   include String
 
@@ -23,8 +26,8 @@ module String = struct
       dst_pos (String.length dst) len;
     blit src src_pos dst dst_pos len
 
-
 end
+*)
 
 type nat = int array
 
@@ -33,12 +36,14 @@ purposely limit ourselves to 30 bits so support simple integers on
 both 32 bits platforms and JS *)
 
 let print_nat nat ofs len =
-  print_string "[";
-  for i = 0 to Array.length nat - 1 do
-    print_int nat.(i);
-    print_string "; ";
-  done;
-  Printf.printf "] ofs=%d len=%d\n" ofs len
+  if debug then begin
+    print_string "[";
+    for i = 0 to Array.length nat - 1 do
+      print_int nat.(i);
+      print_string "; ";
+    done;
+    Printf.printf "] ofs=%d len=%d\n" ofs len
+  end
 
 let length_of_digit = 30
 let mask = (1 lsl 30) - 1
@@ -66,10 +71,10 @@ let rec num_digits_nat nat ofs len =
   if len = 0 then 1 else len
 
 let num_digits_nat nat ofs len =
-  Printf.printf "num_digits_nat:\n";
+  if debug then Printf.printf "num_digits_nat:\n";
   print_nat nat ofs len;
   let num = num_digits_nat nat ofs len in
-  Printf.printf "= %d\n" num;
+  if debug then Printf.printf "= %d\n" num;
   num
 
 
@@ -96,7 +101,7 @@ let rec incr_nat nat ofs alen carry =
       incr_nat nat (ofs+1) (alen-1) 1
 
 let rec add_nat nat1 ofs1 len1 nat2 ofs2 len2 carry =
-  Printf.printf "add_nat %d %d %d %d %d\n"
+  if debug then Printf.printf "add_nat %d %d %d %d %d\n"
     ofs1 len1 ofs2 len2 carry;
   if len1 = 0 then carry else
     let tmp1 = nat1.(ofs1) in
@@ -111,12 +116,12 @@ let rec add_nat nat1 ofs1 len1 nat2 ofs2 len2 carry =
     add_nat nat1 (ofs1+1) (len1-1) nat2 (ofs2+1) (len2-1) carry
 
 let add_nat nat1 ofs1 len1 nat2 ofs2 len2 carry =
-  Printf.printf "add_nat: %d + \n" carry;
+  if debug then Printf.printf "add_nat: %d + \n" carry;
   print_nat nat1 ofs1 len1;
   print_nat nat2 ofs2 len2;
   let carry = add_nat nat1 ofs1 len1 nat2 ofs2 len2 carry in
   print_nat nat1 ofs1 len1;
-  Printf.printf "carry = %d\n" carry;
+  if debug then Printf.printf "carry = %d\n" carry;
   carry
 
 let complement_nat nat ofs len =
@@ -124,14 +129,100 @@ let complement_nat nat ofs len =
     nat.(ofs+i) <- (lnot nat.(ofs + i)) land mask
   done
 
-let decr_nat nat int int int = failwith "decr_nat"
-let sub_nat nat int int nat int int int = failwith "sub_nat"
-let mult_digit_nat nat int int nat int int nat int = failwith "mult_digit_nat"
-let mult_nat nat int int nat int int nat int int = failwith "mult_nat"
-let square_nat nat int int nat int int = failwith "square_nat"
-let shift_left_nat nat int int nat int int= failwith "shift_left_nat"
+let decr_nat nat ofs len carry =
+  let carry = 1 lxor carry in
+  if carry = 0 || len = 0 then carry else
+    let rec iter ofs len =
+      if len = 0 then 1 else
+      let a = nat.(ofs) in
+      nat.(ofs) <- (a - 1) land mask;
+      let len = len -1 in
+      if a > 0 then 0 else
+        iter (ofs+1) (len-1)
+  in
+  1 lxor (iter ofs len)
+
+let sub_nat nat1 ofs1 len1 nat2 ofs2 len2 carry =
+  let carry = 1 lxor carry in
+  let rec sub_nat nat1 ofs1 len1 nat2 ofs2 len2 carry =
+    if debug then Printf.printf "sub_nat_in %d\n" carry;
+    print_nat nat1 ofs1 len1;
+    print_nat nat2 ofs2 len2;
+    if len1 = 0 then carry else
+      let tmp1 = nat1.(ofs1) in
+      let tmp2 = if len2 > 0 then nat2.(ofs2) else 0 in
+      let tmp3 = (tmp1 - tmp2) land mask in
+      let tmp4 = (tmp3 - carry) land mask in
+      nat1.(ofs1) <- tmp4;
+      let carry = if tmp1 < tmp2 || tmp3 < carry then 1 else 0 in
+      sub_nat nat1 (ofs1+1) (len1-1) nat2 (ofs2+1) (len2-1) carry
+  in
+  let carry = sub_nat nat1 ofs1 len1 nat2 ofs2 len2 carry in
+  let carry = 1 lxor carry in
+  if debug then Printf.printf "sub_nat finished\n";
+  print_nat nat1 carry 0;
+  carry
+
+let mult_digit_nat nat1 ofs1 len1 nat2 ofs2 len2 nat3 ofs3 =
+  let dL = Int64.of_int nat3.(ofs3) in
+  let rec iter carryL ofs1 len1 ofs2 len2 =
+    if len1 = 0 then carryL else
+      let a = nat1.(ofs1) in
+      let b = if len2 > 0 then nat2.(ofs2) else 0 in
+      let aL = Int64.of_int a in
+      let bL = Int64.of_int b in
+      let mL = Int64.mul bL dL in
+      let mL = Int64.add mL carryL in
+      let mL = Int64.add mL aL in
+      let base = (Int64.to_int mL) land mask in
+      nat1.(ofs1) <- base;
+      let carryL = Int64.shift_right_logical mL length_of_digit in
+      iter carryL (ofs1+1) (len1-1) (ofs2+1) (len2-1)
+  in
+  let carryL = iter 0L ofs1 len1 ofs2 len2 in
+  Int64.to_int carryL
+
+let mult_nat nat1 ofs1 len1 nat2 ofs2 len2 nat3 ofs3 len3 =
+  let rec iter carry ofs1 len1 ofs3 len3 =
+    if len3 = 0 then carry else
+    let new_carry = mult_digit_nat
+      nat1 ofs1 len1 nat2 ofs2 len2 nat3 ofs3 in
+    iter (carry + new_carry)
+      (ofs1+1) (len1-1) (ofs3+1) (len3-1)
+  in
+  iter 0 ofs1 len1 ofs3 len3
+
+let square_nat nat1 ofs1 len1 nat2 ofs2 len2 = failwith "square_nat"
 let div_nat nat int int nat int int= failwith "div_nat"
-let shift_right_nat nat int int nat int int= failwith "shift_right_nat"
+
+let shift_left_nat nat1 ofs1 len1 nat2 ofs2 nbits=
+  if nbits > 0 then
+    let shift2 = length_of_digit - nbits in
+    let rec iter carry pos =
+      if pos < len1 then
+        let d = nat1.(ofs1+pos) in
+        nat1.(ofs1+pos) <- ((d lsl nbits) lor carry) land mask;
+        let carry = (d lsr shift2) land mask in
+        iter carry (pos+1)
+      else carry
+    in
+    let carry = iter 0 0 in
+    nat2.(ofs2) <- carry
+
+
+let shift_right_nat nat1 ofs1 len1 nat2 ofs2 nbits =
+  if nbits > 0 then
+    let shift2 = length_of_digit - nbits in
+    let rec iter carry pos =
+      if pos >= 0 then
+        let d = nat1.(ofs1+pos) in
+        nat1.(ofs1+pos) <- ((d lsr nbits) lor carry) land mask;
+        let carry = d lsl shift2 in
+        iter carry (pos-1)
+      else carry
+    in
+    let carry = iter 0 (len1 - 1) in
+    nat2.(ofs2) <- carry
 
 
 let compare_digits_nat nat1 ofs1 nat2 ofs2 =
@@ -146,7 +237,7 @@ let div_digit_nat
     natr ofsr
     nat1 ofs1 len1
     nat2 ofs2 =
-  Printf.printf "div_digit_nat\n";
+  if debug then Printf.printf "div_digit_nat\n";
   print_nat natq ofsq 0;
   print_nat natr ofsr 0;
   print_nat nat1 ofs1 len1;
@@ -163,7 +254,7 @@ let div_digit_nat
   in
   let r = iter (len1-1) (Int64.of_int nat1.(ofs1 + len1 - 1)) in
   natr.(ofsr) <- Int64.to_int r;
-  Printf.printf "done\n";
+  if debug then Printf.printf "done\n";
   print_nat natq ofsq 0;
   print_nat natr ofsr 0
 
@@ -185,11 +276,11 @@ let rec compare_nat nat1 ofs1 len1 nat2 ofs2 len2 =
             compare_nat nat1 ofs1 (len1-1) nat2 ofs2 (len1-1)
 
 let compare_nat nat1 ofs1 len1 nat2 ofs2 len2 =
-  Printf.printf "compare_nat:\n";
+  if debug then Printf.printf "compare_nat:\n";
  print_nat nat1 ofs1 len1;
   print_nat nat2 ofs2 len2;
   let num = compare_nat nat1 ofs1 len1 nat2 ofs2 len2  in
-  Printf.printf "compare_nat = %d\n" num;
+  if debug then Printf.printf "compare_nat = %d\n" num;
   num
 
 
@@ -453,10 +544,10 @@ let raw_string_of_digit nat off =
   end
 
 let raw_string_of_digit nat off =
-  Printf.printf "raw_string_of_digit:\n";
+  if debug then Printf.printf "raw_string_of_digit:\n";
   print_nat nat off 0;
   let s = raw_string_of_digit nat off in
-  Printf.printf " = [%s]\n" s;
+  if debug then Printf.printf " = [%s]\n" s;
   s
 
 (* XL: suppression de string_of_digit et de sys_string_of_digit.
@@ -628,14 +719,14 @@ let unadjusted_string_of_nat nat off len_nat =
          if len > biggest_int / (succ pmax)
             then failwith "number too long"
             else let len_s = (succ pmax) * len in
-                 Printf.printf "String.length = %d\n" len_s;
+                 if debug then Printf.printf "String.length = %d\n" len_s;
                  let s = String.make len_s '0'
                  and pos_ref = ref len_s in
                    len_copy := pred !len_copy;
                    blit_nat copy1 0 nat off len;
                    set_digit_nat copy1 len 0;
                    while not (is_zero_nat copy1 0 !len_copy) do
-                     Printf.printf "pos_ref = %d\n" !pos_ref;
+                     if debug then Printf.printf "pos_ref = %d\n" !pos_ref;
                       div_digit_nat copy2 0
                                      rest_digit 0
                                      copy1 0 (succ !len_copy)
