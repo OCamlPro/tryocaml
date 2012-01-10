@@ -463,4 +463,7 @@ let run _ =
   start ppf;
   Js._false
 
-let _ = Html.window##onload <- Html.handler run; Tutorial.init ()
+let _ =
+  (* Html.window##onload <- Html.handler *)
+  run ();
+  Tutorial.init ()
