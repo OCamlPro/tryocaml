@@ -22,6 +22,8 @@ open Ratio
 type num = Int of int | Big_int of big_int | Ratio of ratio
         (* The type of numbers. *)
 
+
+
 let biggest_INT = big_int_of_int biggest_int
 and least_INT = big_int_of_int least_int
 
@@ -440,3 +442,15 @@ let incr_num r = r := succ_num !r
 and decr_num r = r := pred_num !r
 
 let init () = ()
+
+
+let int_of_int int = Int int
+let (+) = add_num
+let (-) = sub_num
+let (/) = div_num
+let ( * ) = mult_num
+let ( ~- ) = minus_num
+
+let print ppf b =
+  Format.fprintf ppf "@[Num %s@]@." (string_of_num b)
+

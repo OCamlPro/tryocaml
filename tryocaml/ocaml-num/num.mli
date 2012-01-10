@@ -32,6 +32,13 @@ type num =
 
 (** {6 Arithmetic operations} *)
 
+val int_of_int : int -> num
+val (+) : num -> num -> num
+val (-) : num -> num -> num
+val (/) : num -> num -> num
+val ( * ) : num -> num -> num
+val ( ~- ) : num -> num
+val print : Format.formatter -> num -> unit
 
 val ( +/ ) : num -> num -> num
 (** Same as {!Num.add_num}.*)

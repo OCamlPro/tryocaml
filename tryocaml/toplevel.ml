@@ -82,6 +82,7 @@ let start ppf =
   exec ppf "#install_printer Toploop.print_lazy";
   exec ppf "#install_printer N.print";
   exec ppf "#install_printer Big.print";
+  exec ppf "#install_printer Num.print";
   ()
 
 let at_bol = ref true
