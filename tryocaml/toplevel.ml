@@ -80,7 +80,7 @@ let start ppf =
   exec ppf "#install_printer Toploop.print_queue";
   exec ppf "#install_printer Toploop.print_stack";
   exec ppf "#install_printer Toploop.print_lazy";
-  exec ppf "#install_printer N.print";
+  exec ppf "#install_printer N.print";  
   ()
 
 let at_bol = ref true
@@ -321,7 +321,7 @@ let _ =
            "<div class=\"alert-message block-message success\">%s</div>" s)
     with _ -> ()
   )
-
+  
 let run _ =
   let top =
     Js.Opt.get (doc##getElementById (Js.string "toplevel"))
@@ -344,10 +344,9 @@ let run _ =
           (doc##createTextNode(Js.string (Buffer.contents b)));
         Buffer.clear b)
   in
-
   let textbox = Html.createTextarea doc in
   textbox##value <- Js.string "";
-  textbox##id <- Js.string "console";
+  textbox##id <- Js.string "console"; 
   Dom.appendChild top textbox;
   textbox##focus();
   textbox##select();
@@ -392,21 +391,23 @@ let run _ =
   Html.document##onkeydown <-
     (Html.handler
        (fun e -> match e##keyCode with
-         | 13 -> (* ENTER key *)
+         | 13 -> (* ENTER key *)     
            let keyEv = match Js.Opt.to_option (Html.CoerceTo.keyboardEvent e) with
              | None   -> assert false
-             | Some t -> t in
+             | Some t -> t in 
            (* Special handling of ctrl key *)
-           if keyEv##ctrlKey = Js._true then
+           if keyEv##ctrlKey = Js._true then    
              textbox##value <- Js.string ((Js.to_string textbox##value) ^ "\n");
            if keyEv##ctrlKey = Js._true || keyEv##shiftKey = Js._true then
              let rows_height = textbox##scrollHeight / (textbox##rows + 1) in
              let h = string_of_int (rows_height * (textbox##rows + 1) + 20) ^ "px" in
              textbox##style##height <- Js.string h;
              Js._true
-           else begin
+           else begin      
              execute ();
              textbox##style##height <- tbox_init_size;
+             textbox##value <- Js.string "";
+  (* Html.window##alert (output_area##innerHTML); *)
              Js._false
            end
 	 | 38 -> (* UP ARROW key *) begin
@@ -430,12 +431,12 @@ let run _ =
 	     | _ -> Js._true
 	 end
 	 | _ -> Js._true));
-  Tutorial.clear_fun := (fun _ ->
+  Tutorial.clear_fun := (fun _ -> 
     output_area##innerHTML <- (Js.string "");
     textbox##focus();
     textbox##select()
   );
-  Tutorial.reset_fun := (fun _ ->
+  Tutorial.reset_fun := (fun _ -> 
     output_area##innerHTML <- (Js.string "");
     Toploop.initialize_toplevel_env ();
     Toploop.input_name := "";
@@ -443,20 +444,38 @@ let run _ =
     textbox##focus();
     textbox##select()
   );
-  Tutorial.set_cols_fun := (fun i ->
+  Tutorial.set_cols_fun := (fun i -> 
     textbox##style##width <- Js.string ((string_of_int (i * 7)) ^ "px"));
 
   let send_button = button "Send" (fun () -> execute ()) in
   let clear_button = button "Clear" (fun () -> Tutorial.clear ()) in
   let reset_button = button "Reset" (fun () -> Tutorial.reset ()) in
+  let save_button =  button "Save" (fun () -> 
+    let content = Js.to_string output_area##innerHTML in
+    let l = Regexp.split (Regexp.regexp ("\n")) content in
+    let content = 
+      Js.string (
+        let l = List.filter (fun x -> 
+          try x.[0] = '#' with _ -> false) l in
+        let l = List.map  (fun x -> String.sub x 2 ((String.length x) - 2)) l in
+        String.concat "\n" l)
+    in
+    let uriContent =
+      Js.string ("data:application/octet-stream," ^
+                    (Js.to_string (Js.encodeURI content))) in
+    Html.window##open_(uriContent, Js.string "Try OCaml", Js.null);
+    Html.window##close ()
+  )
+  in
   let buttons =
       Js.Opt.get (doc##getElementById (Js.string "buttons"))
         (fun () -> assert false)
-  in
+  in 
   Tutorial.set_cols 80;
   Dom.appendChild buttons send_button;
   Dom.appendChild buttons clear_button;
   Dom.appendChild buttons reset_button;
+  Dom.appendChild buttons save_button;
   output_area##scrollTop <- output_area##scrollHeight;
   make_code_clickable ();
   (* Dom.appendChild output_area doc; *)
