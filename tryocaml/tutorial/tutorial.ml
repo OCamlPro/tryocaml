@@ -10,7 +10,6 @@ let message_fun = ref (fun _ -> ())
  let langs = [
    "English", "en";
    "Français", "fr";
-   "Deutsch", "de";
    "Turkçe", "tr"
  ]
    

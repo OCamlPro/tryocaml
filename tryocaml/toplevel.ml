@@ -207,6 +207,31 @@ let text_of_html html =
   done;
   Buffer.contents b
 
+(* Some useful functions to handle cookies *)
+let find_in good_input input =
+  try
+    let len = String.length good_input in
+    for i = 0 to String.length input - len  do
+      if String.sub input i len = good_input then
+        raise Exit
+    done;
+    false
+  with Exit -> true
+
+let get_cookie () =
+  let reg = Regexp.regexp ";" in
+  Regexp.split reg (Js.to_string doc##cookie)
+
+let get_val_from_cookie key : string = 
+  let l = get_cookie () in
+  let reg = Regexp.regexp "=" in
+  try 
+    let v = List.find (fun k -> find_in key k) l in
+    List.nth (Regexp.split reg v) 1
+  with Not_found -> Tutorial.lang ()
+
+let set_cookie key value = 
+  doc##cookie <- Js.string (Printf.sprintf "%s=%s;" key value)
 
 let update_debug_message =
   let b = Buffer.create 100 in
@@ -490,6 +515,7 @@ let run _ =
     Html.handler
     (fun _ ->      
       set_lang (snd (List.nth Tutorial.langs sel##selectedIndex));
+      set_cookie "lang" (Tutorial.lang ());
       Js._true);
   Dom.appendChild form sel;
   let langs = Js.Opt.get (doc##getElementById (Js.string "languages"))
@@ -505,17 +531,28 @@ let run _ =
   output_area##scrollTop <- output_area##scrollHeight;
   make_code_clickable ();
   start ppf;
-
+  (* Setting language *)
+  let set_lang_from_cookie () =
+    let lang = get_val_from_cookie ("lang=" ^ (Tutorial.lang ())) in
+    if lang <> "" then set_lang lang
+  in
+  (* Check if language has change in URL *)
   let url = Js.decodeURI loc##href in
   let reg = Regexp.regexp ".*lang=([a-z][a-z]).*" in
   let _ = 
     match Regexp.string_match reg (Js.to_string url) 0 with
-      | None -> assert false
-      | Some r -> (function None -> () | Some s ->   set_lang s) (Regexp.matched_group r 1)
-  in
+      | None -> set_lang_from_cookie ()
+      | Some r -> 
+        match (Regexp.matched_group r 1) with
+            None -> set_lang_from_cookie () 
+          | Some s -> set_lang s
+  in 
+  let lang = Tutorial.lang () in
+  if lang <> "" then
+    set_cookie "lang" (Tutorial.lang ());  
   Js._false
 
 let _ =
-  (* window##onload <- Html.handler *)
   ignore (run ());
   Tutorial.init ()
+
