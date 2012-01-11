@@ -34,7 +34,7 @@ external global_data : unit -> Obj.t array = "caml_get_global_data"
 
 let g = global_data ()
 
-let _ =
+let _ =  
   let toc = Obj.magic (Array.unsafe_get g (-2)) in
   let prims = split_primitives (List.assoc "PRIM" toc) in
 
@@ -51,6 +51,9 @@ module Html = Dom_html
 let s = ""
 
 let doc = Html.document
+let window = Html.window
+let loc = Js.Unsafe.variable "location"
+
 let button_type = Js.string "button"
 let button txt action =
   let b = Dom_html.createInput ~_type:button_type doc in
@@ -204,6 +207,31 @@ let text_of_html html =
   done;
   Buffer.contents b
 
+(* Some useful functions to handle cookies *)
+let find_in good_input input =
+  try
+    let len = String.length good_input in
+    for i = 0 to String.length input - len  do
+      if String.sub input i len = good_input then
+        raise Exit
+    done;
+    false
+  with Exit -> true
+
+let get_cookie () =
+  let reg = Regexp.regexp ";" in
+  Regexp.split reg (Js.to_string doc##cookie)
+
+let get_val_from_cookie key : string = 
+  let l = get_cookie () in
+  let reg = Regexp.regexp "=" in
+  try 
+    let v = List.find (fun k -> find_in key k) l in
+    List.nth (Regexp.split reg v) 1
+  with Not_found -> Tutorial.lang ()
+
+let set_cookie key value = 
+  doc##cookie <- Js.string (Printf.sprintf "%s=%s;" key value)
 
 let update_debug_message =
   let b = Buffer.create 100 in
@@ -407,7 +435,6 @@ let run _ =
              execute ();
              textbox##style##height <- tbox_init_size;
              textbox##value <- Js.string "";
-  (* Html.window##alert (output_area##innerHTML); *)
              Js._false
            end
 	 | 38 -> (* UP ARROW key *) begin
@@ -463,14 +490,39 @@ let run _ =
     let uriContent =
       Js.string ("data:application/octet-stream," ^
                     (Js.to_string (Js.encodeURI content))) in
-    Html.window##open_(uriContent, Js.string "Try OCaml", Js.null);
-    Html.window##close ()
+    window##open_(uriContent, Js.string "Try OCaml", Js.null);
+    window##close ()
   )
   in
   let buttons =
       Js.Opt.get (doc##getElementById (Js.string "buttons"))
         (fun () -> assert false)
   in 
+  (* Choose your language *)
+  let set_lang lang = 
+    textbox##value <- Js.string ("set_lang \"" ^ lang ^ "\";;" );
+    execute ()
+  in
+  let form = Html.createDiv doc in
+  let sel = Dom_html.createSelect doc in
+  sel##id <- Js.string "languages";
+  List.iter (fun (lang, _) ->
+    let opt = Html.createOption doc in
+    Dom.appendChild opt (doc##createTextNode (Js.string lang));
+    sel##add (opt, Js.null);    
+  ) Tutorial.langs;
+  sel##onchange <-
+    Html.handler
+    (fun _ ->      
+      set_lang (snd (List.nth Tutorial.langs sel##selectedIndex));
+      set_cookie "lang" (Tutorial.lang ());
+      Js._true);
+  Dom.appendChild form sel;
+  let langs = Js.Opt.get (doc##getElementById (Js.string "languages"))
+        (fun () -> assert false)
+  in 
+  Dom.appendChild langs form;
+
   Tutorial.set_cols 80;
   Dom.appendChild buttons send_button;
   Dom.appendChild buttons clear_button;
@@ -478,11 +530,29 @@ let run _ =
   Dom.appendChild buttons save_button;
   output_area##scrollTop <- output_area##scrollHeight;
   make_code_clickable ();
-  (* Dom.appendChild output_area doc; *)
   start ppf;
+  (* Setting language *)
+  let set_lang_from_cookie () =
+    let lang = get_val_from_cookie ("lang=" ^ (Tutorial.lang ())) in
+    if lang <> "" then set_lang lang
+  in
+  (* Check if language has change in URL *)
+  let url = Js.decodeURI loc##href in
+  let reg = Regexp.regexp ".*lang=([a-z][a-z]).*" in
+  let _ = 
+    match Regexp.string_match reg (Js.to_string url) 0 with
+      | None -> set_lang_from_cookie ()
+      | Some r -> 
+        match (Regexp.matched_group r 1) with
+            None -> set_lang_from_cookie () 
+          | Some s -> set_lang s
+  in 
+  let lang = Tutorial.lang () in
+  if lang <> "" then
+    set_cookie "lang" (Tutorial.lang ());  
   Js._false
 
 let _ =
-  (* Html.window##onload <- Html.handler *)
   ignore (run ());
   Tutorial.init ()
+

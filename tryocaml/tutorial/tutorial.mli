@@ -35,7 +35,7 @@ val multiline : bool -> unit
 
 val set_lang : string -> unit
 val lang : unit -> string
-
+val langs : (string * string) list
 
 
 
