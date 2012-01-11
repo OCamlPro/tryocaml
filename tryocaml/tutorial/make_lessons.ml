@@ -61,9 +61,18 @@ let _ =
   let goodies = string_of_file (Filename.concat lessons_dir "goodies.ml") in
   let lesson_dirs = list_directory lessons_dir in
   let langs = ref [] in
+  let lang_dir = Filename.concat lessons_dir "lang" in
   List.iter (fun lang ->
-    langs := lang :: !langs;
-  ) (list_directory (Filename.concat lessons_dir "lang"));
+    let lang_file = Filename.concat lang_dir
+      (Filename.concat lang "messages.ml") in
+    try
+      if Sys.file_exists lang_file then
+      langs := (lang, string_of_file lang_file)  :: !langs;
+    with e ->
+      Printf.fprintf stderr "Warning: exception %s while inspecting %s\n%!"
+        (Printexc.to_string e) lang_file;
+      Printf.fprintf stderr "Discarding lang file %s!\n%!" lang_file
+  ) (list_directory lang_dir);
   let langs = !langs in
   let lessons = ref [] in
   List.iter (fun lesson ->
@@ -74,7 +83,7 @@ let _ =
         let lesson_html = string_of_file (Filename.concat lesson_dir "lesson.html") in
         let lesson_title = get_title lesson_html in
         let lesson_langs = ref [] in
-        List.iter (fun lang ->
+        List.iter (fun (lang,_) ->
           let file = Filename.concat lesson_dir
             (Printf.sprintf "lesson.html.%s" lang) in
           if Sys.file_exists file then
@@ -92,7 +101,7 @@ let _ =
               let step_html = string_of_file (Filename.concat step_dir "step.html") in
               let step_title = get_title step_html in
               let step_langs = ref [] in
-              List.iter (fun lang ->
+              List.iter (fun (lang,_) ->
                 let file = Filename.concat step_dir
                   (Printf.sprintf "step.html.%s" lang) in
                 if Sys.file_exists file then
@@ -122,8 +131,8 @@ let _ =
 
   Printf.printf "%s\n" goodies;
   Printf.printf "let langs = [\n";
-  List.iter (fun lang ->
-    Printf.printf "\t\"%s\";\n" lang;
+  List.iter (fun (lang, lang_file) ->
+    Printf.printf "\t\"%s\", [ %s ];\n" lang lang_file;
   ) langs;
   Printf.printf "]\n";
   Printf.printf "let lessons = [\n";
