@@ -7,6 +7,12 @@ let print_debug s = if !debug then (!debug_fun) s
 
 let message_fun = ref (fun _ -> ())
 
+ let langs = [
+   "English", "en";
+   "Français", "fr";
+   "Turkçe", "tr"
+ ]
+   
 let current_lang = ref ""
 
 let this_lesson = ref 0

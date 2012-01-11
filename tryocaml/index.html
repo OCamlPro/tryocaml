@@ -7,30 +7,31 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link type="text/css" href="bootstrap.css" rel="stylesheet" />
     <link type="text/css" href="style.css" rel="stylesheet" />
-    <script type="text/javascript">
-      var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-22552764-1']);
-      _gaq.push(['_setDomainName', 'ocamlpro.com']);
-      _gaq.push(['_trackPageview']);
-      (function() {
-        var ga = document.createElement('script');
-        ga.type = 'text/javascript';
-        ga.async = true;
-        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-        var s = document.getElementsByTagName('script')[0];
-        s.parentNode.insertBefore(ga, s);
-      })();
-    </script>
+    <!-- <script type="text/javascript"> -->
+    <!--   var _gaq = _gaq || []; -->
+    <!--   _gaq.push(['_setAccount', 'UA-22552764-1']); -->
+    <!--   _gaq.push(['_setDomainName', 'ocamlpro.com']); -->
+    <!--   _gaq.push(['_trackPageview']); -->
+    <!--   (function() { -->
+    <!--     var ga = document.createElement('script'); -->
+    <!--     ga.type = 'text/javascript'; -->
+    <!--     ga.async = true; -->
+    <!--     ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js'; -->
+    <!--     var s = document.getElementsByTagName('script')[0]; -->
+    <!--     s.parentNode.insertBefore(ga, s); -->
+    <!--   })(); -->
+    <!-- </script> -->
     </head>
     <body>
-    <div class="content"><div class="container">
+    <div class="content">
+    <div class="container">
       <div class="row">
-
        <div class="span7">
-          <h1>Try OCaml</h1>
+          <h1>Try OCaml</h1> 
           <p>OCaml is a strongly typed functional language. It is concise
              and fast, enabling you to improve your coding efficiency
              while producing code with higher quality.</p>
+          <p id="languages"></p>
           <div id="lesson-message"></div>
           <span id="lesson-number"></span>
           <span id="lesson-step"></span>
@@ -40,40 +41,40 @@
           </div>
           <div id="menu-lessons"></div>
 
-<script src="http://widgets.twimg.com/j/2/widget.js"></script>
-<script>
-new TWTR.Widget({
-  version: 2,
-  type: 'profile',
-  rpp: 4,
-  interval: 30000,
-  width: 'auto',
-  height: 300,
-  theme: {
-    shell: {
-      background: '#ffffff',
-      color: '#000000'
-    },
-    tweets: {
-      background: '#ebe6eb',
-      color: '#15156b',
-      links: '#0a0f07'
-    }
-  },
-  features: {
-    scrollbar: true,
-    loop: false,
-    live: false,
-    behavior: 'default'
-  }
-}).render().setUser('tryocaml').start();
-</script>
+<!-- <script type="text/javascript" src="http://widgets.twimg.com/j/2/widget.js"></script> -->
+<!-- <script type="text/javascript"> -->
+<!-- new TWTR.Widget({ -->
+<!--   version: 2, -->
+<!--   type: 'profile', -->
+<!--   rpp: 4, -->
+<!--   interval: 30000, -->
+<!--   width: 'auto', -->
+<!--   height: 300, -->
+<!--   theme: { -->
+<!--     shell: { -->
+<!--       background: '#ffffff', -->
+<!--       color: '#000000' -->
+<!--     }, -->
+<!--     tweets: { -->
+<!--       background: '#ddf4fb', -->
+<!--       color: '#15156b', -->
+<!--       links: '#0a0f07' -->
+<!--     } -->
+<!--   }, -->
+<!--   features: { -->
+<!--     scrollbar: true, -->
+<!--     loop: false, -->
+<!--     live: false, -->
+<!--     behavior: 'default' -->
+<!--   } -->
+<!-- }).render().setUser('tryocaml').start(); -->
+<!-- </script> -->
 
         </div>
 
         <div class="span9 ocaml">
           <div id="toplevel-container">
-            <pre><div id="output"></div></pre>
+            <pre id="output"></pre>
             <div id="sharp">#</div>
             <div id="toplevel"></div>
           </div>
@@ -91,7 +92,6 @@ new TWTR.Widget({
             <tr><td><code>steps ()</code></td> <td>See available steps in the current lesson</td></tr>
             <tr><td><code>next ()</code></td> <td>Move to the next step</td></tr>
             <tr><td><code>back ()</code></td> <td>Move to the previous step</td></tr>
-            <tr><td><code>multiline true</code></td> <td>Use ;; as end of input (deprecated, use shift+enter)</td></tr>
           </table>
         </div>
 
