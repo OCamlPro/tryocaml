@@ -53,6 +53,7 @@ let s = ""
 let doc = Html.document
 let window = Html.window
 let loc = Js.Unsafe.variable "location"
+let default_lang = "en"
 
 let registered_buttons = ref []
 
@@ -227,14 +228,15 @@ let get_cookie () =
   let reg = Regexp.regexp ";" in
   Regexp.split reg (Js.to_string doc##cookie)
 
-let get_val_from_cookie key : string =
-  let l = get_cookie () in
-  let reg = Regexp.regexp "=" in
-  try
-    let v = List.find (fun k -> find_in key k) l in
-    List.nth (Regexp.split reg v) 1
-  with Not_found -> Tutorial.lang ()
-
+let get_lang_from_cookie () =
+  let s = doc##cookie in
+  let reg = Regexp.regexp ".*lang=([a-z][a-z]).*" in
+  match Regexp.string_match reg (Js.to_string s) 0 with
+    | None -> default_lang
+    | Some r ->
+      match (Regexp.matched_group r 1) with
+          None -> default_lang
+        | Some s -> s
 
 let set_cookie key value =
   doc##cookie <- Js.string (Printf.sprintf "%s=%s;" key value)
@@ -565,7 +567,8 @@ let run _ =
   start ppf;
   (* Setting language *)
   let set_lang_from_cookie () =
-    let lang = get_val_from_cookie ("lang=" ^ (Tutorial.lang ())) in
+    (* let lang = get_val_from_cookie ("lang=" ^ (Tutorial.lang ())) in *)
+    let lang = get_lang_from_cookie () in
     if lang <> "" then set_lang lang
   in
   (* Check if language has change in URL *)
@@ -577,18 +580,15 @@ let run _ =
       | Some r ->
         match (Regexp.matched_group r 1) with
             None -> set_lang_from_cookie ()
-          | Some s -> set_lang s
+          | Some s -> set_lang s; set_cookie "lang" (Tutorial.lang ());
   in
-  let lang = Tutorial.lang () in
-  if lang <> "" then
-    set_cookie "lang" (Tutorial.lang ());
   Js._false
 
 let _ =
-(*  window##alert (Js.string "Starting..."); *)
+  (*  window##alert (Js.string "Starting..."); *)
   try
     ignore (run ());
-(*    window##alert (Js.string "Done."); *)
+  (*    window##alert (Js.string "Done."); *)
   with e ->
     window##alert (Js.string
                      (Printf.sprintf "exception %s during init."
@@ -599,4 +599,4 @@ let _ =
   Tutorial.init ();
   N.init ();
   ()
-
+    
