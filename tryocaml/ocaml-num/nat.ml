@@ -193,9 +193,8 @@ let mult_nat nat1 ofs1 len1 nat2 ofs2 len2 nat3 ofs3 len3 =
   iter 0 ofs1 len1 ofs3 len3
 
 let square_nat nat1 ofs1 len1 nat2 ofs2 len2 = failwith "square_nat"
-let div_nat nat int int nat int int= failwith "div_nat"
 
-let shift_left_nat nat1 ofs1 len1 nat2 ofs2 nbits=
+let bng_shift_left_nat nat1 ofs1 len1 nbits =
   if nbits > 0 then
     let shift2 = length_of_digit - nbits in
     let rec iter carry pos =
@@ -206,8 +205,21 @@ let shift_left_nat nat1 ofs1 len1 nat2 ofs2 nbits=
         iter carry (pos+1)
       else carry
     in
-    let carry = iter 0 0 in
+    iter 0 0
+  else 0
+
+let shift_left_nat nat1 ofs1 len1 nat2 ofs2 nbits=
+  if nbits > 0 then
+    let carry = bng_shift_left_nat nat1 ofs1 len1 nbits in
     nat2.(ofs2) <- carry
+
+let div_nat n nofs nlen d dofs dlen =
+  let shift = num_leading_zero_bits_in_digit d (dofs + dlen - 1) in
+  assert (bng_shift_left_nat n nofs nlen shift = 0);
+  assert (bng_shift_left_nat d dofs dlen shift = 0);
+  if dlen = 1 then
+    n.(nofs) <-
+  ()
 
 
 let shift_right_nat nat1 ofs1 len1 nat2 ofs2 nbits =
@@ -231,32 +243,6 @@ let compare_digits_nat nat1 ofs1 nat2 ofs2 =
   if d1 > d2 then 1 else
     if d1 < d2 then -1 else 0
 
-
-let div_digit_nat
-    natq ofsq
-    natr ofsr
-    nat1 ofs1 len1
-    nat2 ofs2 =
-  if debug then Printf.printf "div_digit_nat\n";
-  print_nat natq ofsq 0;
-  print_nat natr ofsr 0;
-  print_nat nat1 ofs1 len1;
-  print_nat nat2 ofs2 0;
-  let d = Int64.of_int nat2.(ofs2) in
-  let rec iter len1 r =
-    if len1 = 0 then r else
-      let num = Int64.of_int nat1.(ofs1 + len1 - 1) in
-      let num = Int64.add num (Int64.shift_left r length_of_digit) in
-      let quo = Int64.div num d in
-      let r = Int64.sub num (Int64.mul d quo) in
-      natq.(ofsq + len1 - 1) <- Int64.to_int quo;
-      iter (len1 - 1) r
-  in
-  let r = iter (len1-1) (Int64.of_int nat1.(ofs1 + len1 - 1)) in
-  natr.(ofsr) <- Int64.to_int r;
-  if debug then Printf.printf "done\n";
-  print_nat natq ofsq 0;
-  print_nat natr ofsr 0
 
 let rec compare_nat nat1 ofs1 len1 nat2 ofs2 len2 =
 
