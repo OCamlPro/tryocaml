@@ -20,6 +20,7 @@ val debug_fun : (string -> unit) ref
 val message_fun : (string -> unit) ref
 val clear_fun : (unit -> unit) ref
 val reset_fun : (unit -> unit) ref
+val update_lang_fun : (unit -> unit) ref
 val set_cols_fun : (int -> unit) ref
 
 val clear : unit -> unit
@@ -36,8 +37,9 @@ val multiline : bool -> unit
 val set_lang : string -> unit
 val lang : unit -> string
 
+val langs : (string * (string * (string,string) Hashtbl.t) ) list
 
-
+val translate : string -> string
 
 external int_of_int : int -> int = "%identity"
 external nativeint_of_nativeint : nativeint -> nativeint = "%identity"

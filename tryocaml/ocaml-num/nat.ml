@@ -209,20 +209,33 @@ let bng_shift_left_nat nat1 ofs1 len1 nbits =
   else 0
 
 let shift_left_nat nat1 ofs1 len1 nat2 ofs2 nbits=
-  if nbits > 0 then
-    let carry = bng_shift_left_nat nat1 ofs1 len1 nbits in
-    nat2.(ofs2) <- carry
+  nat2.(ofs2) <- bng_shift_left_nat nat1 ofs1 len1 nbits
 
-let div_nat n nofs nlen d dofs dlen =
-  let shift = num_leading_zero_bits_in_digit d (dofs + dlen - 1) in
-  assert (bng_shift_left_nat n nofs nlen shift = 0);
-  assert (bng_shift_left_nat d dofs dlen shift = 0);
-  if dlen = 1 then
-    n.(nofs) <-
-  ()
+let bng_div_digit_nat
+    natq ofsq
+    nat1 ofs1 len1
+    nat2 ofs2 =
+  if debug then Printf.printf "div_digit_nat\n";
+  print_nat natq ofsq 0;
+  print_nat nat1 ofs1 len1;
+  print_nat nat2 ofs2 0;
+  let d = Int64.of_int nat2.(ofs2) in
+  let rec iter len1 r =
+    if len1 = 0 then r else
+      let num = Int64.of_int nat1.(ofs1 + len1 - 1) in
+      let num = Int64.add num (Int64.shift_left r length_of_digit) in
+      let quo = Int64.div num d in
+      let r = Int64.sub num (Int64.mul d quo) in
+      natq.(ofsq + len1 - 1) <- Int64.to_int quo;
+      iter (len1 - 1) r
+  in
+  let r = iter (len1-1) (Int64.of_int nat1.(ofs1 + len1 - 1)) in
+  if debug then Printf.printf "done\n";
+  print_nat natq ofsq 0;
+  Int64.to_int r
 
 
-let shift_right_nat nat1 ofs1 len1 nat2 ofs2 nbits =
+let bng_shift_right_nat nat1 ofs1 len1 nbits =
   if nbits > 0 then
     let shift2 = length_of_digit - nbits in
     let rec iter carry pos =
@@ -233,8 +246,41 @@ let shift_right_nat nat1 ofs1 len1 nat2 ofs2 nbits =
         iter carry (pos-1)
       else carry
     in
-    let carry = iter 0 (len1 - 1) in
-    nat2.(ofs2) <- carry
+    iter 0 (len1 - 1)
+  else
+    0
+
+let shift_right_nat nat1 ofs1 len1 nat2 ofs2 nbits =
+  nat2.(ofs2) <- bng_shift_right_nat nat1 ofs1 len1 nbits
+
+
+
+let div_digit_nat
+    natq ofsq
+    natr ofsr
+    nat1 ofs1 len1
+    nat2 ofs2 =
+  natr.(ofsr) <-
+    bng_div_digit_nat
+    natq ofsq
+    nat1 ofs1 len1
+    nat2 ofs2;
+  print_nat natr ofsr 0
+
+let div_nat n nofs nlen d dofs dlen =
+  let shift = num_leading_zero_bits_in_digit d (dofs + dlen - 1) in
+  assert (bng_shift_left_nat n nofs nlen shift = 0);
+  assert (bng_shift_left_nat d dofs dlen shift = 0);
+  begin
+  if dlen = 1 then
+    n.(nofs) <- bng_div_digit_nat n (nofs+1) n nofs nlen d 0
+  else
+    ();
+  end;
+  assert (bng_shift_right_nat n nofs dlen shift = 0);
+  assert (bng_shift_right_nat d dofs dlen shift = 0);
+  ()
+
 
 
 let compare_digits_nat nat1 ofs1 nat2 ofs2 =

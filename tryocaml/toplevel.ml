@@ -51,10 +51,19 @@ module Html = Dom_html
 let s = ""
 
 let doc = Html.document
+let window = Html.window
+let loc = Js.Unsafe.variable "location"
+let default_lang = "en"
+
+let registered_buttons = ref []
+
 let button_type = Js.string "button"
 let button txt action =
-  let b = Dom_html.createInput ~_type:button_type doc in
-  b##value <- Js.string txt;
+  let b = Dom_html.createButton ~_type:button_type doc in
+  let id = "button"^txt in
+  b##innerHTML <- Js.string (Tutorial.translate txt);
+  b##id <- Js.string id;
+  registered_buttons := (id, txt) :: !registered_buttons;
   b##className <- Js.string "btn";
   b##onclick <- Dom_html.handler (fun _ -> action (); Js._true);
   b
@@ -206,6 +215,42 @@ let text_of_html html =
   done;
   Buffer.contents b
 
+(* Some useful functions to handle cookies *)
+let find_in good_input input =
+  try
+    let len = String.length good_input in
+    for i = 0 to String.length input - len  do
+      if String.sub input i len = good_input then
+        raise Exit
+    done;
+    false
+  with Exit -> true
+
+let get_cookie () =
+  let reg = Regexp.regexp ";" in
+  Regexp.split reg (Js.to_string doc##cookie)
+
+let get_lang_from_cookie () =
+  let s = doc##cookie in
+  let reg = Regexp.regexp ".*lang=([a-z][a-z]).*" in
+  match Regexp.string_match reg (Js.to_string s) 0 with
+    | None -> default_lang
+    | Some r ->
+      match (Regexp.matched_group r 1) with
+          None -> default_lang
+        | Some s -> s
+
+let set_cookie key value =
+  doc##cookie <- Js.string (Printf.sprintf "%s=%s;" key value)
+
+let set_container_by_id id s =
+  try
+    let container =
+      Js.Opt.get (doc##getElementById (Js.string id))
+        (fun () -> assert false)
+    in
+    container##innerHTML <- Js.string s
+  with _ -> ()
 
 let update_debug_message =
   let b = Buffer.create 100 in
@@ -213,18 +258,10 @@ let update_debug_message =
   function () ->
     let s = Buffer.contents b in
     Buffer.clear b;
-    try
-      let container =
-        Js.Opt.get (doc##getElementById (Js.string "lesson-debug"))
-          (fun () -> assert false)
-      in
-      if s = "" then
-        container##innerHTML <- Js.string ""
-      else
-        container##innerHTML <- Js.string
-          (Printf.sprintf
-             "<div class=\"alert-message block-message warning\">%s</div>" s)
-    with _ -> ()
+    set_container_by_id "lesson-debug"
+      (if s = "" then ""
+       else Printf.sprintf
+          "<div class=\"alert-message block-message warning\">%s</div>" s)
 
 exception End_of_input
 
@@ -313,15 +350,40 @@ let loop s ppf buffer =
 let _ =
   Tutorial.message_fun := (fun s ->
     if  !Tutorial.this_lesson <> 0 then
-    try
-      let container =
-        Js.Opt.get (doc##getElementById (Js.string "lesson-message"))
-          (fun () -> assert false)
-      in
-      container##innerHTML <- Js.string
+      set_container_by_id "lesson-message"
         (Printf.sprintf
            "<div class=\"alert-message block-message success\">%s</div>" s)
-    with _ -> ()
+  )
+
+let to_update = [
+  "main-title", "Try OCaml";
+
+  "short-intro",
+  "OCaml is a strongly typed functional language. It is concise and fast, enabling you to improve your coding efficiency while producing code with higher quality.";
+
+  "text-commands", "Commands";
+  "text-effects", "Effects";
+  "text-enter", "Enter / Return";
+  "text-submit", "Submit code";
+  "text-arrows", "Up / Down";
+  "text-history", "Cycle through history";
+  "text-enter", "Shift + Enter";
+  "text-multiline",  "Multiline edition";
+  "text-lesson-1", "Move to lesson 1";
+  "text-step-1", "Move to step 1 of the current lesson";
+  "text-lessons", "See available lessons";
+  "text-steps",	"See available steps in the current lesson";
+  "text-next", "Move to the next step";
+  "text-back", "Move to the previous step";
+]
+
+let _ =
+  Tutorial.update_lang_fun := (fun _ ->
+    List.iter (fun list ->
+      List.iter (fun (id, s) ->
+        set_container_by_id id (Tutorial.translate s))
+        list)
+      [ to_update; !registered_buttons ]
   )
 
 let run _ =
@@ -346,7 +408,6 @@ let run _ =
           (doc##createTextNode(Js.string (Buffer.contents b)));
         Buffer.clear b)
   in
-
   let textbox = Html.createTextarea doc in
   textbox##value <- Js.string "";
   textbox##id <- Js.string "console";
@@ -371,7 +432,7 @@ let run _ =
     List.iter (fun code ->
       let html =  code##innerHTML in
       let txt = text_of_html (Js.to_string html) in
-      code##title <- Js.string "Click here to execute this code";
+      code##title <- Js.string (Tutorial.translate "Click here to execute this code");
       code##onclick <- Html.handler (fun _ ->
         textbox##value <- Js.string ( txt ^ ";;" );
         execute ();
@@ -409,6 +470,7 @@ let run _ =
            else begin
              execute ();
              textbox##style##height <- tbox_init_size;
+             textbox##value <- Js.string "";
              Js._false
            end
 	 | 38 -> (* UP ARROW key *) begin
@@ -451,25 +513,95 @@ let run _ =
   let send_button = button "Send" (fun () -> execute ()) in
   let clear_button = button "Clear" (fun () -> Tutorial.clear ()) in
   let reset_button = button "Reset" (fun () -> Tutorial.reset ()) in
+  let save_button =  button "Save" (fun () ->
+    let content = Js.to_string output_area##innerHTML in
+    let l = Regexp.split (Regexp.regexp ("\n")) content in
+    let content =
+      Js.string (
+        let l = List.filter (fun x ->
+          try x.[0] = '#' with _ -> false) l in
+        let l = List.map  (fun x -> String.sub x 2 ((String.length x) - 2)) l in
+        String.concat "\n" l)
+    in
+    let uriContent =
+      Js.string ("data:application/octet-stream," ^
+                    (Js.to_string (Js.encodeURI content))) in
+    window##open_(uriContent, Js.string "Try OCaml", Js.null);
+    window##close ()
+  )
+  in
   let buttons =
       Js.Opt.get (doc##getElementById (Js.string "buttons"))
         (fun () -> assert false)
   in
+  (* Choose your language *)
+  let set_lang lang =
+    textbox##value <- Js.string ("set_lang \"" ^ lang ^ "\";;" );
+    execute ()
+  in
+  let form = Html.createDiv doc in
+  let sel = Dom_html.createSelect doc in
+  sel##id <- Js.string "languages";
+  List.iter (fun (_, (lang, _)) ->
+    let opt = Html.createOption doc in
+    Dom.appendChild opt (doc##createTextNode (Js.string lang));
+    sel##add (opt, Js.null);
+  ) Tutorial.langs;
+  sel##onchange <-
+    Html.handler
+    (fun _ ->
+      set_lang (fst (List.nth Tutorial.langs sel##selectedIndex));
+      set_cookie "lang" (Tutorial.lang ());
+      Js._true);
+  Dom.appendChild form sel;
+  let langs = Js.Opt.get (doc##getElementById (Js.string "languages"))
+        (fun () -> assert false)
+  in
+  Dom.appendChild langs form;
+
   Tutorial.set_cols 80;
   Dom.appendChild buttons send_button;
   Dom.appendChild buttons clear_button;
   Dom.appendChild buttons reset_button;
+  Dom.appendChild buttons save_button;
   output_area##scrollTop <- output_area##scrollHeight;
   make_code_clickable ();
-  (* Dom.appendChild output_area doc; *)
   start ppf;
+  (* Setting language *)
+  let set_lang_from_cookie () =
+    (* let lang = get_val_from_cookie ("lang=" ^ (Tutorial.lang ())) in *)
+    let lang = get_lang_from_cookie () in
+    if lang <> "" then set_lang lang
+  in
+  (* Check if language has change in URL *)
+  let url = Js.decodeURI loc##href in
+  let reg = Regexp.regexp ".*lang=([a-z][a-z]).*" in
+  let _ =
+    match Regexp.string_match reg (Js.to_string url) 0 with
+      | None -> set_lang_from_cookie ()
+      | Some r ->
+        match (Regexp.matched_group r 1) with
+            None -> set_lang_from_cookie ()
+          | Some s -> set_lang s; set_cookie "lang" (Tutorial.lang ());
+  in
   Js._false
 
-let _ = Html.window##onload <- Html.handler run; Tutorial.init ()
+let _ =
+  (*  window##alert (Js.string "Starting..."); *)
+  try
+    ignore (run ());
+  (*    window##alert (Js.string "Done."); *)
+  with e ->
+    window##alert (Js.string
+                     (Printf.sprintf "exception %s during init."
+                        (Printexc.to_string e)))
 
 (* Force some dependencies to be linked : *)
 let _ =
+  Tutorial.init ();
   N.init ();
   Big_int.init ();
   Num.init ();
   Big.init ();
+  ()
+

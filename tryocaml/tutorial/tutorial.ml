@@ -1,13 +1,40 @@
 let debug = ref false
 
 let debug_fun = ref (fun _ -> ())
-
+let update_lang_fun = ref (fun _ -> ())
 
 let print_debug s = if !debug then (!debug_fun) s
 
 let message_fun = ref (fun _ -> ())
 
-let current_lang = ref ""
+let default_language = "en"
+let default_translation = Hashtbl.create 13
+let default_language_name = "English"
+let _ = Hashtbl.add default_translation
+  default_language_name default_language_name
+
+let langs = ref [
+  (default_language, (default_language_name, default_translation))
+]
+
+let _ =
+  List.iter (fun (lang, messages) ->
+    let h = Hashtbl.create 13 in
+    List.iter (fun (x,y) -> Hashtbl.add h x y) messages;
+    try
+      let name = Hashtbl.find h default_language_name in
+      langs := ( lang, (name,h) ) :: !langs
+    with Not_found -> ()
+  ) Lessons.langs
+
+let langs = List.sort compare !langs
+
+let current_lang = ref default_language
+let current_translation = ref default_translation
+
+
+let translate s =
+  try Hashtbl.find !current_translation s with Not_found -> s
 
 let this_lesson = ref 0
 let this_lesson_title = ref ""
@@ -39,20 +66,27 @@ let lessons_table =
 
 let user_navigation = ref false
 
+let get_lesson lesson_title lesson_html lesson_langs =
+  try
+    List.assoc !current_lang lesson_langs
+  with Not_found -> (lesson_title, lesson_html)
+
 let update_lesson () =
   match lessons_table.(!this_lesson) with
       None -> ()
     | Some (lesson_title, lesson_html, lesson_langs, steps) ->
-      begin try
-              let (title, html) = List.assoc !current_lang lesson_langs in
-              this_lesson_title := title;
-              this_lesson_html := html;
-        with Not_found ->
-          this_lesson_title := lesson_title;
-          this_lesson_html := lesson_html;
-      end;
+      let (title, html) = get_lesson lesson_title lesson_html lesson_langs in
+      this_lesson_title := title;
+      this_lesson_html := html;
       this_lesson_steps := steps;
       ()
+
+let get_step step_title step_html step_langs =
+  try
+    let (title, html) = List.assoc !current_lang step_langs in
+    (title, html)
+  with Not_found ->
+    (step_title, step_html)
 
 let update_step () =
   if !this_lesson_steps <> [||] then
@@ -60,14 +94,9 @@ let update_step () =
       None -> assert false
     | Some (step_title, step_html, step_langs, step_check) ->
       user_navigation := true;
-      begin try
-              let (title, html) = List.assoc !current_lang step_langs in
-              this_step_title := title;
-              this_step_html := html;
-        with Not_found ->
-          this_step_title := step_title;
-          this_step_html := step_html;
-      end;
+      let (title, html) = get_step step_title step_html step_langs in
+      this_step_title := title;
+      this_step_html := html;
       this_step_check := step_check;
       ()
 
@@ -107,7 +136,11 @@ let check_step ppf input output =
   print_debug (Printf.sprintf  "debug: input=[%s] output=[%s]" (String.escaped input) (String.escaped output));
   if !user_navigation then begin
     user_navigation := false;
-    (!message_fun) (Printf.sprintf "You moved to lesson %d, step %d." !this_lesson !this_step)
+    (!message_fun) (Printf.sprintf "%s %d, %s %d."
+                      (translate  "You moved to lesson")
+                      !this_lesson
+                      (translate "step")
+                      !this_step)
   end else
   let result =
     try (!this_step_check) input output with _ -> false
@@ -118,10 +151,14 @@ let check_step ppf input output =
     step (!this_step + 1);
     user_navigation := false;
     if current_lesson < !this_lesson then
-      (!message_fun) "Congratulations ! You moved to the next lesson."
+      (!message_fun) (Printf.sprintf "%s ! %s."
+                        (translate "Congratulations")
+                        (translate "You moved to the next lesson"))
     else
       if current_step < !this_step then
-        (!message_fun) "Congratulations ! You moved to the next step."
+        (!message_fun) (Printf.sprintf "%s ! %s."
+                          (translate "Congratulations")
+                          (translate "You moved to the next step"))
   end else
     (!message_fun) ""
 
@@ -142,36 +179,41 @@ let set_cols_fun = ref (fun (_ : int) -> ())
 let set_cols i = !set_cols_fun i
 
 let lessons () =
-  Printf.printf "All lessons:\n%!";
+  Printf.printf "%s:\n%!" (translate "All lessons");
   let left = ref true in
   for i = 0 to Array.length lessons_table - 1 do
     match lessons_table.(i) with
         None -> ()
-      | Some (lesson_title, _, _, steps) ->
+      | Some (lesson_title, lesson_html, lesson_langs, steps) ->
+        let (title, html) = get_lesson lesson_title lesson_html lesson_langs in
         if !left then
-          Printf.printf "%2d   %-30s" i lesson_title
+          Printf.printf "%2d   %-30s" i title
         else
-          Printf.printf "%2d   %-30s\n" i lesson_title;
+          Printf.printf "%2d   %-30s\n" i title;
         left := not !left
   done;
   if not !left then Printf.printf "\n%!"
 
 let steps () =
-  Printf.printf "All steps in lesson %d:\n%!" !this_lesson;
+  Printf.printf "%s %d:\n%!" (translate "All steps in lesson")!this_lesson;
   for i = 0 to Array.length !this_lesson_steps - 1 do
     match (!this_lesson_steps).(i) with
         None -> ()
-      | Some (step_title, _, _, _) ->
-        Printf.printf "%d\t%s\n%!" i step_title
+      | Some (step_title, step_html, step_langs, _) ->
+        let (title, html) = get_step step_title step_html step_langs in
+        Printf.printf "%d\t%s\n%!" i title
   done
 
 let use_multiline = ref false
 let multiline flag = use_multiline := flag
 
 let set_lang lang =
+  let (_, translation) = List.assoc lang langs in
   current_lang := lang;
+  current_translation := translation;
   update_lesson ();
-  update_step ()
+  update_step ();
+  !update_lang_fun ()
 
 let lang () = !current_lang
 
