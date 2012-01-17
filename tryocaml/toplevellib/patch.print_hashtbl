@@ -1,6 +1,19 @@
+diff -C 3 -r ocaml-3.12.1-orig/parsing/lexer.mll ocaml-3.12.1/parsing/lexer.mll
+*** ocaml-3.12.1-orig/parsing/lexer.mll	2010-04-08 05:58:41.000000000 +0200
+--- ocaml-3.12.1/parsing/lexer.mll	2012-01-16 14:00:39.737088001 +0100
+***************
+*** 346,351 ****
+--- 346,352 ----
+          token lexbuf
+        }
+    | "#"  { SHARP }
++   | "##" { SHARPJS }
+    | "&"  { AMPERSAND }
+    | "&&" { AMPERAMPER }
+    | "`"  { BACKQUOTE }
 diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.mly
 *** ocaml-3.12.1-orig/parsing/parser.mly	2011-04-29 06:56:21.000000000 +0200
---- ocaml-3.12.1/parsing/parser.mly	2012-01-05 15:38:50.612043006 +0100
+--- ocaml-3.12.1/parsing/parser.mly	2012-01-16 20:42:32.810704998 +0100
 ***************
 *** 83,100 ****
     then String.sub f 1 (String.length f - 1)
@@ -63,6 +76,187 @@ diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.ml
         mkexp(Pexp_apply(mkoperator ("~" ^ name) 1, ["", arg]))
   
 ***************
+*** 208,213 ****
+--- 230,380 ----
+  let pat_of_label lbl =
+    mkpat (Ppat_var(Longident.last lbl))
+  
++ let rnd = Random.State.make [|0x513511d4|]
++ let random_var () =
++   Format.sprintf "a%08Lx" (Random.State.int64 rnd 0x100000000L)
++ 
++ let unescape lab =
++   assert (lab <> "");
++   let lab =
++     if lab.[0] = '_' then String.sub lab 1 (String.length lab - 1) else lab
++   in
++   try
++     let i = String.rindex lab '_' in
++     if i = 0 then raise Not_found;
++     String.sub lab 0 i
++   with Not_found ->
++     lab
++ 
++ let make_js_get expr label =
++   let var = mktyp (Ptyp_var (random_var ())) in
++   let t_var = mktyp ( Ptyp_poly([],mktyp (Ptyp_constr( Ldot(Lident "Js", "gen_prop") ,
++     [mktyp(Ptyp_object [
++       mkfield (Pfield("get",var));
++       mkfield Pfield_var])] ) ))) in
++   let expr = mkexp (Pexp_constraint(
++     expr,
++     Some( mktyp(Ptyp_object [
++       mkfield (Pfield(label,t_var));
++       mkfield Pfield_var]) ),
++     None )) in
++   let call = mkexp(Pexp_apply(
++     mkexp(Pexp_ident(Ldot(Ldot(Lident "Js","Unsafe"), "get"))),
++     [ "", expr;
++       "", mkexp(Pexp_constant(Const_string (unescape label)))] )) in
++   mkexp (Pexp_constraint( call, Some (mktyp (Ptyp_poly([],var))), None ))
++ 
++ let make_js_set expr label param =
++   let var = mktyp (Ptyp_var (random_var ())) in
++   let t_var =
++     mktyp (Ptyp_constr(
++       Ldot(Lident "Js", "gen_prop") ,
++       [mktyp( Ptyp_object [
++ 	mkfield (
++ 	  Pfield(
++ 	    "set",
++ 	    mktyp ( Ptyp_poly(
++ 	      [], mktyp ( Ptyp_arrow (
++ 		"", var, mktyp (Ptyp_constr ((Lident "unit"), []))))))));
++ 	mkfield Pfield_var])] )) in
++   let expr = mkexp (Pexp_constraint(
++     expr,
++     Some( mktyp(Ptyp_object [
++       mkfield (Pfield(label, mktyp ( Ptyp_poly([],t_var) ) ));
++       mkfield Pfield_var]) ),
++     None )) in
++   mkexp(Pexp_apply(
++     mkexp(Pexp_ident(Ldot(Ldot(Lident "Js","Unsafe"), "set"))),
++     [ "", expr;
++       "", mkexp(Pexp_constant(Const_string (unescape label)));
++       "", mkexp (Pexp_constraint( param, Some var, None )) ] ))
++ 
++ let rnd = Random.State.make [|0x513511d4|]
++ let random_var () =
++   Format.sprintf "a%08Lx" (Random.State.int64 rnd 0x100000000L)
++ let fresh_type () = mktyp (Ptyp_var (random_var ()))
++ 
++ let unescape lab =
++   assert (lab <> "");
++   let lab =
++     if lab.[0] = '_' then String.sub lab 1 (String.length lab - 1) else lab
++   in
++   try
++     let i = String.rindex lab '_' in
++     if i = 0 then raise Not_found;
++     String.sub lab 0 i
++   with Not_found ->
++     lab
++ 
++ let js_unsafe s = mkexp(Pexp_ident(Ldot(Ldot(Lident "Js","Unsafe"), s)))
++ 
++ let js_prop_type field_name field_type =
++   mktyp( Ptyp_constr(
++     Ldot( Lident "Js", "gen_prop" ),
++     [mktyp(Ptyp_object [
++       mkfield (Pfield( field_name, field_type ));
++       mkfield Pfield_var ]) ]) )
++ 
++ let js_field_type expr field_name field_type =
++   mkexp( Pexp_constraint(
++     expr,
++     Some( mktyp( Ptyp_constr(
++       Ldot( Lident "Js", "t" ),
++       [mktyp( Ptyp_object [
++ 	mkfield( Pfield( field_name, mktyp( Ptyp_poly( [], field_type ))));
++ 	mkfield Pfield_var ]) ]))),
++     None ))
++ 
++ let make_js_get expr label =
++   let var = fresh_type () in
++   let t_var = js_prop_type "get" var in
++   let expr = js_field_type expr label t_var in
++   let call = mkexp(Pexp_apply(
++     js_unsafe "get",
++     [ "", expr;
++       "", mkexp(Pexp_constant(Const_string (unescape label)))] )) in
++   mkexp( Pexp_constraint( call, Some( mktyp( Ptyp_poly( [], var ))), None ))
++ 
++ let make_js_set expr label param =
++   let var = fresh_type () in
++   let t_var = js_prop_type "set"
++     ( mktyp( Ptyp_poly(
++       [], mktyp( Ptyp_arrow(
++ 	"", var, mktyp (Ptyp_constr ((Lident "unit"), []))) )))) in
++   let expr = js_field_type expr label t_var in
++   mkexp(Pexp_apply(
++     js_unsafe "set",
++     [ "", expr;
++       "", mkexp(Pexp_constant(Const_string (unescape label)));
++       "", mkexp (Pexp_constraint( param, Some var, None )) ] ))
++ 
++ let make_inject (expr,typ) =
++   mkexp(Pexp_apply(
++     js_unsafe "inject",
++     [ "",
++       mkexp (Pexp_constraint(
++ 	expr,
++ 	Some typ,
++ 	None ))]))
++ 
++ let make_js_call expr label args =
++   let args = List.map (fun p -> p,fresh_type ()) args in
++   let ret_type = fresh_type () in
++   let method_type =
++     List.fold_right
++       (fun (_, arg_ty) rem_ty -> mktyp ( Ptyp_arrow ( "", arg_ty, rem_ty )))
++       args
++       ( mktyp ( Ptyp_constr( Ldot( Lident "Js", "meth" ), [ ret_type ] )))
++   in
++   let args = mkexp( Pexp_array( List.map make_inject args )) in
++   let expr = js_field_type expr label method_type in
++   let call = mkexp( Pexp_apply(
++     js_unsafe "meth_call",
++     [ "", expr;
++       "", mkexp( Pexp_constant( Const_string( unescape label )));
++       "", args ] )) in
++   mkexp( Pexp_constraint( call, Some ret_type, None ))
++ 
+  %}
+  
+  /* Tokens */
+***************
+*** 305,310 ****
+--- 472,478 ----
+  %token RPAREN
+  %token SEMI
+  %token SEMISEMI
++ %token SHARPJS
+  %token SHARP
+  %token SIG
+  %token STAR
+***************
+*** 376,382 ****
+  %nonassoc prec_constant_constructor     /* cf. simple_expr (C versus C x) */
+  %nonassoc prec_constr_appl              /* above AS BAR COLONCOLON COMMA */
+  %nonassoc below_SHARP
+! %nonassoc SHARP                         /* simple_expr/toplevel_directive */
+  %nonassoc below_DOT
+  %nonassoc DOT
+  /* Finally, the first tokens of simple_expr are above everything else. */
+--- 544,550 ----
+  %nonassoc prec_constant_constructor     /* cf. simple_expr (C versus C x) */
+  %nonassoc prec_constr_appl              /* above AS BAR COLONCOLON COMMA */
+  %nonassoc below_SHARP
+! %nonassoc SHARP SHARPJS                 /* simple_expr/toplevel_directive */
+  %nonassoc below_DOT
+  %nonassoc DOT
+  /* Finally, the first tokens of simple_expr are above everything else. */
+***************
 *** 956,962 ****
       val_longident
         { mkexp(Pexp_ident $1) }
@@ -71,7 +265,7 @@ diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.ml
     | constr_longident %prec prec_constant_constructor
         { mkexp(Pexp_construct($1, None, false)) }
     | name_tag %prec prec_constant_constructor
---- 978,984 ----
+--- 1124,1130 ----
       val_longident
         { mkexp(Pexp_ident $1) }
     | constant
@@ -79,6 +273,25 @@ diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.ml
     | constr_longident %prec prec_constant_constructor
         { mkexp(Pexp_construct($1, None, false)) }
     | name_tag %prec prec_constant_constructor
+***************
+*** 1021,1026 ****
+--- 1189,1204 ----
+        { mkexp(Pexp_override []) }
+    | simple_expr SHARP label
+        { mkexp(Pexp_send($1, $3)) }
++   | simple_expr SHARPJS label
++       { make_js_get $1 $3 }
++   | simple_expr SHARPJS label LESSMINUS expr
++       { make_js_set $1 $3 $5 }
++   | simple_expr SHARPJS label LPAREN expr_comma_list RPAREN
++       { make_js_call $1 $3 (List.rev $5) }
++   | simple_expr SHARPJS label LPAREN expr RPAREN
++       { make_js_call $1 $3 [$5] }
++   | simple_expr SHARPJS label LPAREN RPAREN
++       { make_js_call $1 $3 [] }
+    | LPAREN MODULE module_expr COLON package_type RPAREN
+        { mkexp (Pexp_pack ($3, $5)) }
+    | LPAREN MODULE module_expr COLON error
 diff -C 3 -r ocaml-3.12.1-orig/toplevel/genprintval.ml ocaml-3.12.1/toplevel/genprintval.ml
 *** ocaml-3.12.1-orig/toplevel/genprintval.ml	2009-10-26 11:53:16.000000000 +0100
 --- ocaml-3.12.1/toplevel/genprintval.ml	2012-01-03 14:11:29.453539000 +0100
