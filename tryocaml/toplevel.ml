@@ -535,10 +535,6 @@ let run _ =
         (fun () -> assert false)
   in
   (* Choose your language *)
-  let set_lang lang =
-    textbox##value <- Js.string ("set_lang \"" ^ lang ^ "\";;" );
-    execute ()
-  in
   let form = Html.createDiv doc in
   let sel = Dom_html.createSelect doc in
   sel##id <- Js.string "languages";
@@ -550,7 +546,7 @@ let run _ =
   sel##onchange <-
     Html.handler
     (fun _ ->
-      set_lang (fst (List.nth Tutorial.langs sel##selectedIndex));
+      Tutorial.set_lang (fst (List.nth Tutorial.langs sel##selectedIndex));
       set_cookie "lang" (Tutorial.lang ());
       Js._true);
   Dom.appendChild form sel;
@@ -570,7 +566,7 @@ let run _ =
   (* Setting language *)
   let set_lang_from_cookie () =
     let lang = get_lang_from_cookie () in
-    if lang <> "" then set_lang lang
+    if lang <> "" then Tutorial.set_lang lang
   in
   (* Check if language has change in URL *)
   let url = Js.decodeURI loc##href in
@@ -581,7 +577,7 @@ let run _ =
       | Some r ->
         match (Regexp.matched_group r 1) with
             None -> set_lang_from_cookie ()
-          | Some s -> set_lang s; set_cookie "lang" (Tutorial.lang ());
+          | Some s -> Tutorial.set_lang s; set_cookie "lang" (Tutorial.lang ());
   in
   Js._false
 
