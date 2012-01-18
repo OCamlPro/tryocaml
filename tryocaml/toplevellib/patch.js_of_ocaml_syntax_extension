@@ -1,0 +1,151 @@
+86,107d85
+< let pexp_constant cst =
+<   if !Clflags.wrap_constants then
+<     match cst with
+<         Const_string _
+<       | Const_char _ ->
+<         Pexp_constant cst
+<       | _ ->
+<         let name =
+<           match cst with
+<               Const_string _
+<             | Const_char _ -> assert false
+<             | Const_nativeint _ -> "nativeint"
+<             | Const_int64 _ -> "int64"
+<             | Const_int32 _ -> "int32"
+<             | Const_float _ -> "float"
+<             | Const_int _ -> "int"
+<         in
+<         Pexp_apply(ghexp(Pexp_ident (Lident (Printf.sprintf "%s_of_%s" name name))),
+<                    ["", mkexp (Pexp_constant cst)])
+<   else
+<     Pexp_constant cst
+< 
+111c89
+<       mkexp(pexp_constant(Const_int(-n)))
+---
+>       mkexp(Pexp_constant(Const_int(-n)))
+113c91
+<       mkexp(pexp_constant(Const_int32(Int32.neg n)))
+---
+>       mkexp(Pexp_constant(Const_int32(Int32.neg n)))
+115c93
+<       mkexp(pexp_constant(Const_int64(Int64.neg n)))
+---
+>       mkexp(Pexp_constant(Const_int64(Int64.neg n)))
+117c95
+<       mkexp(pexp_constant(Const_nativeint(Nativeint.neg n)))
+---
+>       mkexp(Pexp_constant(Const_nativeint(Nativeint.neg n)))
+119c97
+<       mkexp(pexp_constant(Const_float(neg_float_string f)))
+---
+>       mkexp(Pexp_constant(Const_float(neg_float_string f)))
+233,317d210
+< let rnd = Random.State.make [|0x513511d4|]
+< let random_var () =
+<   Format.sprintf "a%08Lx" (Random.State.int64 rnd 0x100000000L)
+< let fresh_type () = mktyp (Ptyp_var (random_var ()))
+< 
+< let unescape lab =
+<   assert (lab <> "");
+<   let lab =
+<     if lab.[0] = '_' then String.sub lab 1 (String.length lab - 1) else lab
+<   in
+<   try
+<     let i = String.rindex lab '_' in
+<     if i = 0 then raise Not_found;
+<     String.sub lab 0 i
+<   with Not_found ->
+<     lab
+< 
+< let js_unsafe s = mkexp(Pexp_ident(Ldot(Ldot(Lident "Js","Unsafe"), s)))
+< 
+< let js_prop_type field_name field_type =
+<   mktyp( Ptyp_constr(
+<     Ldot( Lident "Js", "gen_prop" ),
+<     [mktyp(Ptyp_object [
+<       mkfield (Pfield( field_name, mktyp (Ptyp_poly ([], field_type)) ));
+<       mkfield Pfield_var ]) ]) )
+< 
+< let js_field_type expr field_name field_type =
+<   mkexp( Pexp_constraint(
+<     expr,
+<     Some( mktyp( Ptyp_constr(
+<       Ldot( Lident "Js", "t" ),
+<       [mktyp( Ptyp_object [
+< 	mkfield( Pfield( field_name, mktyp( Ptyp_poly( [], field_type ))));
+< 	mkfield Pfield_var ]) ]))),
+<     None ))
+< 
+< let make_js_get expr label =
+<   let var = fresh_type () in
+<   let t_var = js_prop_type "get" var in
+<   let expr = js_field_type expr label t_var in
+<   let call = mkexp(Pexp_apply(
+<     js_unsafe "get",
+<     [ "", expr;
+<       "", mkexp(Pexp_constant(Const_string (unescape label)))] )) in
+<   mkexp( Pexp_constraint( call, Some var, None ))
+< 
+< let make_js_set expr label param =
+<   let var = fresh_type () in
+<   let t_var = js_prop_type "set"
+<     ( mktyp( Ptyp_arrow(
+< 	"", var, mktyp (Ptyp_constr ((Lident "unit"), []))) )) in
+<   let expr = js_field_type expr label t_var in
+<   mkexp(Pexp_apply(
+<     js_unsafe "set",
+<     [ "", expr;
+<       "", mkexp(Pexp_constant(Const_string (unescape label)));
+<       "", mkexp (Pexp_constraint( param, Some var, None )) ] ))
+< 
+< let make_inject (expr,typ) =
+<   mkexp(Pexp_apply(
+<     js_unsafe "inject",
+<     [ "",
+<       mkexp (Pexp_constraint(
+< 	expr,
+< 	Some typ,
+< 	None ))]))
+< 
+< let make_js_call expr label args =
+<   let args = List.map (fun p -> p,fresh_type ()) args in
+<   let ret_type = fresh_type () in
+<   let method_type =
+<     List.fold_right
+<       (fun (_, arg_ty) rem_ty -> mktyp ( Ptyp_arrow ( "", arg_ty, rem_ty )))
+<       args
+<       ( mktyp ( Ptyp_constr( Ldot( Lident "Js", "meth" ), [ ret_type ] )))
+<   in
+<   let args = mkexp( Pexp_array( List.map make_inject args )) in
+<   let expr = js_field_type expr label method_type in
+<   let call = mkexp( Pexp_apply(
+<     js_unsafe "meth_call",
+<     [ "", expr;
+<       "", mkexp( Pexp_constant( Const_string( unescape label )));
+<       "", args ] )) in
+<   mkexp( Pexp_constraint( call, Some ret_type, None ))
+< 
+415d307
+< %token SHARPJS
+487,488c379
+< %nonassoc SHARP                 /* simple_expr/toplevel_directive */
+< %left SHARPJS
+---
+> %nonassoc SHARP                         /* simple_expr/toplevel_directive */
+1068c959
+<       { mkexp(pexp_constant $1) }
+---
+>       { mkexp(Pexp_constant $1) }
+1133,1142d1023
+< 
+<   | simple_expr SHARPJS label
+<       { make_js_get $1 $3 }
+<   | simple_expr SHARPJS label LESSMINUS expr
+<       { make_js_set $1 $3 $5 }
+<   | simple_expr SHARPJS label LPAREN expr_comma_list RPAREN
+<       { make_js_call $1 $3 (List.rev $5) }
+<   | simple_expr SHARPJS label LPAREN expr RPAREN
+<       { make_js_call $1 $3 [$5] }
+< 
