@@ -67,21 +67,7 @@ STDLIB_MODULES=\
   stringLabels \
   weak \
   n \
-  css \
-  dom \
-  dom_events \
-  dom_html \
-  event_arrows \
-  file \
-  firebug \
-  form \
-  js \
-  json \
-  deriving_Json \
-  lwt_js \
   regexp \
-  url \
-  xmlHttpRequest \
   tutorial \
   toplevel
 
