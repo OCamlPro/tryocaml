@@ -416,6 +416,8 @@ let run _ =
     Js.Opt.get (doc##getElementById (Js.string "toplevel-container"))
       (fun () -> assert false)
   in
+  container##onclick <- Dom_html.handler (fun _ ->     
+    textbox##focus();  textbox##select();  Js._true);
   let history = ref [] in
   let history_bckwrd = ref [] in
   let history_frwrd = ref [] in
@@ -567,7 +569,6 @@ let run _ =
   start ppf;
   (* Setting language *)
   let set_lang_from_cookie () =
-    (* let lang = get_val_from_cookie ("lang=" ^ (Tutorial.lang ())) in *)
     let lang = get_lang_from_cookie () in
     if lang <> "" then set_lang lang
   in
