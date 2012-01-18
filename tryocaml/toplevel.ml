@@ -241,14 +241,32 @@ let get_lang_from_cookie () =
 let set_cookie key value =
   doc##cookie <- Js.string (Printf.sprintf "%s=%s;" key value)
 
-let set_container_by_id id s =
-  try
+let set_by_id id s =
     let container =
       Js.Opt.get (doc##getElementById (Js.string id))
         (fun () -> assert false)
     in
     container##innerHTML <- Js.string s
+
+let set_container_by_id id s =
+  try
+    set_by_id id s
   with _ -> ()
+
+
+
+let get_by_id id =
+  let container =
+    Js.Opt.get (doc##getElementById (Js.string id))
+      (fun () -> assert false)
+  in
+  Js.to_string container##innerHTML
+
+let get_by_name id =
+  let container =
+    List.hd (Dom.list_of_nodeList (doc##getElementsByTagName (Js.string id)))
+  in
+  Js.to_string container##innerHTML
 
 let update_debug_message =
   let b = Buffer.create 100 in
@@ -298,8 +316,13 @@ let loop s ppf buffer =
         let phr = try
                     !Toploop.parse_toplevel_phrase lb
           with End_of_file -> raise End_of_input
+            | e ->
+              let input = string_of_char_list (List.rev !output) in
+              Tutorial.print_debug (Printf.sprintf "debug: input = [%s]"  (String.escaped input));
+              raise e
         in
         let input = string_of_char_list (List.rev !output) in
+        Tutorial.print_debug (Printf.sprintf "debug: input = [%s]"  (String.escaped input));
         if !Tutorial.use_multiline then begin
           match !output with
               ';' :: ';' :: _ -> output := []
@@ -332,7 +355,6 @@ let loop s ppf buffer =
             Errors.report_error ppf x
           end
       end;
-      update_debug_message ();
     done
     with End_of_input ->
       match !output with
@@ -416,7 +438,7 @@ let run _ =
     Js.Opt.get (doc##getElementById (Js.string "toplevel-container"))
       (fun () -> assert false)
   in
-  container##onclick <- Dom_html.handler (fun _ ->     
+  container##onclick <- Dom_html.handler (fun _ ->
     textbox##focus();  textbox##select();  Js._true);
   let history = ref [] in
   let history_bckwrd = ref [] in
@@ -445,7 +467,8 @@ let run _ =
     history_bckwrd := !history;
     history_frwrd := [];
     textbox##value <- Js.string "";
-    loop s ppf buffer;
+    (try loop s ppf buffer with _ -> ());
+    update_debug_message ();
     make_code_clickable ();
     textbox##focus();
     container##scrollTop <- container##scrollHeight;
@@ -581,7 +604,7 @@ let run _ =
   in
   Js._false
 
-let _ =
+let main () =
   (*  window##alert (Js.string "Starting..."); *)
   try
     ignore (run ());
