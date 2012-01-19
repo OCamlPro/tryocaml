@@ -4,9 +4,10 @@ INCLUDE_TOPLEVELLIB= -I toplevellib
 COMPILER=js_of_ocaml
 LIBNAME=js_of_ocaml
 NAME=toplevel
-OBJS=tutorial/tutorial.cma toplevel.cmo
+CMIS=toplevel.cmi
+OBJS=tutorial/tutorial.cma toplevel.cmo topmain.cmo
 JS=js_of_ocaml-patched
-INCLUDES= -I $(JS)/lib -I $(JS)/compiler -I tutorial $(INCLUDE_TOPLEVELLIB)
+INCLUDES= -I $(JS)/lib -I $(JS)/compiler -I tutorial $(INCLUDE_TOPLEVELLIB) -I .
 
 all: compiler tuto $(NAME).js
 
@@ -81,28 +82,28 @@ STDLIB_MODULES=\
   regexp \
   url \
   xmlHttpRequest \
-  tutorial
+  tutorial \
+  toplevel
 
 PERVASIVES=$(STDLIB_MODULES) outcometree topdirs toploop
 
 $(NAME).js: $(NAME).byte $(JSFILES) toplevellib/toplevellib.cma
 	$(COMP) $(INCLUDES) -toplevel -linkall -noinline -noruntime $(JSFILES) $(NAME).byte $(OPTIONS)
 
-$(NAME).byte: $(OBJS) $(JS)/compiler/compiler.cma toplevellib/toplevellib.cma
+$(NAME).byte: $(CMIS) $(OBJS) $(JS)/compiler/compiler.cma toplevellib/toplevellib.cma
 	$(OCAMLC) $(INCLUDES) -linkall -package str -linkpkg -o $@.tmp $(STDLIB) $(OBJS)
 	$(EXPUNGE) $@.tmp $@ $(PERVASIVES)
 	rm -f $@.tmp
 
 %.cmo: %.ml
 	$(OCAMLC) $(INCLUDES) -c $<
+%.cmi: %.mli
+	$(OCAMLC) $(INCLUDES) -c $<
 
 %.cmi:$(JS)/compiler/compiler.cma
 
 $(JS)/compiler/compiler.cma:
 	$(MAKE) -C $(JS)/compiler compiler.cma
-
-errors.cmi: errors.mli
-	$(OCAMLC) $(INCLUDES) -c $<
 
 tuto:
 	$(MAKE) -C tutorial all
