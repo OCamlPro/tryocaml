@@ -238,8 +238,32 @@ let get_lang_from_cookie () =
           None -> default_lang
         | Some s -> s
 
+let get_lesson_from_cookie () =
+  let s = doc##cookie in
+  let reg = Regexp.regexp ".*lesson=([0-9]+).*" in
+  match Regexp.string_match reg (Js.to_string s) 0 with
+    | None -> 0
+    | Some r ->
+      match (Regexp.matched_group r 1) with
+          None -> 0
+        | Some s -> int_of_string s
+
+let get_step_from_cookie () =
+  let s = doc##cookie in
+  let reg = Regexp.regexp ".*step=([0-9]+).*" in
+  match Regexp.string_match reg (Js.to_string s) 0 with
+    | None -> 0
+    | Some r ->
+      match (Regexp.matched_group r 1) with
+          None -> 0
+        | Some s -> int_of_string s
+
 let set_cookie key value =
-  doc##cookie <- Js.string (Printf.sprintf "%s=%s;" key value)
+  let today = jsnew Js.date_now () in
+  let expire_time = today##setTime 
+    ((Js.to_float today##getTime()) *. 60. *. 60. *. 24. *. 365.) in
+  doc##cookie <- Js.string (Printf.sprintf "%s=%s;expires=%f" key value 
+                              (Js.to_float expire_time))
 
 let set_by_id id s =
     let container =
@@ -591,6 +615,7 @@ let run _ =
     let lang = get_lang_from_cookie () in
     if lang <> "" then Tutorial.set_lang lang
   in
+ 
   (* Check if language has change in URL *)
   let url = Js.decodeURI loc##href in
   let reg = Regexp.regexp ".*lang=([a-z][a-z]).*" in
@@ -598,12 +623,49 @@ let run _ =
     match Regexp.string_match reg (Js.to_string url) 0 with
       | None -> set_lang_from_cookie ()
       | Some r ->
-        match (Regexp.matched_group r 1) with
+        match Regexp.matched_group r 1 with
             None -> set_lang_from_cookie ()
-          | Some s -> Tutorial.set_lang s; set_cookie "lang" (Tutorial.lang ());
+          | Some s -> 
+            Tutorial.set_lang s; 
+            set_cookie "lang" (Tutorial.lang ());
   in
-  Js._false
-
+  (* Choice of lesson and step with URL *)  
+  let update_lesson_step lesson step =
+    Tutorial.lesson lesson;
+    Tutorial.step step;
+    update_lesson_number ();
+    update_lesson_step_number ();
+    update_lesson_text ()
+  in
+  let set_lesson_step_from_cookie () =
+    let lesson = get_lesson_from_cookie () in
+    let step = get_step_from_cookie () in
+    update_lesson_step lesson step
+  in
+  let reg_lesson = Regexp.regexp ".*lesson=([0-9]+).*" in
+  let reg_step = Regexp.regexp ".*step=([0-9]+).*" in
+  let _ =
+    match Regexp.string_match reg_lesson (Js.to_string url) 0 with
+      | None -> ()
+      | Some r ->
+        match Regexp.matched_group r 1 with
+            None -> ()
+          | Some s -> 
+            set_cookie "lesson" s;
+            Tutorial.lesson (int_of_string s) in
+  let _ =
+    match Regexp.string_match reg_step (Js.to_string url) 0 with
+      | None -> set_lesson_step_from_cookie ()
+      | Some r ->
+        match Regexp.matched_group r 1 with
+            None -> set_lesson_step_from_cookie ()
+          | Some s -> 
+            set_cookie "step" s;
+            Tutorial.step (int_of_string s)
+  in
+  update_lesson_step !Tutorial.this_lesson !Tutorial.this_step;
+   Js._false
+    
 let main () =
   (*  window##alert (Js.string "Starting..."); *)
   try
@@ -617,6 +679,4 @@ let main () =
 (* Force some dependencies to be linked : *)
 let _ =
   Tutorial.init ();
-  N.init ();
   ()
-
