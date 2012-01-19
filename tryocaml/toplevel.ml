@@ -260,9 +260,9 @@ let get_step_from_cookie () =
 
 let set_cookie key value =
   let today = jsnew Js.date_now () in
-  let expire_time = today##setTime 
+  let expire_time = today##setTime
     ((Js.to_float today##getTime()) *. 60. *. 60. *. 24. *. 365.) in
-  doc##cookie <- Js.string (Printf.sprintf "%s=%s;expires=%f" key value 
+  doc##cookie <- Js.string (Printf.sprintf "%s=%s;expires=%f" key value
                               (Js.to_float expire_time))
 
 let set_by_id id s =
@@ -411,7 +411,7 @@ let to_update = [
   "text-submit", "Submit code";
   "text-arrows", "Up / Down";
   "text-history", "Cycle through history";
-  "text-enter", "Shift + Enter";
+  "text-newline", "Shift + Enter";
   "text-multiline",  "Multiline edition";
   "text-lesson-1", "Move to lesson 1";
   "text-step-1", "Move to step 1 of the current lesson";
@@ -615,7 +615,7 @@ let run _ =
     let lang = get_lang_from_cookie () in
     if lang <> "" then Tutorial.set_lang lang
   in
- 
+
   (* Check if language has change in URL *)
   let url = Js.decodeURI loc##href in
   let reg = Regexp.regexp ".*lang=([a-z][a-z]).*" in
@@ -625,11 +625,11 @@ let run _ =
       | Some r ->
         match Regexp.matched_group r 1 with
             None -> set_lang_from_cookie ()
-          | Some s -> 
-            Tutorial.set_lang s; 
+          | Some s ->
+            Tutorial.set_lang s;
             set_cookie "lang" (Tutorial.lang ());
   in
-  (* Choice of lesson and step with URL *)  
+  (* Choice of lesson and step with URL *)
   let update_lesson_step lesson step =
     Tutorial.lesson lesson;
     Tutorial.step step;
@@ -650,7 +650,7 @@ let run _ =
       | Some r ->
         match Regexp.matched_group r 1 with
             None -> ()
-          | Some s -> 
+          | Some s ->
             set_cookie "lesson" s;
             Tutorial.lesson (int_of_string s) in
   let _ =
@@ -659,13 +659,13 @@ let run _ =
       | Some r ->
         match Regexp.matched_group r 1 with
             None -> set_lesson_step_from_cookie ()
-          | Some s -> 
+          | Some s ->
             set_cookie "step" s;
             Tutorial.step (int_of_string s)
   in
   update_lesson_step !Tutorial.this_lesson !Tutorial.this_step;
    Js._false
-    
+
 let main () =
   (*  window##alert (Js.string "Starting..."); *)
   try
