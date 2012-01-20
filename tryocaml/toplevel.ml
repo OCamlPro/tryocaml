@@ -430,6 +430,34 @@ let _ =
       [ to_update; !registered_buttons ]
   )
 
+let get_history_size () =
+  match Js.Optdef.to_option
+    (window##localStorage##getItem(Js.string "history last")) with
+      | None -> 0
+      | Some s -> try int_of_string (Js.to_string s) with _ -> 0
+
+let set_history_size i =
+  window##localStorage##setItem(Js.string "history last",
+                                Js.string (string_of_int i))
+
+let get_history () =
+  let size = get_history_size () in
+  let h = Array.init size
+    (fun i -> Js.Optdef.get
+      (window##localStorage##getItem(
+        Js.string (Printf.sprintf "history %i" i)))
+      (fun () -> failwith "no history item")) in
+  Array.to_list h
+
+let add_history s =
+  try
+    let size = get_history_size () in
+    window##localStorage##setItem(
+      Js.string (Printf.sprintf "history %i" size), s);
+    set_history_size (size+1);
+  with
+    | _ -> Firebug.console##warn(Js.string "can't set history")
+
 let run _ =
   let top =
     Js.Opt.get (doc##getElementById (Js.string "toplevel"))
@@ -464,8 +492,8 @@ let run _ =
   in
   container##onclick <- Dom_html.handler (fun _ ->
     textbox##focus();  textbox##select();  Js._true);
-  let history = ref [] in
-  let history_bckwrd = ref [] in
+  let history = ref (get_history ()) in
+  let history_bckwrd = ref !history in
   let history_frwrd = ref [] in
 
   let rec make_code_clickable () =
@@ -487,7 +515,11 @@ let run _ =
 
   and execute () =
     let s = Js.to_string textbox##value in
-    if s <> "" then history := Js.string s :: !history;
+    if s <> "" then
+      begin
+        history := Js.string s :: !history;
+        add_history (Js.string s);
+      end;
     history_bckwrd := !history;
     history_frwrd := [];
     textbox##value <- Js.string "";
