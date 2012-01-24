@@ -51,10 +51,19 @@ module Html = Dom_html
 let s = ""
 
 let doc = Html.document
+let window = Html.window
+let loc = Js.Unsafe.variable "location"
+let default_lang = "en"
+
+let registered_buttons = ref []
+
 let button_type = Js.string "button"
 let button txt action =
-  let b = Dom_html.createInput ~_type:button_type doc in
-  b##value <- Js.string txt;
+  let b = Dom_html.createButton ~_type:button_type doc in
+  let id = "button"^txt in
+  b##innerHTML <- Js.string (Tutorial.translate txt);
+  b##id <- Js.string id;
+  registered_buttons := (id, txt) :: !registered_buttons;
   b##className <- Js.string "btn";
   b##onclick <- Dom_html.handler (fun _ -> action (); Js._true);
   b
@@ -80,7 +89,7 @@ let start ppf =
   exec ppf "#install_printer Toploop.print_queue";
   exec ppf "#install_printer Toploop.print_stack";
   exec ppf "#install_printer Toploop.print_lazy";
-  exec ppf "#install_printer N.print";  
+  exec ppf "#install_printer N.print";
   ()
 
 let at_bol = ref true
@@ -204,6 +213,84 @@ let text_of_html html =
   done;
   Buffer.contents b
 
+(* Some useful functions to handle cookies *)
+let find_in good_input input =
+  try
+    let len = String.length good_input in
+    for i = 0 to String.length input - len  do
+      if String.sub input i len = good_input then
+        raise Exit
+    done;
+    false
+  with Exit -> true
+
+let get_cookie () =
+  let reg = Regexp.regexp ";" in
+  Regexp.split reg (Js.to_string doc##cookie)
+
+let get_lang_from_cookie () =
+  let s = doc##cookie in
+  let reg = Regexp.regexp ".*lang=([a-z][a-z]).*" in
+  match Regexp.string_match reg (Js.to_string s) 0 with
+    | None -> default_lang
+    | Some r ->
+      match (Regexp.matched_group r 1) with
+          None -> default_lang
+        | Some s -> s
+
+let get_lesson_from_cookie () =
+  let s = doc##cookie in
+  let reg = Regexp.regexp ".*lesson=([0-9]+).*" in
+  match Regexp.string_match reg (Js.to_string s) 0 with
+    | None -> 0
+    | Some r ->
+      match (Regexp.matched_group r 1) with
+          None -> 0
+        | Some s -> int_of_string s
+
+let get_step_from_cookie () =
+  let s = doc##cookie in
+  let reg = Regexp.regexp ".*step=([0-9]+).*" in
+  match Regexp.string_match reg (Js.to_string s) 0 with
+    | None -> 0
+    | Some r ->
+      match (Regexp.matched_group r 1) with
+          None -> 0
+        | Some s -> int_of_string s
+
+let set_cookie key value =
+  let today = jsnew Js.date_now () in
+  let expire_time = today##setTime
+    ((Js.to_float today##getTime()) *. 60. *. 60. *. 24. *. 365.) in
+  doc##cookie <- Js.string (Printf.sprintf "%s=%s;expires=%f" key value
+                              (Js.to_float expire_time))
+
+let set_by_id id s =
+    let container =
+      Js.Opt.get (doc##getElementById (Js.string id))
+        (fun () -> assert false)
+    in
+    container##innerHTML <- Js.string s
+
+let set_container_by_id id s =
+  try
+    set_by_id id s
+  with _ -> ()
+
+
+
+let get_by_id id =
+  let container =
+    Js.Opt.get (doc##getElementById (Js.string id))
+      (fun () -> assert false)
+  in
+  Js.to_string container##innerHTML
+
+let get_by_name id =
+  let container =
+    List.hd (Dom.list_of_nodeList (doc##getElementsByTagName (Js.string id)))
+  in
+  Js.to_string container##innerHTML
 
 let update_debug_message =
   let b = Buffer.create 100 in
@@ -211,18 +298,10 @@ let update_debug_message =
   function () ->
     let s = Buffer.contents b in
     Buffer.clear b;
-    try
-      let container =
-        Js.Opt.get (doc##getElementById (Js.string "lesson-debug"))
-          (fun () -> assert false)
-      in
-      if s = "" then
-        container##innerHTML <- Js.string ""
-      else
-        container##innerHTML <- Js.string
-          (Printf.sprintf
-             "<div class=\"alert-message block-message warning\">%s</div>" s)
-    with _ -> ()
+    set_container_by_id "lesson-debug"
+      (if s = "" then ""
+       else Printf.sprintf
+          "<div class=\"alert-message block-message warning\">%s</div>" s)
 
 exception End_of_input
 
@@ -261,8 +340,13 @@ let loop s ppf buffer =
         let phr = try
                     !Toploop.parse_toplevel_phrase lb
           with End_of_file -> raise End_of_input
+            | e ->
+              let input = string_of_char_list (List.rev !output) in
+              Tutorial.print_debug (Printf.sprintf "debug: input = [%s]"  (String.escaped input));
+              raise e
         in
         let input = string_of_char_list (List.rev !output) in
+        Tutorial.print_debug (Printf.sprintf "debug: input = [%s]"  (String.escaped input));
         if !Tutorial.use_multiline then begin
           match !output with
               ';' :: ';' :: _ -> output := []
@@ -295,7 +379,6 @@ let loop s ppf buffer =
             Errors.report_error ppf x
           end
       end;
-      update_debug_message ();
     done
     with End_of_input ->
       match !output with
@@ -311,17 +394,70 @@ let loop s ppf buffer =
 let _ =
   Tutorial.message_fun := (fun s ->
     if  !Tutorial.this_lesson <> 0 then
-    try
-      let container =
-        Js.Opt.get (doc##getElementById (Js.string "lesson-message"))
-          (fun () -> assert false)
-      in
-      container##innerHTML <- Js.string
+      set_container_by_id "lesson-message"
         (Printf.sprintf
            "<div class=\"alert-message block-message success\">%s</div>" s)
-    with _ -> ()
   )
-  
+
+let to_update = [
+  "main-title", "Try OCaml";
+
+  "short-intro",
+  "OCaml is a strongly typed functional language. It is concise and fast, enabling you to improve your coding efficiency while producing code with higher quality.";
+
+  "text-commands", "Commands";
+  "text-effects", "Effects";
+  "text-enter", "Enter / Return";
+  "text-submit", "Submit code";
+  "text-arrows", "Up / Down";
+  "text-history", "Cycle through history";
+  "text-newline", "Shift + Enter";
+  "text-multiline",  "Multiline edition";
+  "text-lesson-1", "Move to lesson 1";
+  "text-step-1", "Move to step 1 of the current lesson";
+  "text-lessons", "See available lessons";
+  "text-steps",	"See available steps in the current lesson";
+  "text-next", "Move to the next step";
+  "text-back", "Move to the previous step";
+]
+
+let _ =
+  Tutorial.update_lang_fun := (fun _ ->
+    List.iter (fun list ->
+      List.iter (fun (id, s) ->
+        set_container_by_id id (Tutorial.translate s))
+        list)
+      [ to_update; !registered_buttons ]
+  )
+
+let get_history_size () =
+  match Js.Optdef.to_option
+    (window##localStorage##getItem(Js.string "history last")) with
+      | None -> 0
+      | Some s -> try int_of_string (Js.to_string s) with _ -> 0
+
+let set_history_size i =
+  window##localStorage##setItem(Js.string "history last",
+                                Js.string (string_of_int i))
+
+let get_history () =
+  let size = get_history_size () in
+  let h = Array.init size
+    (fun i -> Js.Optdef.get
+      (window##localStorage##getItem(
+        Js.string (Printf.sprintf "history %i" i)))
+      (fun () -> failwith "no history item")) in
+  Array.to_list h
+
+let add_history s =
+  try
+    let size = get_history_size () in
+    window##localStorage##setItem(
+      Js.string (Printf.sprintf "history %i" size), s);
+    set_history_size (size+1);
+  with
+    | _ -> Firebug.console##warn(Js.string "can't set history")
+
 let run _ =
   let top =
     Js.Opt.get (doc##getElementById (Js.string "toplevel"))
@@ -346,7 +482,7 @@ let run _ =
   in
   let textbox = Html.createTextarea doc in
   textbox##value <- Js.string "";
-  textbox##id <- Js.string "console"; 
+  textbox##id <- Js.string "console";
   Dom.appendChild top textbox;
   textbox##focus();
   textbox##select();
@@ -354,8 +490,10 @@ let run _ =
     Js.Opt.get (doc##getElementById (Js.string "toplevel-container"))
       (fun () -> assert false)
   in
-  let history = ref [] in
-  let history_bckwrd = ref [] in
+  container##onclick <- Dom_html.handler (fun _ ->
+    textbox##focus();  textbox##select();  Js._true);
+  let history = ref (get_history ()) in
+  let history_bckwrd = ref !history in
   let history_frwrd = ref [] in
 
   let rec make_code_clickable () =
@@ -368,7 +506,7 @@ let run _ =
     List.iter (fun code ->
       let html =  code##innerHTML in
       let txt = text_of_html (Js.to_string html) in
-      code##title <- Js.string "Click here to execute this code";
+      code##title <- Js.string (Tutorial.translate "Click here to execute this code");
       code##onclick <- Html.handler (fun _ ->
         textbox##value <- Js.string ( txt ^ ";;" );
         execute ();
@@ -377,11 +515,16 @@ let run _ =
 
   and execute () =
     let s = Js.to_string textbox##value in
-    if s <> "" then history := Js.string s :: !history;
+    if s <> "" then
+      begin
+        history := Js.string s :: !history;
+        add_history (Js.string s);
+      end;
     history_bckwrd := !history;
     history_frwrd := [];
     textbox##value <- Js.string "";
-    loop s ppf buffer;
+    (try loop s ppf buffer with _ -> ());
+    update_debug_message ();
     make_code_clickable ();
     textbox##focus();
     container##scrollTop <- container##scrollHeight;
@@ -391,23 +534,22 @@ let run _ =
   Html.document##onkeydown <-
     (Html.handler
        (fun e -> match e##keyCode with
-         | 13 -> (* ENTER key *)     
+         | 13 -> (* ENTER key *)
            let keyEv = match Js.Opt.to_option (Html.CoerceTo.keyboardEvent e) with
              | None   -> assert false
-             | Some t -> t in 
+             | Some t -> t in
            (* Special handling of ctrl key *)
-           if keyEv##ctrlKey = Js._true then    
+           if keyEv##ctrlKey = Js._true then
              textbox##value <- Js.string ((Js.to_string textbox##value) ^ "\n");
            if keyEv##ctrlKey = Js._true || keyEv##shiftKey = Js._true then
              let rows_height = textbox##scrollHeight / (textbox##rows + 1) in
              let h = string_of_int (rows_height * (textbox##rows + 1) + 20) ^ "px" in
              textbox##style##height <- Js.string h;
              Js._true
-           else begin      
+           else begin
              execute ();
              textbox##style##height <- tbox_init_size;
              textbox##value <- Js.string "";
-  (* Html.window##alert (output_area##innerHTML); *)
              Js._false
            end
 	 | 38 -> (* UP ARROW key *) begin
@@ -431,12 +573,12 @@ let run _ =
 	     | _ -> Js._true
 	 end
 	 | _ -> Js._true));
-  Tutorial.clear_fun := (fun _ -> 
+  Tutorial.clear_fun := (fun _ ->
     output_area##innerHTML <- (Js.string "");
     textbox##focus();
     textbox##select()
   );
-  Tutorial.reset_fun := (fun _ -> 
+  Tutorial.reset_fun := (fun _ ->
     output_area##innerHTML <- (Js.string "");
     Toploop.initialize_toplevel_env ();
     Toploop.input_name := "";
@@ -444,18 +586,18 @@ let run _ =
     textbox##focus();
     textbox##select()
   );
-  Tutorial.set_cols_fun := (fun i -> 
+  Tutorial.set_cols_fun := (fun i ->
     textbox##style##width <- Js.string ((string_of_int (i * 7)) ^ "px"));
 
   let send_button = button "Send" (fun () -> execute ()) in
   let clear_button = button "Clear" (fun () -> Tutorial.clear ()) in
   let reset_button = button "Reset" (fun () -> Tutorial.reset ()) in
-  let save_button =  button "Save" (fun () -> 
+  let save_button =  button "Save" (fun () ->
     let content = Js.to_string output_area##innerHTML in
     let l = Regexp.split (Regexp.regexp ("\n")) content in
-    let content = 
+    let content =
       Js.string (
-        let l = List.filter (fun x -> 
+        let l = List.filter (fun x ->
           try x.[0] = '#' with _ -> false) l in
         let l = List.map  (fun x -> String.sub x 2 ((String.length x) - 2)) l in
         String.concat "\n" l)
@@ -463,14 +605,35 @@ let run _ =
     let uriContent =
       Js.string ("data:application/octet-stream," ^
                     (Js.to_string (Js.encodeURI content))) in
-    Html.window##open_(uriContent, Js.string "Try OCaml", Js.null);
-    Html.window##close ()
+    window##open_(uriContent, Js.string "Try OCaml", Js.null);
+    window##close ()
   )
   in
   let buttons =
       Js.Opt.get (doc##getElementById (Js.string "buttons"))
         (fun () -> assert false)
-  in 
+  in
+  (* Choose your language *)
+  let form = Html.createDiv doc in
+  let sel = Dom_html.createSelect doc in
+  sel##id <- Js.string "languages";
+  List.iter (fun (_, (lang, _)) ->
+    let opt = Html.createOption doc in
+    Dom.appendChild opt (doc##createTextNode (Js.string lang));
+    sel##add (opt, Js.null);
+  ) Tutorial.langs;
+  sel##onchange <-
+    Html.handler
+    (fun _ ->
+      Tutorial.set_lang (fst (List.nth Tutorial.langs sel##selectedIndex));
+      set_cookie "lang" (Tutorial.lang ());
+      Js._true);
+  Dom.appendChild form sel;
+  let langs = Js.Opt.get (doc##getElementById (Js.string "languages"))
+        (fun () -> assert false)
+  in
+  Dom.appendChild langs form;
+
   Tutorial.set_cols 80;
   Dom.appendChild buttons send_button;
   Dom.appendChild buttons clear_button;
@@ -478,11 +641,74 @@ let run _ =
   Dom.appendChild buttons save_button;
   output_area##scrollTop <- output_area##scrollHeight;
   make_code_clickable ();
-  (* Dom.appendChild output_area doc; *)
   start ppf;
-  Js._false
+  (* Setting language *)
+  let set_lang_from_cookie () =
+    let lang = get_lang_from_cookie () in
+    if lang <> "" then Tutorial.set_lang lang
+  in
 
+  (* Check if language has change in URL *)
+  let url = Js.decodeURI loc##href in
+  let reg = Regexp.regexp ".*lang=([a-z][a-z]).*" in
+  let _ =
+    match Regexp.string_match reg (Js.to_string url) 0 with
+      | None -> set_lang_from_cookie ()
+      | Some r ->
+        match Regexp.matched_group r 1 with
+            None -> set_lang_from_cookie ()
+          | Some s ->
+            Tutorial.set_lang s;
+            set_cookie "lang" (Tutorial.lang ());
+  in
+  (* Choice of lesson and step with URL *)
+  let update_lesson_step lesson step =
+    Tutorial.lesson lesson;
+    Tutorial.step step;
+    update_lesson_number ();
+    update_lesson_step_number ();
+    update_lesson_text ()
+  in
+  let set_lesson_step_from_cookie () =
+    let lesson = get_lesson_from_cookie () in
+    let step = get_step_from_cookie () in
+    update_lesson_step lesson step
+  in
+  let reg_lesson = Regexp.regexp ".*lesson=([0-9]+).*" in
+  let reg_step = Regexp.regexp ".*step=([0-9]+).*" in
+  let _ =
+    match Regexp.string_match reg_lesson (Js.to_string url) 0 with
+      | None -> ()
+      | Some r ->
+        match Regexp.matched_group r 1 with
+            None -> ()
+          | Some s ->
+            set_cookie "lesson" s;
+            Tutorial.lesson (int_of_string s) in
+  let _ =
+    match Regexp.string_match reg_step (Js.to_string url) 0 with
+      | None -> set_lesson_step_from_cookie ()
+      | Some r ->
+        match Regexp.matched_group r 1 with
+            None -> set_lesson_step_from_cookie ()
+          | Some s ->
+            set_cookie "step" s;
+            Tutorial.step (int_of_string s)
+  in
+  update_lesson_step !Tutorial.this_lesson !Tutorial.this_step;
+   Js._false
+
+let main () =
+  (*  window##alert (Js.string "Starting..."); *)
+  try
+    ignore (run ());
+  (*    window##alert (Js.string "Done."); *)
+  with e ->
+    window##alert (Js.string
+                     (Printf.sprintf "exception %s during init."
+                        (Printexc.to_string e)))
+
+(* Force some dependencies to be linked : *)
 let _ =
-  (* Html.window##onload <- Html.handler *)
-  run ();
-  Tutorial.init ()
+  Tutorial.init ();
+  ()

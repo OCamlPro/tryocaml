@@ -7,13 +7,13 @@ exemple :</p>
 
 <br/>
 
-<p>Les chaînes (<em>string</em>)sont aussi faciles à créer. Par
+<p>Les chaînes (<em>string</em>) sont aussi faciles à créer. Par
 exemple, vous pouvez créer une chaîne avec votre prénom :</p>
 
 <p><code>"Mary"</code></p>
 
 <br/>
 
-<p>L'élément de base d'une chaîne est la caractère (<em>char</em>) :</p>
+<p>L'élément de base d'une chaîne est le caractère (<em>char</em>) :</p>
 
 <p><code>'a'</code></p>

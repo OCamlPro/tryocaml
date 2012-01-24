@@ -1,0 +1,20 @@
+<h3>Les chaînes de caractères</h3>
+
+<p>Les chaînes de caractères sont des séquences de caractères. Il est
+ tout à fait possible de créer une chaîne de caractère à partir d'un
+ seul caractère, en utilisant:</p>
+<p><code>String.make 10 'x'</code></p>
+
+<br />
+
+<p>Les chaînes de caractères peuvent également être créér en
+  concaténant plusieurs autres chaînes:</p>
+<p><code>"Mary" ^ " and " ^ "John"</code></p>
+
+<br />
+<p>Il peut être intéressant de récuperer la taille d'une chaîne de
+  caractère:</p>
+
+<p><code>String.length "abcdefghijklmnopqstuvwxyz"</code></p>
+
+<p>(et oui, il manque un caractère !)</p>
