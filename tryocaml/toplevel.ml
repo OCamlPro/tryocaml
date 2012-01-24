@@ -152,46 +152,38 @@ let ensure_at_bol ppf =
     consume_nl := true; at_bol := true
   end
 
-let update_lesson_text () =
-  if  !Tutorial.this_lesson <> 0 then
-  try
+let set_by_id id s =
     let container =
-      Js.Opt.get (doc##getElementById (Js.string "lesson-text"))
+      Js.Opt.get (doc##getElementById (Js.string id))
         (fun () -> assert false)
     in
-    container##innerHTML <- Js.string !Tutorial.this_step_html
+    container##innerHTML <- Js.string s
+
+let set_container_by_id id s =
+  try
+    set_by_id id s
   with _ -> ()
+
+let update_lesson_text () =
+  if  !Tutorial.this_lesson <> 0 then
+    set_container_by_id "lesson-text" !Tutorial.this_step_html
 
 let update_lesson_number () =
   if  !Tutorial.this_lesson <> 0 then
-    try
-    let container =
-      Js.Opt.get (doc##getElementById (Js.string "lesson-number"))
-        (fun () -> assert false)
-    in
-    container##innerHTML <- Js.string
-      (Printf.sprintf "<span class=\"lesson\">Lesson %d</span>" !Tutorial.this_lesson)
-  with _ -> ()
+    set_container_by_id "lesson-number"
+      (Printf.sprintf "<span class=\"lesson\">%s %d</span>"
+         (Tutorial.translate "Lesson")
+         !Tutorial.this_lesson)
 
 let update_lesson_step_number () =
   if  !Tutorial.this_lesson <> 0 then
-  try
-    let container =
-      Js.Opt.get (doc##getElementById (Js.string "lesson-step"))
-        (fun () -> assert false)
-    in
-    container##innerHTML <- Js.string
-      (Printf.sprintf "<span class=\"step\">Step %d</span>" !Tutorial.this_step)
-  with _ -> ()
+    set_container_by_id "lesson-step"
+      (Printf.sprintf "<span class=\"step\">%s %d</span>"
+         (Tutorial.translate "Step")
+         !Tutorial.this_step)
 
 let update_prompt prompt =
-  try
-    let container =
-      Js.Opt.get (doc##getElementById (Js.string "sharp"))
-        (fun () -> assert false)
-    in
-    container##innerHTML <- Js.string prompt
-  with _ -> ()
+  set_container_by_id "sharp" prompt
 
 let extract_escaped_and_kill html i =
   let len = String.length html in
@@ -276,18 +268,6 @@ let set_cookie key value =
     ((Js.to_float today##getTime()) *. 60. *. 60. *. 24. *. 365.) in
   doc##cookie <- Js.string (Printf.sprintf "%s=%s;expires=%f" key value
                               (Js.to_float expire_time))
-
-let set_by_id id s =
-    let container =
-      Js.Opt.get (doc##getElementById (Js.string id))
-        (fun () -> assert false)
-    in
-    container##innerHTML <- Js.string s
-
-let set_container_by_id id s =
-  try
-    set_by_id id s
-  with _ -> ()
 
 
 
