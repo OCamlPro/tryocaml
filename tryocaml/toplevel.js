@@ -1843,7 +1843,7 @@ function caml_realloc_global (len) {
   if (len + 1 > caml_global_data.length) caml_global_data.length = len + 1;
   return 0;
 }
-function caml_register_global (n, v) { caml_global_data[n + 1] = v; }
+function caml_register_global (n, v) { caml_global_data[n + 1] = v; alert("caml_register_global "+n); }
 var caml_named_values = {};
 function caml_register_named_value(nm,v) {
   caml_named_values[nm] = v; return 0;
