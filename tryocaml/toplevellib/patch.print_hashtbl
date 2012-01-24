@@ -1,6 +1,200 @@
+diff -C 3 -r ocaml-3.12.1-orig/asmcomp/closure.ml ocaml-3.12.1/asmcomp/closure.ml
+*** ocaml-3.12.1-orig/asmcomp/closure.ml	2010-09-02 15:29:21.000000000 +0200
+--- ocaml-3.12.1/asmcomp/closure.ml	2012-01-19 20:43:57.222730002 +0100
+***************
+*** 574,579 ****
+--- 574,581 ----
+             Immutable -> Value_tuple(Array.of_list approxs)
+           | Mutable -> Value_unknown
+         end)
++   | Lprim(Prevapply loc, [arg; func]) ->
++     close fenv cenv (Lapply(func, [arg], loc))
+    | Lprim(Pfield n, [lam]) ->
+        let (ulam, approx) = close fenv cenv lam in
+        let fieldapprox =
+Binary files ocaml-3.12.1-orig/boot/ocamlc and ocaml-3.12.1/boot/ocamlc differ
+Binary files ocaml-3.12.1-orig/boot/ocamldep and ocaml-3.12.1/boot/ocamldep differ
+Binary files ocaml-3.12.1-orig/boot/ocamllex and ocaml-3.12.1/boot/ocamllex differ
+diff -C 3 -r ocaml-3.12.1-orig/bytecomp/bytegen.ml ocaml-3.12.1/bytecomp/bytegen.ml
+*** ocaml-3.12.1-orig/bytecomp/bytegen.ml	2010-09-02 15:29:21.000000000 +0200
+--- ocaml-3.12.1/bytecomp/bytegen.ml	2012-01-19 20:43:43.232730002 +0100
+***************
+*** 524,529 ****
+--- 524,531 ----
+        comp_expr env arg sz cont
+    | Lprim(Pignore, [arg]) ->
+        comp_expr env arg sz (add_const_unit cont)
++   | Lprim(Prevapply loc, [arg; f]) ->
++       comp_expr env (Lapply(f, [arg], loc)) sz cont
+    | Lprim(Pnot, [arg]) ->
+        let newcont =
+          match cont with
+diff -C 3 -r ocaml-3.12.1-orig/bytecomp/lambda.ml ocaml-3.12.1/bytecomp/lambda.ml
+*** ocaml-3.12.1-orig/bytecomp/lambda.ml	2010-09-02 15:29:21.000000000 +0200
+--- ocaml-3.12.1/bytecomp/lambda.ml	2012-01-19 20:42:49.662730001 +0100
+***************
+*** 19,24 ****
+--- 19,25 ----
+  type primitive =
+      Pidentity
+    | Pignore
++   | Prevapply of Location.t
+      (* Globals *)
+    | Pgetglobal of Ident.t
+    | Psetglobal of Ident.t
+diff -C 3 -r ocaml-3.12.1-orig/bytecomp/lambda.mli ocaml-3.12.1/bytecomp/lambda.mli
+*** ocaml-3.12.1-orig/bytecomp/lambda.mli	2010-09-02 15:29:21.000000000 +0200
+--- ocaml-3.12.1/bytecomp/lambda.mli	2012-01-19 20:42:53.292730007 +0100
+***************
+*** 19,24 ****
+--- 19,25 ----
+  type primitive =
+      Pidentity
+    | Pignore
++   | Prevapply of Location.t
+      (* Globals *)
+    | Pgetglobal of Ident.t
+    | Psetglobal of Ident.t
+diff -C 3 -r ocaml-3.12.1-orig/bytecomp/printlambda.ml ocaml-3.12.1/bytecomp/printlambda.ml
+*** ocaml-3.12.1-orig/bytecomp/printlambda.ml	2010-09-02 15:29:21.000000000 +0200
+--- ocaml-3.12.1/bytecomp/printlambda.ml	2012-01-19 20:43:03.772730001 +0100
+***************
+*** 92,97 ****
+--- 92,98 ----
+  let primitive ppf = function
+    | Pidentity -> fprintf ppf "id"
+    | Pignore -> fprintf ppf "ignore"
++   | Prevapply _ -> fprintf ppf "revapply"
+    | Pgetglobal id -> fprintf ppf "global %a" Ident.print id
+    | Psetglobal id -> fprintf ppf "setglobal %a" Ident.print id
+    | Pmakeblock(tag, Immutable) -> fprintf ppf "makeblock %i" tag
+diff -C 3 -r ocaml-3.12.1-orig/bytecomp/simplif.ml ocaml-3.12.1/bytecomp/simplif.ml
+*** ocaml-3.12.1-orig/bytecomp/simplif.ml	2010-09-02 15:29:21.000000000 +0200
+--- ocaml-3.12.1/bytecomp/simplif.ml	2012-01-19 20:43:36.892730000 +0100
+***************
+*** 375,381 ****
+    | Llet(kind, v, l1, l2) -> Llet(kind, v, simplif l1, simplif l2)
+    | Lletrec(bindings, body) ->
+        Lletrec(List.map (fun (v, l) -> (v, simplif l)) bindings, simplif body)
+!   | Lprim(p, ll) -> Lprim(p, List.map simplif ll)
+    | Lswitch(l, sw) ->
+        let new_l = simplif l
+        and new_consts =  List.map (fun (n, e) -> (n, simplif e)) sw.sw_consts
+--- 375,388 ----
+    | Llet(kind, v, l1, l2) -> Llet(kind, v, simplif l1, simplif l2)
+    | Lletrec(bindings, body) ->
+        Lletrec(List.map (fun (v, l) -> (v, simplif l)) bindings, simplif body)
+!   | Lprim(p, ll) -> begin
+!     let ll = List.map simplif ll in
+!     match p, ll with
+!       | Prevapply loc, [x; Lapply(f, args, _)] -> Lapply(f, args@[x], loc)
+!       | Prevapply loc, [x; f] -> Lapply(f, [x], loc)
+!       | Prevapply _, _ -> assert false
+!       | _ -> Lprim(p, ll)
+!   end
+    | Lswitch(l, sw) ->
+        let new_l = simplif l
+        and new_consts =  List.map (fun (n, e) -> (n, simplif e)) sw.sw_consts
+diff -C 3 -r ocaml-3.12.1-orig/bytecomp/symtable.ml ocaml-3.12.1/bytecomp/symtable.ml
+*** ocaml-3.12.1-orig/bytecomp/symtable.ml	2010-01-22 13:48:24.000000000 +0100
+--- ocaml-3.12.1/bytecomp/symtable.ml	2012-01-24 11:10:21.959974413 +0100
+***************
+*** 297,304 ****
+      (* Done *)
+      sect.close_reader();
+      crcintfs
+!   with Bytesections.Bad_magic_number | Not_found | Failure _ ->
+!     fatal_error "Toplevel bytecode executable is corrupted"
+  
+  (* Find the value of a global identifier *)
+  
+--- 297,308 ----
+      (* Done *)
+      sect.close_reader();
+      crcintfs
+!   with Bytesections.Bad_magic_number ->
+!     fatal_error "Toplevel bytecode executable is corrupted (magic number)"
+!     | Not_found ->
+!       fatal_error "Toplevel bytecode executable is corrupted (section not found)"
+!     | Failure s ->
+!       fatal_error (Printf.sprintf  "Toplevel bytecode executable is corrupted (%s)" s)
+  
+  (* Find the value of a global identifier *)
+  
+diff -C 3 -r ocaml-3.12.1-orig/bytecomp/translcore.ml ocaml-3.12.1/bytecomp/translcore.ml
+*** ocaml-3.12.1-orig/bytecomp/translcore.ml	2010-09-02 15:29:21.000000000 +0200
+--- ocaml-3.12.1/bytecomp/translcore.ml	2012-01-19 20:43:27.382730000 +0100
+***************
+*** 285,291 ****
+    { prim_name = "caml_obj_dup"; prim_arity = 1; prim_alloc = true;
+      prim_native_name = ""; prim_native_float = false }
+  
+! let transl_prim prim args =
+    try
+      let (gencomp, intcomp, floatcomp, stringcomp,
+           nativeintcomp, int32comp, int64comp,
+--- 285,291 ----
+    { prim_name = "caml_obj_dup"; prim_arity = 1; prim_alloc = true;
+      prim_native_name = ""; prim_native_float = false }
+  
+! let transl_prim loc prim args =
+    try
+      let (gencomp, intcomp, floatcomp, stringcomp,
+           nativeintcomp, int32comp, int64comp,
+***************
+*** 322,328 ****
+      end
+    with Not_found ->
+    try
+!     let p = Hashtbl.find primitives_table prim.prim_name in
+      (* Try strength reduction based on the type of the argument *)
+      begin match (p, args) with
+          (Psetfield(n, _), [arg1; arg2]) -> Psetfield(n, maybe_pointer arg2)
+--- 322,331 ----
+      end
+    with Not_found ->
+    try
+!     let p =
+!       match prim.prim_name with
+!         | "%revapply" -> Prevapply loc
+!         | _ -> Hashtbl.find primitives_table prim.prim_name in
+      (* Try strength reduction based on the type of the argument *)
+      begin match (p, args) with
+          (Psetfield(n, _), [arg1; arg2]) -> Psetfield(n, maybe_pointer arg2)
+***************
+*** 620,626 ****
+            wrap (Lsend(Cached, meth, obj, [cache; pos], e.exp_loc))
+          | _ -> assert false
+        else begin
+!         let prim = transl_prim p args in
+          match (prim, args) with
+            (Praise, [arg1]) ->
+              wrap0 (Lprim(Praise, [event_after arg1 (List.hd argl)]))
+--- 623,629 ----
+            wrap (Lsend(Cached, meth, obj, [cache; pos], e.exp_loc))
+          | _ -> assert false
+        else begin
+!         let prim = transl_prim e.exp_loc p args in
+          match (prim, args) with
+            (Praise, [arg1]) ->
+              wrap0 (Lprim(Praise, [event_after arg1 (List.hd argl)]))
+diff -C 3 -r ocaml-3.12.1-orig/otherlibs/threads/pervasives.ml ocaml-3.12.1/otherlibs/threads/pervasives.ml
+*** ocaml-3.12.1-orig/otherlibs/threads/pervasives.ml	2010-06-09 12:23:48.000000000 +0200
+--- ocaml-3.12.1/otherlibs/threads/pervasives.ml	2012-01-19 20:42:20.052729997 +0100
+***************
+*** 28,33 ****
+--- 28,35 ----
+  
+  exception Exit
+  
++ external ( |> ) : 'a -> ('a -> 'b) -> 'b = "%revapply"
++ 
+  (* Comparisons *)
+  
+  external (=) : 'a -> 'a -> bool = "%equal"
 diff -C 3 -r ocaml-3.12.1-orig/parsing/lexer.mll ocaml-3.12.1/parsing/lexer.mll
 *** ocaml-3.12.1-orig/parsing/lexer.mll	2010-04-08 05:58:41.000000000 +0200
---- ocaml-3.12.1/parsing/lexer.mll	2012-01-16 14:00:39.737088001 +0100
+--- ocaml-3.12.1/parsing/lexer.mll	2012-01-19 17:09:28.168765004 +0100
 ***************
 *** 346,351 ****
 --- 346,352 ----
@@ -13,7 +207,7 @@ diff -C 3 -r ocaml-3.12.1-orig/parsing/lexer.mll ocaml-3.12.1/parsing/lexer.mll
     | "`"  { BACKQUOTE }
 diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.mly
 *** ocaml-3.12.1-orig/parsing/parser.mly	2011-04-29 06:56:21.000000000 +0200
---- ocaml-3.12.1/parsing/parser.mly	2012-01-16 20:42:32.810704998 +0100
+--- ocaml-3.12.1/parsing/parser.mly	2012-01-19 17:08:59.998765003 +0100
 ***************
 *** 83,100 ****
     then String.sub f 1 (String.length f - 1)
@@ -77,69 +271,10 @@ diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.ml
   
 ***************
 *** 208,213 ****
---- 230,380 ----
+--- 230,321 ----
   let pat_of_label lbl =
     mkpat (Ppat_var(Longident.last lbl))
   
-+ let rnd = Random.State.make [|0x513511d4|]
-+ let random_var () =
-+   Format.sprintf "a%08Lx" (Random.State.int64 rnd 0x100000000L)
-+ 
-+ let unescape lab =
-+   assert (lab <> "");
-+   let lab =
-+     if lab.[0] = '_' then String.sub lab 1 (String.length lab - 1) else lab
-+   in
-+   try
-+     let i = String.rindex lab '_' in
-+     if i = 0 then raise Not_found;
-+     String.sub lab 0 i
-+   with Not_found ->
-+     lab
-+ 
-+ let make_js_get expr label =
-+   let var = mktyp (Ptyp_var (random_var ())) in
-+   let t_var = mktyp ( Ptyp_poly([],mktyp (Ptyp_constr( Ldot(Lident "Js", "gen_prop") ,
-+     [mktyp(Ptyp_object [
-+       mkfield (Pfield("get",var));
-+       mkfield Pfield_var])] ) ))) in
-+   let expr = mkexp (Pexp_constraint(
-+     expr,
-+     Some( mktyp(Ptyp_object [
-+       mkfield (Pfield(label,t_var));
-+       mkfield Pfield_var]) ),
-+     None )) in
-+   let call = mkexp(Pexp_apply(
-+     mkexp(Pexp_ident(Ldot(Ldot(Lident "Js","Unsafe"), "get"))),
-+     [ "", expr;
-+       "", mkexp(Pexp_constant(Const_string (unescape label)))] )) in
-+   mkexp (Pexp_constraint( call, Some (mktyp (Ptyp_poly([],var))), None ))
-+ 
-+ let make_js_set expr label param =
-+   let var = mktyp (Ptyp_var (random_var ())) in
-+   let t_var =
-+     mktyp (Ptyp_constr(
-+       Ldot(Lident "Js", "gen_prop") ,
-+       [mktyp( Ptyp_object [
-+ 	mkfield (
-+ 	  Pfield(
-+ 	    "set",
-+ 	    mktyp ( Ptyp_poly(
-+ 	      [], mktyp ( Ptyp_arrow (
-+ 		"", var, mktyp (Ptyp_constr ((Lident "unit"), []))))))));
-+ 	mkfield Pfield_var])] )) in
-+   let expr = mkexp (Pexp_constraint(
-+     expr,
-+     Some( mktyp(Ptyp_object [
-+       mkfield (Pfield(label, mktyp ( Ptyp_poly([],t_var) ) ));
-+       mkfield Pfield_var]) ),
-+     None )) in
-+   mkexp(Pexp_apply(
-+     mkexp(Pexp_ident(Ldot(Ldot(Lident "Js","Unsafe"), "set"))),
-+     [ "", expr;
-+       "", mkexp(Pexp_constant(Const_string (unescape label)));
-+       "", mkexp (Pexp_constraint( param, Some var, None )) ] ))
-+ 
 + let rnd = Random.State.make [|0x513511d4|]
 + let random_var () =
 +   Format.sprintf "a%08Lx" (Random.State.int64 rnd 0x100000000L)
@@ -231,7 +366,7 @@ diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.ml
   /* Tokens */
 ***************
 *** 305,310 ****
---- 472,478 ----
+--- 413,419 ----
   %token RPAREN
   %token SEMI
   %token SEMISEMI
@@ -248,7 +383,7 @@ diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.ml
   %nonassoc below_DOT
   %nonassoc DOT
   /* Finally, the first tokens of simple_expr are above everything else. */
---- 544,550 ----
+--- 485,491 ----
   %nonassoc prec_constant_constructor     /* cf. simple_expr (C versus C x) */
   %nonassoc prec_constr_appl              /* above AS BAR COLONCOLON COMMA */
   %nonassoc below_SHARP
@@ -265,7 +400,7 @@ diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.ml
     | constr_longident %prec prec_constant_constructor
         { mkexp(Pexp_construct($1, None, false)) }
     | name_tag %prec prec_constant_constructor
---- 1124,1130 ----
+--- 1065,1071 ----
       val_longident
         { mkexp(Pexp_ident $1) }
     | constant
@@ -275,7 +410,7 @@ diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.ml
     | name_tag %prec prec_constant_constructor
 ***************
 *** 1021,1026 ****
---- 1189,1204 ----
+--- 1130,1145 ----
         { mkexp(Pexp_override []) }
     | simple_expr SHARP label
         { mkexp(Pexp_send($1, $3)) }
@@ -292,6 +427,19 @@ diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.ml
     | LPAREN MODULE module_expr COLON package_type RPAREN
         { mkexp (Pexp_pack ($3, $5)) }
     | LPAREN MODULE module_expr COLON error
+diff -C 3 -r ocaml-3.12.1-orig/stdlib/pervasives.mli ocaml-3.12.1/stdlib/pervasives.mli
+*** ocaml-3.12.1-orig/stdlib/pervasives.mli	2011-05-17 15:31:32.000000000 +0200
+--- ocaml-3.12.1/stdlib/pervasives.mli	2012-01-24 11:12:06.199973573 +0100
+***************
+*** 40,46 ****
+  (** The [Exit] exception is not raised by any library function.  It is
+      provided for use in your programs.*)
+  
+- 
+  (** {6 Comparisons} *)
+  
+  external ( = ) : 'a -> 'a -> bool = "%equal"
+--- 40,45 ----
 diff -C 3 -r ocaml-3.12.1-orig/toplevel/genprintval.ml ocaml-3.12.1/toplevel/genprintval.ml
 *** ocaml-3.12.1-orig/toplevel/genprintval.ml	2009-10-26 11:53:16.000000000 +0100
 --- ocaml-3.12.1/toplevel/genprintval.ml	2012-01-03 14:11:29.453539000 +0100
