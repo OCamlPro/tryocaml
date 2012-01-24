@@ -30,12 +30,17 @@ let split_primitives p =
 
 (****)
 
-external global_data : unit -> Obj.t array = "caml_get_global_data"
+class type global_data = object
+  method toc : (string * string) list Js.readonly_prop
+  method compile : (string -> string) Js.writeonly_prop
+end
+
+external global_data : unit -> global_data Js.t = "caml_get_global_data"
 
 let g = global_data ()
 
 let _ =
-  let toc = Obj.magic (Array.unsafe_get g (-2)) in
+  let toc = g##toc in
   let prims = split_primitives (List.assoc "PRIM" toc) in
 
   let compile s =
@@ -44,7 +49,7 @@ let _ =
     output_program (Pretty_print.to_buffer b);
     Buffer.contents b
   in
-  Array.unsafe_set g (-3) (Obj.repr compile); (*XXX HACK!*)
+  g##compile <- compile; (*XXX HACK!*)
 
 module Html = Dom_html
 
@@ -83,13 +88,20 @@ let start ppf =
   Format.fprintf ppf "        Welcome to TryOCaml (v. %s)@.@." Sys.ocaml_version;
   Toploop.initialize_toplevel_env ();
   Toploop.input_name := "";
-  exec ppf "Toploop.set_wrap true";
-  exec ppf "open Tutorial";
-  exec ppf "#install_printer Toploop.print_hashtbl";
-  exec ppf "#install_printer Toploop.print_queue";
-  exec ppf "#install_printer Toploop.print_stack";
-  exec ppf "#install_printer Toploop.print_lazy";
-  exec ppf "#install_printer N.print";
+  List.iter (fun s ->
+    try
+      exec ppf s
+    with e ->
+      Printf.printf "Exception %s while processing [%s]\n%!" (Printexc.to_string e) s
+  )  [
+    "Toploop.set_wrap true";
+    "open Tutorial";
+    "#install_printer Toploop.print_hashtbl";
+    "#install_printer Toploop.print_queue";
+    "#install_printer Toploop.print_stack";
+    "#install_printer Toploop.print_lazy";
+    "#install_printer N.print";
+  ];
   ()
 
 let at_bol = ref true
@@ -441,6 +453,7 @@ let set_history_size i =
                                 Js.string (string_of_int i))
 
 let get_history () =
+  try
   let size = get_history_size () in
   let h = Array.init size
     (fun i -> Js.Optdef.get
@@ -448,6 +461,8 @@ let get_history () =
         Js.string (Printf.sprintf "history %i" i)))
       (fun () -> failwith "no history item")) in
   Array.to_list h
+  with _ -> (* Probably no local storage *)
+    []
 
 let add_history s =
   try
@@ -468,7 +483,6 @@ let run _ =
       (fun () -> assert false)
   in
   let buffer = Buffer.create 1000 in
-
   let ppf =
     let b = Buffer.create 80 in
     Format.make_formatter
@@ -495,7 +509,6 @@ let run _ =
   let history = ref (get_history ()) in
   let history_bckwrd = ref !history in
   let history_frwrd = ref [] in
-
   let rec make_code_clickable () =
     let textbox =
       Js.Opt.get (doc##getElementById(Js.string "console")) (fun () -> assert false) in
@@ -588,7 +601,6 @@ let run _ =
   );
   Tutorial.set_cols_fun := (fun i ->
     textbox##style##width <- Js.string ((string_of_int (i * 7)) ^ "px"));
-
   let send_button = button "Send" (fun () -> execute ()) in
   let clear_button = button "Clear" (fun () -> Tutorial.clear ()) in
   let reset_button = button "Reset" (fun () -> Tutorial.reset ()) in
