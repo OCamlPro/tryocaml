@@ -97,7 +97,43 @@ diff -C 3 -r ocaml-3.12.1-orig/bytecomp/simplif.ml ocaml-3.12.1/bytecomp/simplif
         and new_consts =  List.map (fun (n, e) -> (n, simplif e)) sw.sw_consts
 diff -C 3 -r ocaml-3.12.1-orig/bytecomp/symtable.ml ocaml-3.12.1/bytecomp/symtable.ml
 *** ocaml-3.12.1-orig/bytecomp/symtable.ml	2010-01-22 13:48:24.000000000 +0100
---- ocaml-3.12.1/bytecomp/symtable.ml	2012-01-24 11:10:21.959974413 +0100
+--- ocaml-3.12.1/bytecomp/symtable.ml	2012-01-24 11:25:57.899966866 +0100
+***************
+*** 261,274 ****
+      { read_string =
+          (fun name -> (Obj.magic(List.assoc name sections) : string));
+        read_struct =
+!         (fun name -> List.assoc name sections);
+        close_reader =
+          (fun () -> ()) }
+    with Not_found ->
+      let ic = open_in_bin Sys.executable_name in
+      Bytesections.read_toc ic;
+!     { read_string = Bytesections.read_section_string ic;
+!       read_struct = Bytesections.read_section_struct ic;
+        close_reader = fun () -> close_in ic }
+  
+  (* Initialize the linker for toplevel use *)
+--- 261,279 ----
+      { read_string =
+          (fun name -> (Obj.magic(List.assoc name sections) : string));
+        read_struct =
+!         (fun name -> try List.assoc name sections with
+!         Not_found -> raise (failwith (Printf.sprintf "(1) %s not found" name)));
+        close_reader =
+          (fun () -> ()) }
+    with Not_found ->
+      let ic = open_in_bin Sys.executable_name in
+      Bytesections.read_toc ic;
+!     { read_string = (fun name -> try Bytesections.read_section_string ic name
+!                      with Not_found ->
+!                        raise (failwith (Printf.sprintf "(2) %s not found" name)));
+!       read_struct = (fun name -> try Bytesections.read_section_struct ic name;
+!                      with Not_found ->
+!                        raise (failwith (Printf.sprintf "(2) %s not found" name)));
+        close_reader = fun () -> close_in ic }
+  
+  (* Initialize the linker for toplevel use *)
 ***************
 *** 297,304 ****
       (* Done *)
@@ -108,7 +144,7 @@ diff -C 3 -r ocaml-3.12.1-orig/bytecomp/symtable.ml ocaml-3.12.1/bytecomp/symtab
   
   (* Find the value of a global identifier *)
   
---- 297,308 ----
+--- 302,313 ----
       (* Done *)
       sect.close_reader();
       crcintfs
