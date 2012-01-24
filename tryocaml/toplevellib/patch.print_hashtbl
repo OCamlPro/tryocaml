@@ -97,9 +97,12 @@ diff -C 3 -r ocaml-3.12.1-orig/bytecomp/simplif.ml ocaml-3.12.1/bytecomp/simplif
         and new_consts =  List.map (fun (n, e) -> (n, simplif e)) sw.sw_consts
 diff -C 3 -r ocaml-3.12.1-orig/bytecomp/symtable.ml ocaml-3.12.1/bytecomp/symtable.ml
 *** ocaml-3.12.1-orig/bytecomp/symtable.ml	2010-01-22 13:48:24.000000000 +0100
---- ocaml-3.12.1/bytecomp/symtable.ml	2012-01-24 11:25:57.899966866 +0100
+--- ocaml-3.12.1/bytecomp/symtable.ml	2012-01-24 13:35:23.649904270 +0100
 ***************
-*** 261,274 ****
+*** 258,274 ****
+  let read_sections () =
+    try
+      let sections = Meta.get_section_table () in
       { read_string =
           (fun name -> (Obj.magic(List.assoc name sections) : string));
         read_struct =
@@ -114,7 +117,11 @@ diff -C 3 -r ocaml-3.12.1-orig/bytecomp/symtable.ml ocaml-3.12.1/bytecomp/symtab
         close_reader = fun () -> close_in ic }
   
   (* Initialize the linker for toplevel use *)
---- 261,279 ----
+--- 258,280 ----
+  let read_sections () =
+    try
+      let sections = Meta.get_section_table () in
++     List.iter (fun (name, _) -> Printf.printf "NAME [%s]\n%!" name) sections;
       { read_string =
           (fun name -> (Obj.magic(List.assoc name sections) : string));
         read_struct =
@@ -144,7 +151,7 @@ diff -C 3 -r ocaml-3.12.1-orig/bytecomp/symtable.ml ocaml-3.12.1/bytecomp/symtab
   
   (* Find the value of a global identifier *)
   
---- 302,313 ----
+--- 303,314 ----
       (* Done *)
       sect.close_reader();
       crcintfs
