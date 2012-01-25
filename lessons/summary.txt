@@ -27,10 +27,12 @@ LESSON 3    Creating functions (Cagdas)
 6      Iterators (List.iter)
 
 LESSON 4    Pattern-matching
-1      Pattern-matching on lists []
+1      Pattern-matching on ints
 2      Pattern-matching on chars 'a'..'z'
-3      Pattern-matching on tuples, arrays, etc...
-4      Exhaustiveness
+3      Pattern-matching on tuples
+4      Pattern-matching on lists
+5      Pattern-matching on arrays
+6      Exhaustiveness
 
 LESSON 5 : Variant types
 1      Variant types
