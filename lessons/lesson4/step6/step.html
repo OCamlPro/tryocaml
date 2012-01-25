@@ -6,7 +6,7 @@
   pattern-matching on a list, the compiler will warn
   the user if she forgets to handle the empty list case:
 
-<pre><code>let head = function
+<pre><code>let head_partial = function
   | h::_ -> h
 </code></pre>
 

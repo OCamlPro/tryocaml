@@ -24,7 +24,7 @@ condition which will be computed when the pattern is evaluated, using
 the keyword <em>when</em>:
 
 <pre><code>let fit str len = match (str,len) with
-  | (_,51) when (str="foo" | str="bar") -> true
+  | (_,51) when (str="foo" || str="bar") -> true
   | (_, x) when x=42 -> false
   | _ -> (String.length str) = len
 </pre></code>

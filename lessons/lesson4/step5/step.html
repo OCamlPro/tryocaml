@@ -9,7 +9,7 @@
 
 And you can mix all the kind of values:
 
-<pre><code>let second_second = function
+<pre><code>let f = function
   | []                 -> failwith "empty list"
   | [| _; (_, x) |]::_ -> x
   | _                  -> failwith "the first array should be of size two"
