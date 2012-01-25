@@ -79,7 +79,7 @@ STDLIB_MODULES=\
   stringLabels \
   weak
 
-TOPLEVEL_MODULES=$(STDLIB_MODULES) n regexp tutorial outcometree topdirs toploop toplevel
+TOPLEVEL_MODULES=$(STDLIB_MODULES) n regexp tutorial outcometree topdirs toploop toplevel clflags
 
 %.cmo: %.ml
 	$(OCAMLC) $(INCLUDES) -c $<
