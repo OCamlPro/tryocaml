@@ -18,6 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
+let init_in_lesson = ref (fun _ -> ())
+
 let split_primitives p =
   let len = String.length p in
   let rec split beg cur =
@@ -63,12 +65,22 @@ let default_lang = "en"
 let registered_buttons = ref []
 
 let button_type = Js.string "button"
-let button txt action =
+let text_button txt action =
   let b = Dom_html.createButton ~_type:button_type doc in
   let id = "button"^txt in
   b##innerHTML <- Js.string (Tutorial.translate txt);
   b##id <- Js.string id;
   registered_buttons := (id, txt) :: !registered_buttons;
+  b##className <- Js.string "btn";
+  b##onclick <- Dom_html.handler (fun _ -> action (); Js._true);
+  b
+
+let image_button  src width txt action =
+  let b = Dom_html.createButton ~_type:button_type doc in
+  let id = "button"^txt in
+  b##innerHTML <- Js.string (
+    Printf.sprintf "<img src=\"%s\" width=\"%d\" text=\"%s\"/>" src width (Tutorial.translate txt));
+  b##id <- Js.string id;
   b##className <- Js.string "btn";
   b##onclick <- Dom_html.handler (fun _ -> action (); Js._true);
   b
@@ -152,11 +164,12 @@ let ensure_at_bol ppf =
     consume_nl := true; at_bol := true
   end
 
+let get_element_by_id id =
+  Js.Opt.get (doc##getElementById (Js.string id))
+    (fun () -> assert false)
+
 let set_by_id id s =
-    let container =
-      Js.Opt.get (doc##getElementById (Js.string id))
-        (fun () -> assert false)
-    in
+    let container = get_element_by_id id in
     container##innerHTML <- Js.string s
 
 let set_container_by_id id s =
@@ -165,8 +178,10 @@ let set_container_by_id id s =
   with _ -> ()
 
 let update_lesson_text () =
-  if  !Tutorial.this_lesson <> 0 then
+  if  !Tutorial.this_lesson <> 0 then begin
+    !init_in_lesson ();
     set_container_by_id "lesson-text" !Tutorial.this_step_html
+  end
 
 let update_lesson_number () =
   if  !Tutorial.this_lesson <> 0 then
@@ -272,10 +287,7 @@ let set_cookie key value =
 
 
 let get_by_id id =
-  let container =
-    Js.Opt.get (doc##getElementById (Js.string id))
-      (fun () -> assert false)
-  in
+  let container = get_element_by_id id in
   Js.to_string container##innerHTML
 
 let get_by_name id =
@@ -444,6 +456,10 @@ let get_history () =
   with _ -> (* Probably no local storage *)
     []
 
+let append_children id list =
+  let ele = get_element_by_id id in
+  List.iter (fun w -> Dom.appendChild ele w) list
+
 let add_history s =
   try
     let size = get_history_size () in
@@ -454,14 +470,8 @@ let add_history s =
     | _ -> Firebug.console##warn(Js.string "can't set history")
 
 let run _ =
-  let top =
-    Js.Opt.get (doc##getElementById (Js.string "toplevel"))
-      (fun () -> assert false)
-  in
-  let output_area =
-    Js.Opt.get (doc##getElementById (Js.string "output"))
-      (fun () -> assert false)
-  in
+  let top = get_element_by_id "toplevel"  in
+  let output_area = get_element_by_id "output" in
   let buffer = Buffer.create 1000 in
   let ppf =
     let b = Buffer.create 80 in
@@ -480,18 +490,14 @@ let run _ =
   Dom.appendChild top textbox;
   textbox##focus();
   textbox##select();
-  let container =
-    Js.Opt.get (doc##getElementById (Js.string "toplevel-container"))
-      (fun () -> assert false)
-  in
+  let container = get_element_by_id "toplevel-container" in
   container##onclick <- Dom_html.handler (fun _ ->
     textbox##focus();  textbox##select();  Js._true);
   let history = ref (get_history ()) in
   let history_bckwrd = ref !history in
   let history_frwrd = ref [] in
   let rec make_code_clickable () =
-    let textbox =
-      Js.Opt.get (doc##getElementById(Js.string "console")) (fun () -> assert false) in
+    let textbox = get_element_by_id "console" in
     let textbox = match Js.Opt.to_option (Html.CoerceTo.textarea textbox) with
       | None   -> assert false
       | Some t -> t in
@@ -581,10 +587,10 @@ let run _ =
   );
   Tutorial.set_cols_fun := (fun i ->
     textbox##style##width <- Js.string ((string_of_int (i * 7)) ^ "px"));
-  let send_button = button "Send" (fun () -> execute ()) in
-  let clear_button = button "Clear" (fun () -> Tutorial.clear ()) in
-  let reset_button = button "Reset" (fun () -> Tutorial.reset ()) in
-  let save_button =  button "Save" (fun () ->
+  let send_button = text_button "Send" (fun () -> execute ()) in
+  let clear_button = text_button "Clear" (fun () -> Tutorial.clear ()) in
+  let reset_button = text_button "Reset" (fun () -> Tutorial.reset ()) in
+  let save_button =  text_button "Save" (fun () ->
     let content = Js.to_string output_area##innerHTML in
     let l = Regexp.split (Regexp.regexp ("\n")) content in
     let content =
@@ -600,10 +606,6 @@ let run _ =
     window##open_(uriContent, Js.string "Try OCaml", Js.null);
     window##close ()
   )
-  in
-  let buttons =
-      Js.Opt.get (doc##getElementById (Js.string "buttons"))
-        (fun () -> assert false)
   in
   (* Choose your language *)
   let form = Html.createDiv doc in
@@ -621,16 +623,62 @@ let run _ =
       set_cookie "lang" (Tutorial.lang ());
       Js._true);
   Dom.appendChild form sel;
-  let langs = Js.Opt.get (doc##getElementById (Js.string "languages"))
-        (fun () -> assert false)
-  in
+  let langs = get_element_by_id "languages" in
   Dom.appendChild langs form;
 
   Tutorial.set_cols 80;
-  Dom.appendChild buttons send_button;
-  Dom.appendChild buttons clear_button;
-  Dom.appendChild buttons reset_button;
-  Dom.appendChild buttons save_button;
+  append_children "buttons" [
+    send_button; clear_button; reset_button; save_button];
+
+
+  let update_lesson () =
+    update_lesson_number ();
+    update_lesson_step_number ();
+    update_lesson_text ();
+    make_code_clickable ();
+  in
+
+  (* Choice of lesson and step with URL *)
+  let update_lesson_step lesson step =
+    Tutorial.lesson lesson;
+    Tutorial.step step;
+    update_lesson ()
+  in
+
+  init_in_lesson :=
+    (let init = ref false in
+     fun () ->
+       if not !init then begin
+         init := true;
+
+         append_children "lesson-left-button" [
+           image_button "images/left2.png" 16 "left2"
+             (fun _ ->
+               Tutorial.lesson (!Tutorial.this_lesson-1);
+               update_lesson ();
+             );
+         ];
+         append_children "lesson-right-button" [
+           image_button "images/right2.png" 16 "right2"
+             (fun _ ->
+               Tutorial.lesson (!Tutorial.this_lesson+1);
+               update_lesson ();
+             );
+         ];
+         append_children "step-left-button" [
+           image_button "images/left1.png" 16 "left1"  (fun _ ->
+             Tutorial.back();
+             update_lesson ();
+           );
+         ];
+         append_children "step-right-button" [
+           image_button "images/right1.png" 16 "right1"  (fun _ ->
+             Tutorial.next();
+             update_lesson ();
+           );
+         ];
+       end);
+
   output_area##scrollTop <- output_area##scrollHeight;
   make_code_clickable ();
   start ppf;
@@ -652,14 +700,6 @@ let run _ =
           | Some s ->
             Tutorial.set_lang s;
             set_cookie "lang" (Tutorial.lang ());
-  in
-  (* Choice of lesson and step with URL *)
-  let update_lesson_step lesson step =
-    Tutorial.lesson lesson;
-    Tutorial.step step;
-    update_lesson_number ();
-    update_lesson_step_number ();
-    update_lesson_text ()
   in
   let set_lesson_step_from_cookie () =
     let lesson = get_lesson_from_cookie () in
@@ -688,7 +728,7 @@ let run _ =
             Tutorial.step (int_of_string s)
   in
   update_lesson_step !Tutorial.this_lesson !Tutorial.this_step;
-   Js._false
+  Js._false
 
 let main () =
   (*  window##alert (Js.string "Starting..."); *)

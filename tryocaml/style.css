@@ -91,6 +91,10 @@ table {
     color: black;
 }
 
+#lesson-step-spacer {
+   margin-left: 20px;
+}
+
 .menu-lessons {
     overflow: hidden;
     width: 100%;
@@ -99,6 +103,10 @@ table {
 
 dl dt {
    font-weight: normal;
+}
+
+#lesson-position {
+    text-align: center;
 }
 
 #lesson-text h3 {
@@ -130,7 +138,7 @@ dl dt {
     font-size: 12px;
 }
 
-#buttons button { 
+#buttons button {
     margin-top: 10px;
     margin-right: 10px;
     padding: 7px;
