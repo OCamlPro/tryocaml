@@ -9,4 +9,4 @@ depend:
 
 update-lessons:
 	touch lessons/goodies.ml
-	$(MAKE) -C tryocaml
+	$(MAKE) -C tryocaml tuto tryocaml
