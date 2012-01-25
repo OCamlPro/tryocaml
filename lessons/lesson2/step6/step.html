@@ -1,0 +1,20 @@
+<h3>If then else</h3>
+
+<p>Now that we know how to test conditions, we can use them to choose
+between computations. Let's define two values : </p>
+
+<p><code>let a = 1 and b = 2</code></p><br/>
+
+<p>We can compute the minimum of them:</p>
+
+<pre><code>Printf.printf "min(%d,%d) = %d\n" a b
+    (if a &lt; b then a else b)</code></pre><br/>
+
+<p>We can of course execute sequences within branches:</p>
+
+<pre><code>let z = if a &lt; 100 then begin
+    print_string "return at least 100 !";
+    print_newline ();
+    100
+ end else a
+</code></pre>
