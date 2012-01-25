@@ -1,0 +1,26 @@
+<h3>Opérations sur les listes</h3>
+
+<p><p>On retrouve des fonctions prédéfinies sur les listes tels que le
+  renversement d'une liste:</p>
+<p><code>List.rev [1; 2; 3]</code></p>
+
+<br />
+<p>Récupérer le premier élement d'une liste:</p>
+<p><code>List.hd [1; 2; 3]</code></p>
+
+<br />
+<h3>Opérations sur les tableaux</h3>
+
+<p><p>On a également des fonctions prédéfinies sur les tableaux, comme
+  la concaténation de deux tableaux:</p>
+<p><code>Array.append [| 1; 2 |] [| 3; 4; 5 |]</code></p>
+
+<br />
+<p>Il existe deux façons de faire pour récupérer le ième
+ d'une tableau: (ne pas oublier que le premier élément est à la
+ position <code>0</code>):</p>
+<p><code>Array.get [| 42; 51; 32 |] 2 </code></p>
+
+<p>ou</p>
+
+<p><code>[| 42; 51; 32 |].(2) </code></p>

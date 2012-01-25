@@ -1,0 +1,20 @@
+<h3>While loops</h3>
+
+<p>OCaml also provides a <code>while</code> loop, to execute some code
+as long as an expression is true:</p>
+
+<pre><code>while !x &gt; 20 do
+  print_int !x; print_newline ();
+  x := !x - 2
+done</code></pre>
+
+<!---
+<p>For example, the following code will wait for you to say "yes":</p>
+
+<pre><code>let cond = ref true;;
+while !cond do
+  print_string "Say 'yes':";
+  cond := ( input_line stdin <> "yes" )
+done;;
+</code></pre>
+--->

@@ -1,0 +1,34 @@
+<h3>For loops</h3>
+
+<p>Let's define a reference on a list:</p>
+
+<p><code>let xl = ref []</code></p>
+<br/>
+
+<p>OCaml provides a simple <code>for</code> loop to iterate on
+integers in a range:</p>
+
+<pre><code>for i = 1 to 10 do
+  xl := i :: !xl;
+done;
+!xl
+</code></pre><br/>
+
+<p>Here, for each value between 1 and 10, we have added it in this
+order at the head of the reference.</p>
+
+<p>Of course, if we want them in the correct order, we need to reverse
+the list:</p>
+
+<p><code>List.rev !xl</code></p>
+<br/>
+<p>Or we can just execute the loop directly from the upper bound to the
+lower bound:</p>
+
+<pre><code>for i = 10 downto 1 do
+ xl := i :: !xl
+done;
+!xl</code></pre>
+<br/>
+
+<p>

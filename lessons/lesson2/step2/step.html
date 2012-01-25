@@ -1,18 +1,24 @@
 <h3>Mutable Variables</h3>
 
+<p>In OCaml, you cannot change the value associated with a name after
+its definition. Trying to do so will trigger a compilation error:</p>
+<p><code>x <- x + 1</code></p>
 
-<p>A variable in OCaml is immutable, you will never be able to
-change the value associated with <code>x</code> (you get an error):</p>
-<p><code>x := x + 1</code></p>
+<p>You will better understand the error message later.</p>
 
 <br />
-<p>To get a traditional mutable variable, OCaml provides references:</p>
+<p>If you really want to modify the value associated with a name, you
+must use a trick. OCaml provides a function <code>ref</code> that
+creates a special value that can be modified later (a reference):</p>
 <p><code>let x = ref 42</code></p>
 
 <br />
-<p>You can then change the value of <code>x</code></p>
-<p><code>x := 56</code></p>
+<p>You can then change the value of the reference associated
+with <code>x</code> using the <code>:=</code> operator:</p>
+<p><code>x := 100 / 4</code></p>
 
 <br />
-<p>The operator <code>!</code> allows you to access the contents of a reference variable:</p>
+<p>You can also access the value contained in the reference using the
+operator <code>!</code>:</p>
+
 <p><code>let y = !x + 1</code></p>

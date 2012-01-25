@@ -8,7 +8,7 @@ LESSON 1: (cagdas)
 > [ 1; 2; 3 ]
 > [
 3       Functions on these things (length, uppercase) String.length, Array.length, List.length ...
-4       String.concat
+4       Operations on string
 5       Tuples
 
 LESSON 2
