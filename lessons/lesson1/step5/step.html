@@ -1,13 +1,15 @@
-<h3>Lists, Tuples and Arrays</h3>
+<h3>Operations on Tuples</h3>
 
-<p>Tuples, arrays and lists are predefined data structures, for
-example you can have a list of integers:</p>
-<p><code>[42; 1; 55]</code></p>
-
-<br />
-<p>A tuple with values of different types for each component:</p>
+<p>A tuple consists of values (zero or more), enclosed in parentheses
+and separated by commas. Note that you can have differents types for
+each element, remember</p>
 <p><code>(42, "John", true)</code></p>
 
 <br />
-<p>An array of strings:<p>
-<p><code>[|"John"; "Doe"|]</code></p>
+<p>When you have a pair (a tuple with two elements), you can use some
+predefined functions like get the first element:</p>
+<p><code>fst (42, "John")</code></p>
+
+<br />
+<p>Or the second element:</p>
+<p><code>snd (42, "John")</code></p>

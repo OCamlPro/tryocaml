@@ -1,40 +1,32 @@
-<h3>Computing Conditions</h3>
+<h3>Basic operations on strings</h3>
 
-<p>Boolean values in OCaml can be either <code>true</code>
-or <code>false</code>. They are often created from comparing other
-values. For example:</p>
-
-<p><code>1 &gt; 2</code></p>
-<br />
-
-<p>OCaml's comparison operators can be used on values of any type, 
-not only on numerical values. We can compare strings and characters 
-too:</p>
-
-<p><code>"aaaaaa" &lt; "bbb"</code></p>
-<p><code>"3" &lt; "22"</code></p>
-<p><code>'a' &lt; 'z'</code></p>
-<br />
-
-<p>There are different comparison operators, strict ones
-like <quote>&lt;</quote> and <quote>&gt;</quote>, and non-strict ones
-like <quote>&lt;=</quote> and <quote>&gt;=</quote>. For example:</p>
-
-<p><code>1 &lt;= 2</code></p>
-<p><code>2 &lt;= 2</code></p>
-<p><code>3 &lt;= 2</code></p>
-<br />
-
-<p>To test equality, you can use <quote>=</quote>, and for inequality, there
-is <quote>&lt;&gt;</quote>. For example:</p>
-
-<p><code>1 = 1</code></p>
-<p><code>1 &lt;&gt; 1</code></p>
-<p><code>"1" = 1</code></p>
+<p>Strings are sequences of chars. It is possible to create a
+string from just one char, using:</p>
+<p><code>String.make 10 'x'</code></p>
 
 <br />
+<p>Strings can also be created by joining other strings:</p>
+<p><code>"Mary" ^ " and " ^ "John"</code></p>
 
-<p>Oops, OCaml does not allow you to compare values with different
-types, so we must be more careful:</p>
+<br />
+<p>It might also be interesting to get the length of a string:</p>
 
-<p><code>"1" = string_of_int 1</code></p>
+<p><code>String.length "abcdefghijklmnopqstuvwxyz"</code></p>
+
+<p>(and yes, one character is missing !)</p>
+
+<br />
+<p>There are many operations available on strings, like a function
+which returns a copy of the argument, with all uppercase letters
+translated to lowercase:</p>
+<p><code>String.lowercase "MARY"</code></p>
+
+<br />
+<p>Here's a more practical example, generating a filename from components: </p>
+<p><code>String.concat "/" [""; "usr"; "local"; "bin"]</code></p>
+<p>Note that the second argument is a list of strings.</p>
+
+<br />
+<p>It is sometimes useful to extract an integer from a string. This is
+easy in OCaml:</p>
+<p><code>int_of_string "546"</code></p>

@@ -1,0 +1,16 @@
+<h3>Operations sur les tuples</h3>
+
+<p>Un tuple est constitué de valeurs (zéro ou plus), entre parenthèses
+et séparés par des virgules. Notez que vous pouvez avoir différents types pour
+chaque élément, par exemple :<p>
+<p><code>(42, "John", true)</code></p>
+
+<br />
+<p>Quand vous avez une pair (un tuple avec deux éléments), il existe
+  quelques fonctions prédéfinies, comme une fonction pour récupérer le
+  premier élément:</p>
+<p><code>fst (42, "John")</code></p>
+
+<br />
+<p>Ou le second élément:</p>
+<p><code>snd (42, "John")</code></p>

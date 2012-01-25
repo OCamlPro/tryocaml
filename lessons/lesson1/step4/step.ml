@@ -1,2 +1,3 @@
 fun input output ->
-  find_in "string_of_int" input && find_in "- : bool" output
+  find_in "- : int =" output
+

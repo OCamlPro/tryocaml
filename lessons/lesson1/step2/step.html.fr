@@ -1,20 +1,9 @@
-<h3>Les chaînes de caractères</h3>
+<h3>Listes et tableaux</h3>
 
-<p>Les chaînes de caractères sont des séquences de caractères. Il est
- tout à fait possible de créer une chaîne de caractère à partir d'un
- seul caractère, en utilisant:</p>
-<p><code>String.make 10 'x'</code></p>
-
-<br />
-
-<p>Les chaînes de caractères peuvent également être créér en
-  concaténant plusieurs autres chaînes:</p>
-<p><code>"Mary" ^ " and " ^ "John"</code></p>
+<p>Les listes et tableaux sont des structures de données
+  prédéfinies. Par exemple on peut avoir une liste d'entier:</p>
+<p><code>[ 42; 1; 55 ]</code></p>
 
 <br />
-<p>Il peut être intéressant de récuperer la taille d'une chaîne de
-  caractère:</p>
-
-<p><code>String.length "abcdefghijklmnopqstuvwxyz"</code></p>
-
-<p>(et oui, il manque un caractère !)</p>
+<p>Un tableau de chaîne de caractères:<p>
+<p><code>[|"John"; "Doe"|]</code></p>
