@@ -1,1 +1,3 @@
-fun input output -> find_in "- : string =" output
+fun input output ->
+  find_in "- : int =" output
+

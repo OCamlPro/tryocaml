@@ -1,15 +1,16 @@
-<h3>Operations on Tuples</h3>
+<h3>More operations on strings</h3>
 
-<p>A tuple consists of values (zero or more), enclosed in parentheses
-and separated by commas. Note that you can have differents types for
-each element, remember</p>
-<p><code>(42, "John", true)</code></p>
-
-<br />
-<p>When you have a pair (a tuple with two elements), you can use some
-predefined functions like get the first element:</p>
-<p><code>fst (42, "John")</code></p>
+<p>There are many operations available on strings, like a function
+which returns a copy of the argument, with all uppercase letters
+translated to lowercase:</p>
+<p><code>String.lowercase "MARY"</code></p>
 
 <br />
-<p>Or the second element:</p>
-<p><code>snd (42, "John")</code></p>
+<p>Here's a more practical example, generating a filename from components: </p>
+<p><code>String.concat "/" [""; "usr"; "local"; "bin"]</code></p>
+<p>Note that the second argument is a list of strings.</p>
+
+<br />
+<p>It is sometimes useful to extract an integer from a string. This is
+easy in OCaml:</p>
+<p><code>int_of_string "546"</code></p>
