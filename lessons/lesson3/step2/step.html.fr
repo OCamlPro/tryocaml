@@ -1,0 +1,20 @@
+<h3>Définir une fonction avec plusieurs arguments</h3>
+
+<p>En C ou Java, pour définir une fonction <code>plus</code>, on
+écrirait quelque chose come:
+<p><code>int plus (int x, int y) { return x + y; }</code></xp>
+
+<br />
+<p>L'appel à cette fonction, ressemblerait donc à:</p>
+<p><code>plus (1, 2);</code></p>
+
+<br />
+<p>En OCaml, la même fonction <code>plus</code> serait définie comme
+  suit:</p>
+<p><code>let plus x y = x + y</code></p>
+
+<br />
+<p>Pour utiliser cette fonction, rien de plus simple :</p>
+<p><code>plus 1 2</code></p>
+<p>On remarque ici aussi qu'il n'y a pas de parenthèses ni de virgules
+  entre les paramètres de la fonction.</p>

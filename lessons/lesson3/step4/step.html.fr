@@ -1,0 +1,28 @@
+<h3>Application partielle</h3>
+
+<p>Il est possible d'appliquer un nombre de paramètres inférieur à ce
+  qui est demandé par une fonction. Le résultat est une expression
+  fonctionnelle, c'est ce qu'on appelle une application partielle.</p>
+
+<br />
+<p>Prenons l'exemple de la fonction <code>plus</code>:</p>
+<p><code>let plus x y = x + y</code></p>
+
+<br />
+<p>À l'aide de l'application partielle, nous pourrions réécrire la
+fonction <code>incr</code>, en n'appliquant seulement qu'un argument</p>
+<p><code>let incr = plus 1</code></p>
+
+<br />
+<p>De cette manière <code>plus 1</code> renvoie une fonction d'arité 1
+<code> val incr : int -> int = &lt;fun&gt;</code><p>
+<p>Il suffira donc de donner un entier à <code>incr</code> pour obtenir
+l'addition entre cet entier et <code>1</code>:</p>
+<p><code>incr 42</code></p>
+
+<br />
+<p>De la même manière on peut définir une fonction qui multiplie par
+<code>2</code> chaque entier:</p>
+<p><code>let mul x y = x * y </code><p>
+<p><code>let double = mul 2</code><p>
+<p><code>double 8</code><p>
