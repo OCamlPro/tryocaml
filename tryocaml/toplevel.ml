@@ -607,6 +607,12 @@ let run _ =
     window##close ()
   )
   in
+  let update_lesson () =
+    update_lesson_number ();
+    update_lesson_step_number ();
+    update_lesson_text ();
+    make_code_clickable ();
+  in
   (* Choose your language *)
   let form = Html.createDiv doc in
   let sel = Dom_html.createSelect doc in
@@ -621,6 +627,7 @@ let run _ =
     (fun _ ->
       Tutorial.set_lang (fst (List.nth Tutorial.langs sel##selectedIndex));
       set_cookie "lang" (Tutorial.lang ());
+      update_lesson ();
       Js._true);
   Dom.appendChild form sel;
   let langs = get_element_by_id "languages" in
@@ -629,14 +636,6 @@ let run _ =
   Tutorial.set_cols 80;
   append_children "buttons" [
     send_button; clear_button; reset_button; save_button];
-
-
-  let update_lesson () =
-    update_lesson_number ();
-    update_lesson_step_number ();
-    update_lesson_text ();
-    make_code_clickable ();
-  in
 
   (* Choice of lesson and step with URL *)
   let update_lesson_step lesson step =
@@ -728,6 +727,7 @@ let run _ =
             Tutorial.step (int_of_string s)
   in
   update_lesson_step !Tutorial.this_lesson !Tutorial.this_step;
+  make_code_clickable ();    
   Js._false
 
 let main () =
