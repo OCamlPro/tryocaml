@@ -727,7 +727,6 @@ let run _ =
             Tutorial.step (int_of_string s)
   in
   update_lesson_step !Tutorial.this_lesson !Tutorial.this_step;
-  make_code_clickable ();    
   Js._false
 
 let main () =
