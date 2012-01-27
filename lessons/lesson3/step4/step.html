@@ -1,0 +1,28 @@
+<h3>Partial application</h3>
+
+<p>It is possible to apply a number of parameters less than what is
+required by a function. The result would be a partial application of a
+function.</p>
+
+
+<br />
+<p>Let's take the <code>plus</code> example:</p>
+<p><code>let plus x y = x + y</code></p>
+
+<br />
+<p>Using the partial application, we could rewrite the function
+<code>incr</code>, by giving just one argument to the
+function <code>plus</code>:</p>
+<p><code>let incr = plus 1</code></p>
+
+<br />
+<p>In this way, <code>plus 1</code> will return a function arity 1: <code> val incr : int -> int = &lt;fun&gt;</code><p>
+<p>To increment an integer by one, you can now use the function <code>incr</code>:</p>
+<p><code>incr 42</code></p>
+
+<br />
+<p>Similarly, we can define a function which double each integer
+passed as argument of the function:</p>
+<p><code>let mul x y = x * y </code><p>
+<p><code>let double = mul 2</code><p>
+<p><code>double 8</code><p>

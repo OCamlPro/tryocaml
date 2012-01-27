@@ -1,0 +1,37 @@
+<h3>Opérations sur les chaînes de caractères</h3>
+
+<p>Les chaînes de caractères sont des séquences de caractères. Il est
+ tout à fait possible de créer une chaîne de caractère à partir d'un
+ seul caractère, en utilisant:</p>
+<p><code>String.make 10 'x'</code></p>
+
+<br />
+
+<p>Les chaînes de caractères peuvent également être créér en
+  concaténant plusieurs autres chaînes:</p>
+<p><code>"Mary" ^ " and " ^ "John"</code></p>
+
+<br />
+<p>Il peut être intéressant de récuperer la taille d'une chaîne de
+  caractère:</p>
+
+<p><code>String.length "abcdefghijklmnopqstuvwxyz"</code></p>
+
+<p>(et oui, il manque un caractère !)</p>
+
+<br />
+<p>Il y a bien sûr d'autres opérations disponibles sur les chaînes de
+  caractères, comme une fonction qui retourne une copie de l'argument,
+  avec toutes les majuscules transformées en minuscules:</p>
+<p><code>String.lowercase "MARY"</code></p>
+
+<br />
+<p>Voyons un exemple plus pratique, qui génère un nom de fichier à
+  partir d'un composant:</p>
+<p><code>String.concat "/" [""; "usr"; "local"; "bin"]</code></p>
+<p>Notez que le second argument est une liste de chaînes de caractères</p>
+
+<br />
+<p>Il peut être parfois utile d'extraire un entier depuis une chaîne
+  de caractères. Pour cela rien de plus simple:</p>
+<p><code>int_of_string "546"</code></p>

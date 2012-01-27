@@ -1,0 +1,36 @@
+<h3>Les itérateurs</h3>
+
+<p>On peut maintenant combiner les fonctions anonymes avec les
+  itérateurs prédéfinis.
+Prenons un exemple avec les listes. Si on veut incrémenter tous les
+  éléments d'une liste, on utilisera <code>List.map</code>:</p>
+<p><code>List.map (fun x -> x + 1) [ 1; 2; 3; 4 ]</code></p>
+<br />
+<p>Ici, <code>x</code> est un élément de la liste, <code>x + 1</code>
+  est l'opération qui sera effectuée sur <code>x</code>. Le résultat
+  sera une liste dont tous ses éléments seront incrémentés de 1.</p>
+
+<br />
+<p>Un exemple avec <code>fold_left</code>. Si on veut faire la somme
+  de tous les éléments d'une liste :  </p>
+<pre><code>List.fold_left
+     (fun acc x -> acc + x)
+     0
+     [ 1; 2; 3; 4 ]
+</code></pre>
+
+<p>Si on a  :</p>
+<p><code>let plus = fun acc x -> acc + x</code></p>
+<p>alors:</p>
+<p><code>List.fold_left plus 0 [ 1; 2; 3; 4 ]</code></p>
+<p>est équivalent à:</p>
+<p><code>plus (plus (plus (plus 0 1) 2) 3) 4</code></p>
+
+<br />
+<p>Pour finir, on peut avoir besoin d'afficher les valeurs d'une
+  liste, pour cela on utilisera <code>List.iter</code>:</p>
+<p><code>List.iter print_int [ 1; 2; 3; 4 ]</code></p>
+
+
+<br />
+<p>On peut faire les mêmes opérations sur les tableaux.</p>

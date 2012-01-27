@@ -1,0 +1,33 @@
+<h3>Pattern-matching on lists</h3>
+
+<p>
+ However, the real power of pattern-matching appears when we start
+ using more structured values, when we start needing giving a name to
+ matched patterns. For instance, a list is either the empty
+ list <em>[]</em> or a head and a tail, denoted by the
+ pattern <em>h::t</em> where <em>h</em> and <em>t</em> are fresh
+ variables bound to the matched patterns:
+
+<pre><code>let head = function
+  | []   -> failwith "empty list"
+  | h::t -> h
+</code></pre>
+
+More complex patterns can be written, for instance to look at the head
+of the tail:
+
+<pre><code>let second_element = function
+  | []      -> failwith "the list is empty"
+  | [_]     -> failwith "the list contains only one element"
+  | _::e::_ -> e
+</code></pre>
+
+Or to look deeper into the matched list:
+
+<pre><code>let head_head = function
+  | []        -> failwith "the list is empty"
+  | []::_     -> failwith "the head is the empty list"
+  | (h::_)::_ -> h
+</code></pre>
+</p>
+

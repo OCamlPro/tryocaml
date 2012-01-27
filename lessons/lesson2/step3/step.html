@@ -1,0 +1,24 @@
+<h3>Sequences and Printing</h3>
+
+<p>OCaml provides different functions to print basic types. For
+example:</p>
+
+<p><code>print_int 3</code></p><br/>
+
+<p>and:</p>
+
+<p><code>print_string "Hello"</code></p><br/>
+
+<p>Sequences of expressions are separated by <code>;</code>:</p>
+
+<pre><code>print_string "x = ";
+print_int !x;
+print_newline ()</code></pre>
+
+<p>A more powerful method to print values
+is <code>Printf.printf</code>, whose behavior is similar
+to <code>printf</code> in C:</p>
+
+<p><code>Printf.printf "x = %d. Bye %s\n" !x "John"</code></p>
+
+<br/>

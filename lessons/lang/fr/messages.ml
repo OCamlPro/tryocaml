@@ -30,3 +30,5 @@
   "Clear", "Effacer";
   "Reset", "Ré-init";
   "Save", "Télécharger";
+  "Lesson", "Leçon";
+  "Step", "Étape";

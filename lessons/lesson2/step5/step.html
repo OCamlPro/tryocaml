@@ -1,0 +1,31 @@
+<h3>Computing Conditions</h3>
+
+<p>Boolean values in OCaml can be either <code>true</code>
+or <code>false</code>. They are often created from comparing other
+values. For example:</p>
+
+<p><code>1 &gt; 2</code></p>
+<br />
+
+<p>OCaml's comparison operators can be used on values of any type,
+not only on numerical values. We can compare strings and characters
+too:</p>
+
+<p><code>"aaaaaa" &lt; "bbb"</code></p>
+<p><code>"3" &lt;= "22"</code></p>
+<p><code>22 &gt;= 3</code></p>
+<br />
+
+<p>To test equality, you can use <quote>=</quote>, and for inequality, there
+is <quote>&lt;&gt;</quote>. For example:</p>
+
+<p><code>1 = 1</code></p>
+<p><code>1 &lt;&gt; 1</code></p>
+<p><code>"1" = 1</code></p>
+
+<br />
+
+<p>Oops, OCaml does not allow you to compare values with different
+types, so we must be more careful:</p>
+
+<p><code>"1" = string_of_int 1</code></p>

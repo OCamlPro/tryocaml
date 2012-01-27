@@ -133,7 +133,7 @@ and lesson_back num =
         step (Array.length steps - 1)
 
 let check_step ppf input output =
-  print_debug (Printf.sprintf  "debug: input=[%s] output=[%s]" (String.escaped input) (String.escaped output));
+  print_debug (Printf.sprintf "debug: output=[%s]" (String.escaped output));
   if !user_navigation then begin
     user_navigation := false;
     (!message_fun) (Printf.sprintf "%s %d, %s %d."

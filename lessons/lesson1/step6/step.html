@@ -1,8 +1,15 @@
-<h3>Operations on Lists</h3>
+<h3>Operations on Tuples</h3>
 
-<p>You can use some predefined functions such as reversing the list</p>
-<p><code>List.rev [1; 2; 3]</code></p>
+<p>A tuple consists of values (zero or more), enclosed in parentheses
+and separated by commas. Note that you can have differents types for
+each element, remember</p>
+<p><code>(42, "John", true)</code></p>
 
 <br />
-<p>Get the first element of the list:</p>
-<p><code>List.hd [1; 2; 3]</code></p>
+<p>When you have a pair (a tuple with two elements), you can use some
+predefined functions like get the first element:</p>
+<p><code>fst (42, "John")</code></p>
+
+<br />
+<p>Or the second element:</p>
+<p><code>snd (42, "John")</code></p>

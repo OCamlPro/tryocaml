@@ -18,6 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
+let init_in_lesson = ref (fun _ -> ())
+
 let split_primitives p =
   let len = String.length p in
   let rec split beg cur =
@@ -30,12 +32,17 @@ let split_primitives p =
 
 (****)
 
-external global_data : unit -> Obj.t array = "caml_get_global_data"
+class type global_data = object
+  method toc : (string * string) list Js.readonly_prop
+  method compile : (string -> string) Js.writeonly_prop
+end
+
+external global_data : unit -> global_data Js.t = "caml_get_global_data"
 
 let g = global_data ()
 
 let _ =
-  let toc = Obj.magic (Array.unsafe_get g (-2)) in
+  let toc = g##toc in
   let prims = split_primitives (List.assoc "PRIM" toc) in
 
   let compile s =
@@ -44,7 +51,7 @@ let _ =
     output_program (Pretty_print.to_buffer b);
     Buffer.contents b
   in
-  Array.unsafe_set g (-3) (Obj.repr compile); (*XXX HACK!*)
+  g##compile <- compile; (*XXX HACK!*)
 
 module Html = Dom_html
 
@@ -58,12 +65,22 @@ let default_lang = "en"
 let registered_buttons = ref []
 
 let button_type = Js.string "button"
-let button txt action =
+let text_button txt action =
   let b = Dom_html.createButton ~_type:button_type doc in
   let id = "button"^txt in
   b##innerHTML <- Js.string (Tutorial.translate txt);
   b##id <- Js.string id;
   registered_buttons := (id, txt) :: !registered_buttons;
+  b##className <- Js.string "btn";
+  b##onclick <- Dom_html.handler (fun _ -> action (); Js._true);
+  b
+
+let image_button  src width txt action =
+  let b = Dom_html.createButton ~_type:button_type doc in
+  let id = "button"^txt in
+  b##innerHTML <- Js.string (
+    Printf.sprintf "<img src=\"%s\" width=\"%d\" text=\"%s\"/>" src width (Tutorial.translate txt));
+  b##id <- Js.string id;
   b##className <- Js.string "btn";
   b##onclick <- Dom_html.handler (fun _ -> action (); Js._true);
   b
@@ -83,15 +100,22 @@ let start ppf =
   Format.fprintf ppf "        Welcome to TryOCaml (v. %s)@.@." Sys.ocaml_version;
   Toploop.initialize_toplevel_env ();
   Toploop.input_name := "";
-  exec ppf "Toploop.set_wrap true";
-  exec ppf "open Tutorial";
-  exec ppf "#install_printer Toploop.print_hashtbl";
-  exec ppf "#install_printer Toploop.print_queue";
-  exec ppf "#install_printer Toploop.print_stack";
-  exec ppf "#install_printer Toploop.print_lazy";
-  exec ppf "#install_printer N.print";
-  exec ppf "#install_printer Big.print";
-  exec ppf "#install_printer Num.print";
+  List.iter (fun s ->
+    try
+      exec ppf s
+    with e ->
+      Printf.printf "Exception %s while processing [%s]\n%!" (Printexc.to_string e) s
+  )  [
+    "Toploop.set_wrap true";
+    "open Tutorial";
+    "#install_printer Toploop.print_hashtbl";
+    "#install_printer Toploop.print_queue";
+    "#install_printer Toploop.print_stack";
+    "#install_printer Toploop.print_lazy";
+    "#install_printer N.print";
+    "#install_printer Big.print";
+    "#install_printer Num.print";
+  ];
   ()
 
 let at_bol = ref true
@@ -142,46 +166,41 @@ let ensure_at_bol ppf =
     consume_nl := true; at_bol := true
   end
 
-let update_lesson_text () =
-  if  !Tutorial.this_lesson <> 0 then
+let get_element_by_id id =
+  Js.Opt.get (doc##getElementById (Js.string id))
+    (fun () -> assert false)
+
+let set_by_id id s =
+    let container = get_element_by_id id in
+    container##innerHTML <- Js.string s
+
+let set_container_by_id id s =
   try
-    let container =
-      Js.Opt.get (doc##getElementById (Js.string "lesson-text"))
-        (fun () -> assert false)
-    in
-    container##innerHTML <- Js.string !Tutorial.this_step_html
+    set_by_id id s
   with _ -> ()
+
+let update_lesson_text () =
+  if  !Tutorial.this_lesson <> 0 then begin
+    !init_in_lesson ();
+    set_container_by_id "lesson-text" !Tutorial.this_step_html
+  end
 
 let update_lesson_number () =
   if  !Tutorial.this_lesson <> 0 then
-    try
-    let container =
-      Js.Opt.get (doc##getElementById (Js.string "lesson-number"))
-        (fun () -> assert false)
-    in
-    container##innerHTML <- Js.string
-      (Printf.sprintf "<span class=\"lesson\">Lesson %d</span>" !Tutorial.this_lesson)
-  with _ -> ()
+    set_container_by_id "lesson-number"
+      (Printf.sprintf "<span class=\"lesson\">%s %d</span>"
+         (Tutorial.translate "Lesson")
+         !Tutorial.this_lesson)
 
 let update_lesson_step_number () =
   if  !Tutorial.this_lesson <> 0 then
-  try
-    let container =
-      Js.Opt.get (doc##getElementById (Js.string "lesson-step"))
-        (fun () -> assert false)
-    in
-    container##innerHTML <- Js.string
-      (Printf.sprintf "<span class=\"step\">Step %d</span>" !Tutorial.this_step)
-  with _ -> ()
+    set_container_by_id "lesson-step"
+      (Printf.sprintf "<span class=\"step\">%s %d</span>"
+         (Tutorial.translate "Step")
+         !Tutorial.this_step)
 
 let update_prompt prompt =
-  try
-    let container =
-      Js.Opt.get (doc##getElementById (Js.string "sharp"))
-        (fun () -> assert false)
-    in
-    container##innerHTML <- Js.string prompt
-  with _ -> ()
+  set_container_by_id "sharp" prompt
 
 let extract_escaped_and_kill html i =
   let len = String.length html in
@@ -240,17 +259,44 @@ let get_lang_from_cookie () =
           None -> default_lang
         | Some s -> s
 
-let set_cookie key value =
-  doc##cookie <- Js.string (Printf.sprintf "%s=%s;" key value)
+let get_lesson_from_cookie () =
+  let s = doc##cookie in
+  let reg = Regexp.regexp ".*lesson=([0-9]+).*" in
+  match Regexp.string_match reg (Js.to_string s) 0 with
+    | None -> 0
+    | Some r ->
+      match (Regexp.matched_group r 1) with
+          None -> 0
+        | Some s -> int_of_string s
 
-let set_container_by_id id s =
-  try
-    let container =
-      Js.Opt.get (doc##getElementById (Js.string id))
-        (fun () -> assert false)
-    in
-    container##innerHTML <- Js.string s
-  with _ -> ()
+let get_step_from_cookie () =
+  let s = doc##cookie in
+  let reg = Regexp.regexp ".*step=([0-9]+).*" in
+  match Regexp.string_match reg (Js.to_string s) 0 with
+    | None -> 0
+    | Some r ->
+      match (Regexp.matched_group r 1) with
+          None -> 0
+        | Some s -> int_of_string s
+
+let set_cookie key value =
+  let today = jsnew Js.date_now () in
+  let expire_time = today##setTime
+    ((Js.to_float today##getTime()) *. 60. *. 60. *. 24. *. 365.) in
+  doc##cookie <- Js.string (Printf.sprintf "%s=%s;expires=%f" key value
+                              (Js.to_float expire_time))
+
+
+
+let get_by_id id =
+  let container = get_element_by_id id in
+  Js.to_string container##innerHTML
+
+let get_by_name id =
+  let container =
+    List.hd (Dom.list_of_nodeList (doc##getElementsByTagName (Js.string id)))
+  in
+  Js.to_string container##innerHTML
 
 let update_debug_message =
   let b = Buffer.create 100 in
@@ -300,8 +346,13 @@ let loop s ppf buffer =
         let phr = try
                     !Toploop.parse_toplevel_phrase lb
           with End_of_file -> raise End_of_input
+            | e ->
+              let input = string_of_char_list (List.rev !output) in
+              Tutorial.print_debug (Printf.sprintf "debug: input = [%s]"  (String.escaped input));
+              raise e
         in
         let input = string_of_char_list (List.rev !output) in
+        Tutorial.print_debug (Printf.sprintf "debug: input = [%s]"  (String.escaped input));
         if !Tutorial.use_multiline then begin
           match !output with
               ';' :: ';' :: _ -> output := []
@@ -334,7 +385,6 @@ let loop s ppf buffer =
             Errors.report_error ppf x
           end
       end;
-      update_debug_message ();
     done
     with End_of_input ->
       match !output with
@@ -367,7 +417,7 @@ let to_update = [
   "text-submit", "Submit code";
   "text-arrows", "Up / Down";
   "text-history", "Cycle through history";
-  "text-enter", "Shift + Enter";
+  "text-newline", "Shift + Enter";
   "text-multiline",  "Multiline edition";
   "text-lesson-1", "Move to lesson 1";
   "text-step-1", "Move to step 1 of the current lesson";
@@ -386,17 +436,45 @@ let _ =
       [ to_update; !registered_buttons ]
   )
 
-let run _ =
-  let top =
-    Js.Opt.get (doc##getElementById (Js.string "toplevel"))
-      (fun () -> assert false)
-  in
-  let output_area =
-    Js.Opt.get (doc##getElementById (Js.string "output"))
-      (fun () -> assert false)
-  in
-  let buffer = Buffer.create 1000 in
+let get_history_size () =
+  match Js.Optdef.to_option
+    (window##localStorage##getItem(Js.string "history last")) with
+      | None -> 0
+      | Some s -> try int_of_string (Js.to_string s) with _ -> 0
 
+let set_history_size i =
+  window##localStorage##setItem(Js.string "history last",
+                                Js.string (string_of_int i))
+
+let get_history () =
+  try
+  let size = get_history_size () in
+  let h = Array.init size
+    (fun i -> Js.Optdef.get
+      (window##localStorage##getItem(
+        Js.string (Printf.sprintf "history %i" i)))
+      (fun () -> failwith "no history item")) in
+  Array.to_list h
+  with _ -> (* Probably no local storage *)
+    []
+
+let append_children id list =
+  let ele = get_element_by_id id in
+  List.iter (fun w -> Dom.appendChild ele w) list
+
+let add_history s =
+  try
+    let size = get_history_size () in
+    window##localStorage##setItem(
+      Js.string (Printf.sprintf "history %i" size), s);
+    set_history_size (size+1);
+  with
+    | _ -> Firebug.console##warn(Js.string "can't set history")
+
+let run _ =
+  let top = get_element_by_id "toplevel"  in
+  let output_area = get_element_by_id "output" in
+  let buffer = Buffer.create 1000 in
   let ppf =
     let b = Buffer.create 80 in
     Format.make_formatter
@@ -414,17 +492,14 @@ let run _ =
   Dom.appendChild top textbox;
   textbox##focus();
   textbox##select();
-  let container =
-    Js.Opt.get (doc##getElementById (Js.string "toplevel-container"))
-      (fun () -> assert false)
-  in
-  let history = ref [] in
-  let history_bckwrd = ref [] in
+  let container = get_element_by_id "toplevel-container" in
+  container##onclick <- Dom_html.handler (fun _ ->
+    textbox##focus();  textbox##select();  Js._true);
+  let history = ref (get_history ()) in
+  let history_bckwrd = ref !history in
   let history_frwrd = ref [] in
-
   let rec make_code_clickable () =
-    let textbox =
-      Js.Opt.get (doc##getElementById(Js.string "console")) (fun () -> assert false) in
+    let textbox = get_element_by_id "console" in
     let textbox = match Js.Opt.to_option (Html.CoerceTo.textarea textbox) with
       | None   -> assert false
       | Some t -> t in
@@ -441,11 +516,16 @@ let run _ =
 
   and execute () =
     let s = Js.to_string textbox##value in
-    if s <> "" then history := Js.string s :: !history;
+    if s <> "" then
+      begin
+        history := Js.string s :: !history;
+        add_history (Js.string s);
+      end;
     history_bckwrd := !history;
     history_frwrd := [];
     textbox##value <- Js.string "";
-    loop s ppf buffer;
+    (try loop s ppf buffer with _ -> ());
+    update_debug_message ();
     make_code_clickable ();
     textbox##focus();
     container##scrollTop <- container##scrollHeight;
@@ -509,11 +589,10 @@ let run _ =
   );
   Tutorial.set_cols_fun := (fun i ->
     textbox##style##width <- Js.string ((string_of_int (i * 7)) ^ "px"));
-
-  let send_button = button "Send" (fun () -> execute ()) in
-  let clear_button = button "Clear" (fun () -> Tutorial.clear ()) in
-  let reset_button = button "Reset" (fun () -> Tutorial.reset ()) in
-  let save_button =  button "Save" (fun () ->
+  let send_button = text_button "Send" (fun () -> execute ()) in
+  let clear_button = text_button "Clear" (fun () -> Tutorial.clear ()) in
+  let reset_button = text_button "Reset" (fun () -> Tutorial.reset ()) in
+  let save_button =  text_button "Save" (fun () ->
     let content = Js.to_string output_area##innerHTML in
     let l = Regexp.split (Regexp.regexp ("\n")) content in
     let content =
@@ -530,15 +609,13 @@ let run _ =
     window##close ()
   )
   in
-  let buttons =
-      Js.Opt.get (doc##getElementById (Js.string "buttons"))
-        (fun () -> assert false)
+  let update_lesson () =
+    update_lesson_number ();
+    update_lesson_step_number ();
+    update_lesson_text ();
+    make_code_clickable ();
   in
   (* Choose your language *)
-  let set_lang lang =
-    textbox##value <- Js.string ("set_lang \"" ^ lang ^ "\";;" );
-    execute ()
-  in
   let form = Html.createDiv doc in
   let sel = Dom_html.createSelect doc in
   sel##id <- Js.string "languages";
@@ -550,29 +627,68 @@ let run _ =
   sel##onchange <-
     Html.handler
     (fun _ ->
-      set_lang (fst (List.nth Tutorial.langs sel##selectedIndex));
+      Tutorial.set_lang (fst (List.nth Tutorial.langs sel##selectedIndex));
       set_cookie "lang" (Tutorial.lang ());
+      update_lesson ();
       Js._true);
   Dom.appendChild form sel;
-  let langs = Js.Opt.get (doc##getElementById (Js.string "languages"))
-        (fun () -> assert false)
-  in
+  let langs = get_element_by_id "languages" in
   Dom.appendChild langs form;
 
   Tutorial.set_cols 80;
-  Dom.appendChild buttons send_button;
-  Dom.appendChild buttons clear_button;
-  Dom.appendChild buttons reset_button;
-  Dom.appendChild buttons save_button;
+  append_children "buttons" [
+    send_button; clear_button; reset_button; save_button];
+
+  (* Choice of lesson and step with URL *)
+  let update_lesson_step lesson step =
+    Tutorial.lesson lesson;
+    Tutorial.step step;
+    update_lesson ()
+  in
+
+  init_in_lesson :=
+    (let init = ref false in
+     fun () ->
+       if not !init then begin
+         init := true;
+
+         append_children "lesson-left-button" [
+           image_button "images/left2.png" 16 "left2"
+             (fun _ ->
+               Tutorial.lesson (!Tutorial.this_lesson-1);
+               update_lesson ();
+             );
+         ];
+         append_children "lesson-right-button" [
+           image_button "images/right2.png" 16 "right2"
+             (fun _ ->
+               Tutorial.lesson (!Tutorial.this_lesson+1);
+               update_lesson ();
+             );
+         ];
+         append_children "step-left-button" [
+           image_button "images/left1.png" 16 "left1"  (fun _ ->
+             Tutorial.back();
+             update_lesson ();
+           );
+         ];
+         append_children "step-right-button" [
+           image_button "images/right1.png" 16 "right1"  (fun _ ->
+             Tutorial.next();
+             update_lesson ();
+           );
+         ];
+       end);
+
   output_area##scrollTop <- output_area##scrollHeight;
   make_code_clickable ();
   start ppf;
   (* Setting language *)
   let set_lang_from_cookie () =
-    (* let lang = get_val_from_cookie ("lang=" ^ (Tutorial.lang ())) in *)
     let lang = get_lang_from_cookie () in
-    if lang <> "" then set_lang lang
+    if lang <> "" then Tutorial.set_lang lang
   in
+
   (* Check if language has change in URL *)
   let url = Js.decodeURI loc##href in
   let reg = Regexp.regexp ".*lang=([a-z][a-z]).*" in
@@ -580,13 +696,42 @@ let run _ =
     match Regexp.string_match reg (Js.to_string url) 0 with
       | None -> set_lang_from_cookie ()
       | Some r ->
-        match (Regexp.matched_group r 1) with
+        match Regexp.matched_group r 1 with
             None -> set_lang_from_cookie ()
-          | Some s -> set_lang s; set_cookie "lang" (Tutorial.lang ());
+          | Some s ->
+            Tutorial.set_lang s;
+            set_cookie "lang" (Tutorial.lang ());
   in
+  let set_lesson_step_from_cookie () =
+    let lesson = get_lesson_from_cookie () in
+    let step = get_step_from_cookie () in
+    update_lesson_step lesson step
+  in
+  let reg_lesson = Regexp.regexp ".*lesson=([0-9]+).*" in
+  let reg_step = Regexp.regexp ".*step=([0-9]+).*" in
+  let _ =
+    match Regexp.string_match reg_lesson (Js.to_string url) 0 with
+      | None -> ()
+      | Some r ->
+        match Regexp.matched_group r 1 with
+            None -> ()
+          | Some s ->
+            set_cookie "lesson" s;
+            Tutorial.lesson (int_of_string s) in
+  let _ =
+    match Regexp.string_match reg_step (Js.to_string url) 0 with
+      | None -> set_lesson_step_from_cookie ()
+      | Some r ->
+        match Regexp.matched_group r 1 with
+            None -> set_lesson_step_from_cookie ()
+          | Some s ->
+            set_cookie "step" s;
+            Tutorial.step (int_of_string s)
+  in
+  update_lesson_step !Tutorial.this_lesson !Tutorial.this_step;
   Js._false
 
-let _ =
+let main () =
   (*  window##alert (Js.string "Starting..."); *)
   try
     ignore (run ());
@@ -604,4 +749,3 @@ let _ =
   Num.init ();
   Big.init ();
   ()
-

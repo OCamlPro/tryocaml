@@ -1,14 +1,27 @@
 # remove this variable to use the default ocaml toplevel
 INCLUDE_TOPLEVELLIB= -I toplevellib
+TOPLEVELLIB=toplevellib/
 
 COMPILER=js_of_ocaml
 LIBNAME=js_of_ocaml
-NAME=toplevel
-OBJS=tutorial/tutorial.cma ocaml-num/ocaml-num.cma toplevel.cmo
-JS=js_of_ocaml-patched
-INCLUDES= -I $(JS)/lib -I $(JS)/compiler -I tutorial $(INCLUDE_TOPLEVELLIB) -I ocaml-num
 
-all: compiler tuto num $(NAME).js
+TOPLEVEL_CMIS=toplevel.cmi
+TOPLEVEL_CMOS= toplevel.cmo topmain.cmo
+TOPLEVEL_CMAS= $(JS)/lib/$(LIBNAME).cma $(JS)/compiler/compiler.cma  $(TOPLEVELLIB)toplevellib.cma ocaml-num/ocaml-num.cma tutorial/tutorial.cma
+
+JS=js_of_ocaml-patched
+INCLUDES= -I $(JS)/lib -I $(JS)/compiler -I tutorial $(INCLUDE_TOPLEVELLIB) -I ocaml-num -I .
+
+# To add a new toplevel, add a new name below, add it to TOPLEVELS, copy
+# the lines defining TRYOCAML_WITH_JS* at the end, and replace with
+# your own settings
+
+TRYOCAML_NAME=toplevel
+TRYOCAML_WITH_JS_NAME=toplevel-with-js
+TOPLEVELS= $(TRYOCAML_NAME).js $(TRYOCAML_WITH_JS_NAME).js
+
+all: compiler tuto $(TOPLEVELS)
+tryocaml: toplevel.js
 
 compiler:
 	$(MAKE) -C $(JS) all
@@ -19,7 +32,6 @@ COMP=$(JS)/compiler/$(COMPILER)
 #COMP=$(LIBRARY)
 JSFILES=$(JS)/runtime/runtime.js $(JS)/runtime/weak.js toplevel_runtime.js
 OCAMLC=ocamlfind ocamlc -annot -package lwt,str -pp "camlp4o $(JS)/lib/syntax/pa_js.cmo"
-STDLIB= $(JS)/lib/$(LIBNAME).cma $(JS)/compiler/compiler.cma  toplevellib.cma
 EXPUNGE=$(shell ocamlc -where)/expunge
 # Removed gc and sys
 STDLIB_MODULES=\
@@ -64,11 +76,64 @@ STDLIB_MODULES=\
   stream \
   string \
   stringLabels \
-  weak \
-  n \
-  big_int \
-  num \
-  big \
+  weak
+
+#  n \
+#  big_int \
+#  num \
+#  big \
+
+TOPLEVEL_MODULES=$(STDLIB_MODULES) n regexp tutorial outcometree topdirs toploop toplevel clflags
+
+%.cmo: %.ml
+	$(OCAMLC) $(INCLUDES) -c $<
+%.cmi: %.mli
+	$(OCAMLC) $(INCLUDES) -c $<
+
+%.cmi:$(JS)/compiler/compiler.cma
+
+$(JS)/compiler/compiler.cma:
+	$(MAKE) -C $(JS)/compiler compiler.cma
+
+tuto:
+	$(MAKE) -C tutorial all
+
+num:
+	$(MAKE) -C ocaml-num all
+
+clean::
+	rm -f *.cm[io] $(TOPLEVELS:.js=.byte) *.annot *~
+	$(MAKE) -C tutorial clean
+	$(MAKE) -C $(JS) clean
+
+depend:
+	ocamldep -pp "camlp4o $(JS)/lib/syntax/pa_js.cmo" $(INCLUDES) *.ml *.mli > .depend
+
+toplevel.cmo: toplevellib/*.cmi
+
+-include .depend
+
+
+############### TRYOCAML_NAME=toplevel
+
+TRYOCAML_EXTRA_CMIS=
+TRYOCAML_EXTRA_CMAS=
+TRYOCAML_EXTRA_MODULES=
+
+$(TRYOCAML_NAME).js: $(TRYOCAML_NAME).byte $(JSFILES)
+	$(COMP) $(INCLUDES) -toplevel -linkall -noinline -noruntime $(JSFILES) $(TRYOCAML_NAME).byte $(OPTIONS)
+
+$(TRYOCAML_NAME).byte: $(TOPLEVEL_CMIS) $(TOPLEVEL_CMOS) $(TOPLEVEL_CMAS) $(TRYOCAML_EXTRA_CMAS) $(TRYOCAML_EXTRA_CMIS)
+	$(OCAMLC) $(INCLUDES) -linkall -package str -linkpkg -o $@.tmp $(TOPLEVEL_CMAS) $(TRYOCAML_EXTRA_CMAS) $(TOPLEVEL_CMOS)
+	$(EXPUNGE) $@.tmp $@ $(TOPLEVEL_MODULES) $(TRYOCAML_EXTRA_MODULES)
+	rm -f $@.tmp
+
+
+############### TRYOCAML_WITH_JS_NAME=toplevel-with-js
+
+TRYOCAML_WITH_JS_EXTRA_CMIS=
+TRYOCAML_WITH_JS_EXTRA_CMAS=
+TRYOCAML_WITH_JS_EXTRA_MODULES= \
   css \
   dom \
   dom_events \
@@ -84,44 +149,13 @@ STDLIB_MODULES=\
   regexp \
   url \
   xmlHttpRequest \
-  tutorial \
 
 
-PERVASIVES=$(STDLIB_MODULES) outcometree topdirs toploop
+$(TRYOCAML_WITH_JS_NAME).js: $(TRYOCAML_WITH_JS_NAME).byte $(JSFILES)
+	$(COMP) $(INCLUDES) -toplevel -linkall -noinline -noruntime $(JSFILES) $(TRYOCAML_WITH_JS_NAME).byte $(OPTIONS)
 
-$(NAME).js: $(NAME).byte $(JSFILES) toplevellib/toplevellib.cma
-	$(COMP) $(INCLUDES) -toplevel -linkall -noinline -noruntime $(JSFILES) $(NAME).byte $(OPTIONS)
-
-$(NAME).byte: $(OBJS) $(JS)/compiler/compiler.cma toplevellib/toplevellib.cma
-	$(OCAMLC) $(INCLUDES) -linkall -package str -linkpkg -o $@.tmp $(STDLIB) $(OBJS)
-	$(EXPUNGE) $@.tmp $@ $(PERVASIVES)
+$(TRYOCAML_WITH_JS_NAME).byte: $(TOPLEVEL_CMIS) $(TOPLEVEL_CMOS) $(TOPLEVEL_CMAS) $(TRYOCAML_WITH_JS_EXTRA_CMAS) $(TRYOCAML_WITH_JS_EXTRA_CMIS)
+	$(OCAMLC) $(INCLUDES) -linkall -package str -linkpkg -o $@.tmp $(TOPLEVEL_CMAS) $(TRYOCAML_WITH_JS_EXTRA_CMAS) $(TOPLEVEL_CMOS)
+	$(EXPUNGE) $@.tmp $@ $(TOPLEVEL_MODULES) $(TRYOCAML_WITH_JS_EXTRA_MODULES)
 	rm -f $@.tmp
 
-%.cmo: %.ml
-	$(OCAMLC) $(INCLUDES) -c $<
-
-%.cmi:$(JS)/compiler/compiler.cma
-
-$(JS)/compiler/compiler.cma:
-	$(MAKE) -C $(JS)/compiler compiler.cma
-
-errors.cmi: errors.mli
-	$(OCAMLC) $(INCLUDES) -c $<
-
-tuto:
-	$(MAKE) -C tutorial all
-
-num:
-	$(MAKE) -C ocaml-num all
-
-clean::
-	rm -f *.cm[io] $(NAME).byte *.annot *~
-	$(MAKE) -C tutorial clean
-	$(MAKE) -C $(JS) clean
-
-depend:
-	ocamldep -pp "camlp4o $(JS)/lib/syntax/pa_js.cmo" $(INCLUDES) *.ml *.mli > .depend
-
-toplevel.cmo: toplevellib/*.cmi
-
-include .depend

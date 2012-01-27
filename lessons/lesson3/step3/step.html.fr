@@ -1,0 +1,19 @@
+<h3>Retourner plusieurs valeurs</h3>
+
+<p>Vous aurez remarqué qu'en OCaml, nous n'utilisons pas de
+mot-clé <code>return</code> pour retourner une valeur, la valeur de
+l'ensemble du corps est implicitement ce qui est retourné.</p>
+
+<br />
+<p>Pour retourner donc plusieurs valeurs, nous allons utiliser les
+tuples. Par exemple:</p>
+<p><code>(2, 3, 4, 5)</code></p>
+
+<br />
+<p>On peut alors écrire des fonctions qui retournent plusieurs
+  valeurs. Par exemple:</p>
+<p><code>let division x y = (x / y, x mod y)</code></p>
+
+<br />
+<p>On obtient alors:</p>
+<p><code>division 10 3</code></p>

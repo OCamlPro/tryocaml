@@ -1,2 +1,2 @@
-fun input output ->
-  find_in  "- : char =" output
+fun _ output ->
+  find_in  "- : int = 15" output
