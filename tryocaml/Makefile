@@ -20,7 +20,7 @@ TRYOCAML_NAME=toplevel
 TRYOCAML_WITH_JS_NAME=toplevel-with-js
 TOPLEVELS= $(TRYOCAML_NAME).js $(TRYOCAML_WITH_JS_NAME).js
 
-all: compiler tuto $(TOPLEVELS)
+all: num compiler tuto $(TOPLEVELS)
 tryocaml: toplevel.js
 
 compiler:
