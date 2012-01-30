@@ -78,7 +78,7 @@ STDLIB_MODULES=\
   stringLabels \
   weak
 
-TOPLEVEL_MODULES=$(STDLIB_MODULES) n regexp tutorial outcometree topdirs toploop toplevel clflags  n  big_int   num   big
+TOPLEVEL_MODULES=$(STDLIB_MODULES) n regexp tutorial outcometree topdirs toploop toplevel clflags n big_int num topnum
 
 
 %.cmo: %.ml

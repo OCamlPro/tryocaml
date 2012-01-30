@@ -113,8 +113,12 @@ let start ppf =
     "#install_printer Toploop.print_stack";
     "#install_printer Toploop.print_lazy";
     "#install_printer N.print";
-    "#install_printer Big.print";
-    "#install_printer Num.print";
+
+(* for Num/Big_int: *)
+    "#install_printer Topnum.print_big_int";
+    "#install_printer Topnum.print_num";
+    "open Topnum";
+
   ];
   ()
 
@@ -744,8 +748,5 @@ let main () =
 (* Force some dependencies to be linked : *)
 let _ =
   Tutorial.init ();
-  N.init ();
-  Big_int.init ();
-  Num.init ();
-  Big.init ();
+  Topnum.init ();
   ()

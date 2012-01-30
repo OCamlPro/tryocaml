@@ -1,6 +1,7 @@
 
 let ppf =  Format.std_formatter
 
+(*
 open Big
 
 (*
@@ -26,3 +27,13 @@ let _ =
     print ppf !t;
 
   done
+*)
+let _ =
+  let s = "20000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" in
+  for i = 1 to String.length s do
+    let s = String.sub s 0 i in
+    Printf.printf "s = %s [%d]\n%!" s i;
+    assert (s = Big_int.string_of_big_int (Big_int.big_int_of_string s))
+  done
+
+

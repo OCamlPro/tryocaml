@@ -91,7 +91,10 @@ let num_leading_zero_bits_in_digit nat int =
   if !d land 0x2 <> 0 then (n := !n - 1; d := !d lsr 1);
   !n - !d
 
-let is_digit_int nat int = nat.(int) >= 0
+let is_digit_int nat int =
+  let x = nat.(int) in
+  x >= 0 && x land mask = x
+
 let is_digit_zero nat int = nat.(int) = 0
 (* let is_digit_normalized nat int = failwith "is_digit_normalized" *)
 let is_digit_odd nat int = nat.(int) land 1 = 1
@@ -707,7 +710,7 @@ let make_power_base base power_base =
           power_base (pred !i) 1
           power_base 0)
    done;
-   while !j <= !i && is_digit_int power_base !j do incr j done;
+   while !j < !i-1 && is_digit_int power_base !j do incr j done;
   (!i - 2, !j)
 
 (*
@@ -895,6 +898,8 @@ let base_digit_of_char c base =
 let sys_nat_of_string base s off len =
   let power_base = make_nat (succ length_of_digit) in
   let (pmax, pint) = make_power_base base power_base in
+(*  Printf.printf "pmax = %d, pint=%d\n%!" pmax pint;
+  print_nat "power_base" power_base 0 0; *)
   let new_len = ref (1 + len / (pmax + 1))
   and current_len = ref 1 in
   let possible_len = ref (min 2 !new_len) in

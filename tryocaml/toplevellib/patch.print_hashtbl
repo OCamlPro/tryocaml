@@ -168,10 +168,22 @@ diff -C 3 -r ocaml-3.12.1-orig/otherlibs/threads/pervasives.ml ocaml-3.12.1/othe
   external (=) : 'a -> 'a -> bool = "%equal"
 diff -C 3 -r ocaml-3.12.1-orig/parsing/lexer.mll ocaml-3.12.1/parsing/lexer.mll
 *** ocaml-3.12.1-orig/parsing/lexer.mll	2010-04-08 05:58:41.000000000 +0200
---- ocaml-3.12.1/parsing/lexer.mll	2012-01-19 17:09:28.168765004 +0100
+--- ocaml-3.12.1/parsing/lexer.mll	2012-01-30 10:07:57.811419141 +0100
+***************
+*** 292,297 ****
+--- 292,300 ----
+            INT64 (cvt_int64_literal (Lexing.lexeme lexbuf))
+          with Failure _ ->
+            raise (Error(Literal_overflow "int64", Location.curr lexbuf)) }
++   | int_literal "I"
++       { let s = Lexing.lexeme lexbuf in
++         BIGINT (String.sub s 0 (String.length s - 1)) }
+    | int_literal "n"
+        { try
+            NATIVEINT (cvt_nativeint_literal (Lexing.lexeme lexbuf))
 ***************
 *** 346,351 ****
---- 346,352 ----
+--- 349,355 ----
           token lexbuf
         }
     | "#"  { SHARP }
@@ -181,13 +193,13 @@ diff -C 3 -r ocaml-3.12.1-orig/parsing/lexer.mll ocaml-3.12.1/parsing/lexer.mll
     | "`"  { BACKQUOTE }
 diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.mly
 *** ocaml-3.12.1-orig/parsing/parser.mly	2011-04-29 06:56:21.000000000 +0200
---- ocaml-3.12.1/parsing/parser.mly	2012-01-19 17:08:59.998765003 +0100
+--- ocaml-3.12.1/parsing/parser.mly	2012-01-30 13:06:37.671465464 +0100
 ***************
-*** 83,100 ****
+*** 83,111 ****
     then String.sub f 1 (String.length f - 1)
     else "-" ^ f
   
-  let mkuminus name arg =
+! let mkuminus name arg =
     match name, arg.pexp_desc with
     | "-", Pexp_constant(Const_int n) ->
 !       mkexp(Pexp_constant(Const_int(-n)))
@@ -202,50 +214,74 @@ diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.ml
     | _ ->
         mkexp(Pexp_apply(mkoperator ("~" ^ name) 1, ["", arg]))
   
---- 83,122 ----
+  let mkuplus name arg =
+    let desc = arg.pexp_desc in
+    match name, desc with
+!   | "+", Pexp_constant(Const_int _)
+!   | "+", Pexp_constant(Const_int32 _)
+!   | "+", Pexp_constant(Const_int64 _)
+!   | "+", Pexp_constant(Const_nativeint _)
+!   | ("+" | "+."), Pexp_constant(Const_float _) -> mkexp desc
+    | _ ->
+        mkexp(Pexp_apply(mkoperator ("~" ^ name) 1, ["", arg]))
+  
+--- 83,135 ----
     then String.sub f 1 (String.length f - 1)
     else "-" ^ f
   
-+ let pexp_constant cst =
-+   if !Clflags.wrap_constants then
-+     match cst with
-+         Const_string _
-+       | Const_char _ ->
-+         Pexp_constant cst
-+       | _ ->
-+         let name =
-+           match cst with
-+               Const_string _
-+             | Const_char _ -> assert false
-+             | Const_nativeint _ -> "nativeint"
-+             | Const_int64 _ -> "int64"
-+             | Const_int32 _ -> "int32"
-+             | Const_float _ -> "float"
-+             | Const_int _ -> "int"
-+         in
-+         Pexp_apply(ghexp(Pexp_ident (Lident (Printf.sprintf "%s_of_%s" name name))),
-+                    ["", mkexp (Pexp_constant cst)])
-+   else
-+     Pexp_constant cst
-+ 
-  let mkuminus name arg =
+! let pexp_constant rev cst =
+!   if !Clflags.wrap_constants then
+!     match cst with
+!         Const_string _
+!       | Const_char _ ->
+!         Pexp_constant cst
+!       | _ ->
+!         let name =
+!           match cst with
+!               Const_string _
+!             | Const_char _ -> assert false
+!             | Const_nativeint _ -> "nativeint"
+!             | Const_int64 _ -> "int64"
+!             | Const_int32 _ -> "int32"
+!             | Const_float _ -> "float"
+!             | Const_int _ -> "int"
+!         in
+!         Pexp_apply(ghexp(Pexp_ident (Lident (Printf.sprintf "%s_%s_%s" name
+!                                                (if rev then "to" else "of")
+!                                                name))),
+!                    ["", mkexp (Pexp_constant cst)])
+!   else
+!     Pexp_constant cst
+! 
+! let mkuminus rev name arg =
     match name, arg.pexp_desc with
     | "-", Pexp_constant(Const_int n) ->
-!       mkexp(pexp_constant(Const_int(-n)))
+!       mkexp(pexp_constant rev (Const_int(-n)))
     | "-", Pexp_constant(Const_int32 n) ->
-!       mkexp(pexp_constant(Const_int32(Int32.neg n)))
+!       mkexp(pexp_constant rev (Const_int32(Int32.neg n)))
     | "-", Pexp_constant(Const_int64 n) ->
-!       mkexp(pexp_constant(Const_int64(Int64.neg n)))
+!       mkexp(pexp_constant rev (Const_int64(Int64.neg n)))
     | "-", Pexp_constant(Const_nativeint n) ->
-!       mkexp(pexp_constant(Const_nativeint(Nativeint.neg n)))
+!       mkexp(pexp_constant rev (Const_nativeint(Nativeint.neg n)))
     | ("-" | "-."), Pexp_constant(Const_float f) ->
-!       mkexp(pexp_constant(Const_float(neg_float_string f)))
+!       mkexp(pexp_constant rev (Const_float(neg_float_string f)))
+    | _ ->
+        mkexp(Pexp_apply(mkoperator ("~" ^ name) 1, ["", arg]))
+  
+  let mkuplus name arg =
+    let desc = arg.pexp_desc in
+    match name, desc with
+!   | "+", Pexp_constant (Const_int _)
+!   | "+", Pexp_constant (Const_int32 _)
+!   | "+", Pexp_constant (Const_int64 _)
+!   | "+", Pexp_constant (Const_nativeint _)
+!   | ("+" | "+."), Pexp_constant (Const_float _) -> mkexp desc
     | _ ->
         mkexp(Pexp_apply(mkoperator ("~" ^ name) 1, ["", arg]))
   
 ***************
 *** 208,213 ****
---- 230,321 ----
+--- 232,323 ----
   let pat_of_label lbl =
     mkpat (Ppat_var(Longident.last lbl))
   
@@ -340,7 +376,7 @@ diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.ml
   /* Tokens */
 ***************
 *** 305,310 ****
---- 413,419 ----
+--- 415,421 ----
   %token RPAREN
   %token SEMI
   %token SEMISEMI
@@ -349,7 +385,17 @@ diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.ml
   %token SIG
   %token STAR
 ***************
-*** 376,382 ****
+*** 323,328 ****
+--- 434,440 ----
+  %token WHEN
+  %token WHILE
+  %token WITH
++ %token <string> BIGINT
+  
+  /* Precedences and associativities.
+  
+***************
+*** 376,386 ****
   %nonassoc prec_constant_constructor     /* cf. simple_expr (C versus C x) */
   %nonassoc prec_constr_appl              /* above AS BAR COLONCOLON COMMA */
   %nonassoc below_SHARP
@@ -357,7 +403,11 @@ diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.ml
   %nonassoc below_DOT
   %nonassoc DOT
   /* Finally, the first tokens of simple_expr are above everything else. */
---- 485,491 ----
+! %nonassoc BACKQUOTE BANG BEGIN CHAR FALSE FLOAT INT INT32 INT64
+            LBRACE LBRACELESS LBRACKET LBRACKETBAR LIDENT LPAREN
+            NEW NATIVEINT PREFIXOP STRING TRUE UIDENT
+  
+--- 488,498 ----
   %nonassoc prec_constant_constructor     /* cf. simple_expr (C versus C x) */
   %nonassoc prec_constr_appl              /* above AS BAR COLONCOLON COMMA */
   %nonassoc below_SHARP
@@ -365,6 +415,27 @@ diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.ml
   %nonassoc below_DOT
   %nonassoc DOT
   /* Finally, the first tokens of simple_expr are above everything else. */
+! %nonassoc BACKQUOTE BANG BEGIN CHAR FALSE FLOAT BIGINT INT INT32 INT64
+            LBRACE LBRACELESS LBRACKET LBRACKETBAR LIDENT LPAREN
+            NEW NATIVEINT PREFIXOP STRING TRUE UIDENT
+  
+***************
+*** 928,934 ****
+    | expr COLONEQUAL expr
+        { mkinfix $1 ":=" $3 }
+    | subtractive expr %prec prec_unary_minus
+!       { mkuminus $1 $2 }
+    | additive expr %prec prec_unary_plus
+        { mkuplus $1 $2 }
+    | simple_expr DOT label_longident LESSMINUS expr
+--- 1040,1046 ----
+    | expr COLONEQUAL expr
+        { mkinfix $1 ":=" $3 }
+    | subtractive expr %prec prec_unary_minus
+!       { mkuminus false $1 $2 }
+    | additive expr %prec prec_unary_plus
+        { mkuplus $1 $2 }
+    | simple_expr DOT label_longident LESSMINUS expr
 ***************
 *** 956,962 ****
       val_longident
@@ -374,17 +445,25 @@ diff -C 3 -r ocaml-3.12.1-orig/parsing/parser.mly ocaml-3.12.1/parsing/parser.ml
     | constr_longident %prec prec_constant_constructor
         { mkexp(Pexp_construct($1, None, false)) }
     | name_tag %prec prec_constant_constructor
---- 1065,1071 ----
+--- 1068,1082 ----
       val_longident
         { mkexp(Pexp_ident $1) }
     | constant
-!       { mkexp(pexp_constant $1) }
+!       { mkexp(pexp_constant false $1) }
+!   | BIGINT
+!       { mkexp(Pexp_apply(ghexp(Pexp_ident (Lident "big_int_of_string")),
+!                          ["", mkexp(Pexp_constant(Const_string $1))])) }
+!   | BACKQUOTE constant
+!       { mkexp(pexp_constant true $2) }
+!   | BACKQUOTE BIGINT
+!       { mkexp(Pexp_apply(ghexp(Pexp_ident(Lident "string_to_big_int")),
+!                          ["", mkexp(Pexp_constant(Const_string $2))])) }
     | constr_longident %prec prec_constant_constructor
         { mkexp(Pexp_construct($1, None, false)) }
     | name_tag %prec prec_constant_constructor
 ***************
 *** 1021,1026 ****
---- 1130,1145 ----
+--- 1141,1156 ----
         { mkexp(Pexp_override []) }
     | simple_expr SHARP label
         { mkexp(Pexp_send($1, $3)) }

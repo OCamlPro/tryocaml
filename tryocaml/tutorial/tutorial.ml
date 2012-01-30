@@ -224,6 +224,9 @@ external float_of_float : float -> float = "%identity"
 external int32_of_int32 : int32 -> int32 = "%identity"
 external int64_of_int64 : int64 -> int64 = "%identity"
 
+external int_to_int : int -> int = "%identity"
+external float_to_float : float -> float = "%identity"
+
 module Tutorial = struct end
 
 let init () =

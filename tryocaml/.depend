@@ -1,11 +1,13 @@
-toplevel.cmo: tutorial/tutorial.cmi js_of_ocaml-patched/lib/regexp.cmi \
-    js_of_ocaml-patched/compiler/pretty_print.cmi tutorial/n.cmi \
+toplevel.cmo: tutorial/tutorial.cmi ocaml-num/topnum.cmo \
+    js_of_ocaml-patched/lib/regexp.cmi \
+    js_of_ocaml-patched/compiler/pretty_print.cmi \
     js_of_ocaml-patched/lib/js.cmi js_of_ocaml-patched/lib/firebug.cmi \
     errors.cmi js_of_ocaml-patched/compiler/driver.cmi \
     js_of_ocaml-patched/lib/dom_html.cmi js_of_ocaml-patched/lib/dom.cmi \
     toplevel.cmi
-toplevel.cmx: tutorial/tutorial.cmx js_of_ocaml-patched/lib/regexp.cmx \
-    js_of_ocaml-patched/compiler/pretty_print.cmx tutorial/n.cmx \
+toplevel.cmx: tutorial/tutorial.cmx ocaml-num/topnum.cmx \
+    js_of_ocaml-patched/lib/regexp.cmx \
+    js_of_ocaml-patched/compiler/pretty_print.cmx \
     js_of_ocaml-patched/lib/js.cmx js_of_ocaml-patched/lib/firebug.cmx \
     errors.cmi js_of_ocaml-patched/compiler/driver.cmx \
     js_of_ocaml-patched/lib/dom_html.cmx js_of_ocaml-patched/lib/dom.cmx \

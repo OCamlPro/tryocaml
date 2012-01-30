@@ -1,6 +1,6 @@
 
 MLIS= int_misc.mli nat.mli big_int.mli arith_flags.mli ratio.mli num.mli arith_status.mli
-MLS= int_misc.ml nat.ml big_int.ml arith_flags.ml ratio.ml num.ml arith_status.ml big.ml
+MLS= int_misc.ml nat.ml big_int.ml arith_flags.ml ratio.ml num.ml arith_status.ml topnum.ml
 
 all: ocaml-num.cma
 
