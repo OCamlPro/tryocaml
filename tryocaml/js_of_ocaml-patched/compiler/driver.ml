@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
-let debug = Util.debug "main"
+let debug = Util.debug "driver"
 
 let f ?standalone ?linkall p =
 if debug () then Code.print_program (fun _ _ -> "") p;
