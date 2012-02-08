@@ -440,25 +440,33 @@ let _ =
       [ to_update; !registered_buttons ]
   )
 
+let get_storage () = 
+  match Js.Optdef.to_option window##localStorage with
+      None -> assert false
+    | Some t -> t
+
 let get_history_size () =
-  match Js.Optdef.to_option
-    (window##localStorage##getItem(Js.string "history last")) with
+  let st = get_storage () in
+  match Js.Opt.to_option
+    (st##getItem(Js.string "history last")) with
       | None -> 0
       | Some s -> try int_of_string (Js.to_string s) with _ -> 0
 
 let set_history_size i =
-  window##localStorage##setItem(Js.string "history last",
+  let st = get_storage () in
+  st##setItem(Js.string "history last",
                                 Js.string (string_of_int i))
 
 let get_history () =
   try
-  let size = get_history_size () in
-  let h = Array.init size
-    (fun i -> Js.Optdef.get
-      (window##localStorage##getItem(
-        Js.string (Printf.sprintf "history %i" i)))
-      (fun () -> failwith "no history item")) in
-  Array.to_list h
+    let st = get_storage () in
+    let size = get_history_size () in
+    let h = Array.init size
+      (fun i -> Js.Opt.get
+        (st##getItem(
+          Js.string (Printf.sprintf "history %i" i)))
+        (fun () -> failwith "no history item")) in
+    Array.to_list h
   with _ -> (* Probably no local storage *)
     []
 
@@ -468,8 +476,9 @@ let append_children id list =
 
 let add_history s =
   try
+    let st = get_storage () in
     let size = get_history_size () in
-    window##localStorage##setItem(
+    st##setItem(
       Js.string (Printf.sprintf "history %i" size), s);
     set_history_size (size+1);
   with
