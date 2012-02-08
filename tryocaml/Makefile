@@ -9,7 +9,7 @@ TOPLEVEL_CMIS=toplevel.cmi
 TOPLEVEL_CMOS= toplevel.cmo topmain.cmo
 TOPLEVEL_CMAS= $(JS)/lib/$(LIBNAME).cma $(JS)/compiler/compiler.cma  $(TOPLEVELLIB)toplevellib.cma ocaml-num/ocaml-num.cma tutorial/tutorial.cma
 
-JS=js_of_ocaml-patched
+JS=js_of_ocaml/
 INCLUDES= -I $(JS)/lib -I $(JS)/compiler -I tutorial $(INCLUDE_TOPLEVELLIB) -I ocaml-num -I .
 
 # To add a new toplevel, add a new name below, add it to TOPLEVELS, copy
@@ -117,10 +117,10 @@ TRYOCAML_EXTRA_CMAS=
 TRYOCAML_EXTRA_MODULES=
 
 $(TRYOCAML_NAME).js: $(TRYOCAML_NAME).byte $(JSFILES)
-	$(COMP) $(INCLUDES) -toplevel -linkall -noinline -noruntime $(JSFILES) $(TRYOCAML_NAME).byte $(OPTIONS)
+	$(COMP) $(INCLUDES) -toplevel -noinline -noruntime $(JSFILES) $(TRYOCAML_NAME).byte $(OPTIONS)
 
 $(TRYOCAML_NAME).byte: $(TOPLEVEL_CMIS) $(TOPLEVEL_CMOS) $(TOPLEVEL_CMAS) $(TRYOCAML_EXTRA_CMAS) $(TRYOCAML_EXTRA_CMIS)
-	$(OCAMLC) $(INCLUDES) -linkall -package str -linkpkg -o $@.tmp $(TOPLEVEL_CMAS) $(TRYOCAML_EXTRA_CMAS) $(TOPLEVEL_CMOS)
+	$(OCAMLC) $(INCLUDES) -package str -linkpkg -o $@.tmp $(TOPLEVEL_CMAS) $(TRYOCAML_EXTRA_CMAS) $(TOPLEVEL_CMOS)
 	$(EXPUNGE) $@.tmp $@ $(TOPLEVEL_MODULES) $(TRYOCAML_EXTRA_MODULES)
 	rm -f $@.tmp
 
@@ -148,10 +148,10 @@ TRYOCAML_WITH_JS_EXTRA_MODULES= \
 
 
 $(TRYOCAML_WITH_JS_NAME).js: $(TRYOCAML_WITH_JS_NAME).byte $(JSFILES)
-	$(COMP) $(INCLUDES) -toplevel -linkall -noinline -noruntime $(JSFILES) $(TRYOCAML_WITH_JS_NAME).byte $(OPTIONS)
+	$(COMP) $(INCLUDES) -toplevel -noinline -noruntime $(JSFILES) $(TRYOCAML_WITH_JS_NAME).byte $(OPTIONS)
 
 $(TRYOCAML_WITH_JS_NAME).byte: $(TOPLEVEL_CMIS) $(TOPLEVEL_CMOS) $(TOPLEVEL_CMAS) $(TRYOCAML_WITH_JS_EXTRA_CMAS) $(TRYOCAML_WITH_JS_EXTRA_CMIS)
-	$(OCAMLC) $(INCLUDES) -linkall -package str -linkpkg -o $@.tmp $(TOPLEVEL_CMAS) $(TRYOCAML_WITH_JS_EXTRA_CMAS) $(TOPLEVEL_CMOS)
+	$(OCAMLC) $(INCLUDES) -package str -linkpkg -o $@.tmp $(TOPLEVEL_CMAS) $(TRYOCAML_WITH_JS_EXTRA_CMAS) $(TOPLEVEL_CMOS)
 	$(EXPUNGE) $@.tmp $@ $(TOPLEVEL_MODULES) $(TRYOCAML_WITH_JS_EXTRA_MODULES)
 	rm -f $@.tmp
 
