@@ -1,4 +1,5 @@
 === Overview ===
+----------------
 
 TryOCaml is the easiest way to learn how to code in OCaml language. A
 funny way to learn the language. It is available here:
@@ -10,11 +11,13 @@ TryOCaml is based on
 js_of_ocaml (see http://ocsigen.org/js_of_ocaml/).
 
 === Requirements ===
+-------------------
 
   * Findlib
   * Lwt (version 2.3.0** at least, see http://ocsigen.org/lwt/)
 
 === Try it ===
+--------------
 
     $ make
 
@@ -23,6 +26,7 @@ Then, with your favorite browser launch tryocaml/index.html:
     $ chromium-browser tryocaml/index.html
 
 === Contribute lessons/steps/fixes ===
+--------------------------------------
 
 Lessons are in the "lessons/" top directory.
 
@@ -58,4 +62,6 @@ Once everything works, send a "pull request" via Github, or send us a
 patch. You can also come on #ocamlpro IRC channel to discuss with us.
 
 === Online ===
+--------------
+
 http://try.ocamlpro.com/
