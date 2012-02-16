@@ -7,7 +7,7 @@ http://try.ocamlpro.com/
 
 TryOCaml is based on
 (http://ocsigen.org/js_of_ocaml/files/toplevel/index.html) built with
-js_of_ocaml (see http://ocsigen.org/lwt/).
+js_of_ocaml (see http://ocsigen.org/js_of_ocaml/).
 
 === Requirements ===
 
@@ -16,11 +16,11 @@ js_of_ocaml (see http://ocsigen.org/lwt/).
 
 === Try it ===
 
-0: make
+    $ make
 
 Then, with your favorite browser launch tryocaml/index.html:
 
-1: chromium-browser tryocaml/index.html
+    $ chromium-browser tryocaml/index.html
 
 === Contribute lessons/steps/fixes ===
 
@@ -45,13 +45,14 @@ Each step is composed of two files:
 
 To recompile when you have done a modification:
 
-$ make update-lessons
+   $ make update-lessons
 
 Failure to comply to the lesson/step specification will make the
 tryocaml/tutorial/make_lessons command fail.
 
-If you want to debug at some point, you can type "debug true" in
-the terminal to see what the input and output strings are.
+If you want to debug at some point, you can type 
+   debug true 
+in the terminal to see what the input and output strings are.
 
 Once everything works, send a "pull request" via Github, or send us a
 patch. You can also come on #ocamlpro IRC channel to discuss with us.
