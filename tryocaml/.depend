@@ -1,23 +1,13 @@
 toplevel.cmo: tutorial/tutorial.cmi ocaml-num/topnum.cmo \
-    js_of_ocaml//lib/regexp.cmi js_of_ocaml//compiler/pretty_print.cmi \
-    js_of_ocaml//lib/js.cmi js_of_ocaml//lib/firebug.cmi errors.cmi \
-    js_of_ocaml//compiler/driver.cmi js_of_ocaml//lib/dom_html.cmi \
-    js_of_ocaml//lib/dom.cmi toplevel.cmi
+    js_of_ocaml/lib/regexp.cmi js_of_ocaml/compiler/pretty_print.cmi \
+    js_of_ocaml/lib/js.cmi js_of_ocaml/lib/firebug.cmi errors.cmi \
+    js_of_ocaml/compiler/driver.cmi js_of_ocaml/lib/dom_html.cmi \
+    js_of_ocaml/lib/dom.cmi toplevel.cmi
 toplevel.cmx: tutorial/tutorial.cmx ocaml-num/topnum.cmx \
-    js_of_ocaml//lib/regexp.cmx js_of_ocaml//compiler/pretty_print.cmx \
-    js_of_ocaml//lib/js.cmx js_of_ocaml//lib/firebug.cmx errors.cmi \
-    js_of_ocaml//compiler/driver.cmx js_of_ocaml//lib/dom_html.cmx \
-    js_of_ocaml//lib/dom.cmx toplevel.cmi
-toplevel_old.cmo: tutorial/tutorial.cmi ocaml-num/topnum.cmo \
-    js_of_ocaml//lib/regexp.cmi js_of_ocaml//compiler/pretty_print.cmi \
-    js_of_ocaml//lib/js.cmi js_of_ocaml//lib/firebug.cmi errors.cmi \
-    js_of_ocaml//compiler/driver.cmi js_of_ocaml//lib/dom_html.cmi \
-    js_of_ocaml//lib/dom.cmi
-toplevel_old.cmx: tutorial/tutorial.cmx ocaml-num/topnum.cmx \
-    js_of_ocaml//lib/regexp.cmx js_of_ocaml//compiler/pretty_print.cmx \
-    js_of_ocaml//lib/js.cmx js_of_ocaml//lib/firebug.cmx errors.cmi \
-    js_of_ocaml//compiler/driver.cmx js_of_ocaml//lib/dom_html.cmx \
-    js_of_ocaml//lib/dom.cmx
+    js_of_ocaml/lib/regexp.cmx js_of_ocaml/compiler/pretty_print.cmx \
+    js_of_ocaml/lib/js.cmx js_of_ocaml/lib/firebug.cmx errors.cmi \
+    js_of_ocaml/compiler/driver.cmx js_of_ocaml/lib/dom_html.cmx \
+    js_of_ocaml/lib/dom.cmx toplevel.cmi
 topmain.cmo: toplevel.cmi
 topmain.cmx: toplevel.cmx
 errors.cmi:

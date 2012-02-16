@@ -96,6 +96,18 @@ let exec ppf s =
     | Exit -> ()
     | x    -> Errors.report_error ppf x
 
+let _ =
+  Toploop.set_exn_printer 
+    (fun _ _ exn -> 
+      if Js.instanceof (Obj.magic exn) Js.array_empty then 
+        raise Not_found
+      else 
+        Outcometree.Oval_printer (fun fmt ->          
+          Format.fprintf fmt "%s"
+            (Js.to_string 
+               (Js.Unsafe.meth_call (Obj.magic exn) "toString" [||]))
+        )
+    )
 let start ppf =
   Format.fprintf ppf "        Welcome to TryOCaml (v. %s)@.@." Sys.ocaml_version;
   Toploop.initialize_toplevel_env ();
@@ -117,6 +129,7 @@ let start ppf =
 (* for Num/Big_int: *)
     "#install_printer Topnum.print_big_int";
     "#install_printer Topnum.print_num";
+    "#install_printer Toploop.print_exn";    
     "open Topnum";
 
   ];
