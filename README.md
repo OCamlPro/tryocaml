@@ -45,7 +45,7 @@ Each step is composed of two files:
 
 To recompile when you have done a modification:
 
-   $ make update-lessons
+    $ make update-lessons
 
 Failure to comply to the lesson/step specification will make the
 tryocaml/tutorial/make_lessons command fail.
