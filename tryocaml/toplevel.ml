@@ -317,7 +317,9 @@ let get_by_name id =
 
 let update_debug_message =
   let b = Buffer.create 100 in
-  Tutorial.debug_fun := (fun s -> Buffer.add_string b s; Buffer.add_string  b "<br/>");
+  Tutorial.debug_fun := (fun s -> 
+    Firebug.console##log (Js.string s);
+    Buffer.add_string b s; Buffer.add_string  b "<br/>");
   function () ->
     let s = Buffer.contents b in
     Buffer.clear b;
