@@ -105,7 +105,7 @@ clean::
 depend:
 	ocamldep -pp "camlp4o $(JS)/lib/syntax/pa_js.cmo" $(INCLUDES) *.ml *.mli > .depend
 
-toplevel.cmo: toplevellib/*.cmi
+toplevel.cmo: $(TOPLEVELLIB)/*cmi
 
 -include .depend
 
