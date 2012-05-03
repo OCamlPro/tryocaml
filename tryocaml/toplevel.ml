@@ -561,30 +561,30 @@ let run _ =
 
 
   (* Make the toplevel drop-able *)  
-  container##ondragover <- Html.handler (fun _ -> Js._false);
-  container##ondragend <- Html.handler (fun _ -> Js._false);
-  container##ondrop  <- Html.handler 
+  container##ondragover <- Dom.handler (fun _ -> Js._false);
+  container##ondragend <- Dom.handler (fun _ -> Js._false);
+  container##ondrop  <- Dom.handler 
     (fun e ->
       container##className <- Js.string "";
+      
       let file =
         match Js.Opt.to_option (e##dataTransfer##files##item(0)) with
           | None -> assert false
           | Some thing -> thing
-      in
-      e##preventDefault (); (*  Needed for FF and Safari *)
+      in 
       let reader = jsnew File.fileReader () in
-      reader##onload <- Html.handler
-        (fun event ->
-          let s = 
+      reader##onload <- Dom.handler
+        (fun _ ->
+          let s =
             match Js.Opt.to_option (File.CoerceTo.string (reader##result)) with
               | None -> assert false
               | Some str -> str
           in
-          textbox##value <- s;        
+          textbox##value <- s;
           execute ();
-          textbox##value <- Js.string "";        
-          Js._true);
-      reader##onerror <- Html.handler
+          textbox##value <- Js.string "";
+          Js._false);
+      reader##onerror <- Dom.handler
         (fun _ ->
           Firebug.console##log (Js.string "Drang and drop failed.");
           textbox##value <- Js.string "Printf.printf \"Drag and drop failed. Try again\"";
@@ -592,7 +592,7 @@ let run _ =
           textbox##value <- Js.string "";
           Js._true);
       reader##readAsText ((file :> (File.blob Js.t)));
-      Js._true);
+      Js._false);
   (* end drop-able part *)
 
   
