@@ -5,11 +5,11 @@
 *.annot
 *.so
 *~
-tryocaml/js_of_ocaml-patched/compiler/js_of_ocaml
-tryocaml/js_of_ocaml-patched/lib/libjs_of_ocaml.a
-tryocaml/js_of_ocaml-patched/lib/stubs.c
-tryocaml/js_of_ocaml-patched/runtime/runtime.js
-tryocaml/js_of_ocaml-patched/lib/deriving_json/
+tryocaml/js_of_ocaml/compiler/js_of_ocaml
+tryocaml/js_of_ocaml/lib/libjs_of_ocaml.a
+tryocaml/js_of_ocaml/lib/stubs.c
+tryocaml/js_of_ocaml/runtime/runtime.js
+tryocaml/js_of_ocaml/lib/deriving_json/
 tryocaml/log
 tryocaml/toplevel.byte
 tryocaml/tutorial/doc/
