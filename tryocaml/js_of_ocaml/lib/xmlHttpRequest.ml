@@ -42,6 +42,21 @@ class type xmlHttpRequest = object ('self)
   method getAllResponseHeaders : js_string t meth
   method responseText : js_string t readonly_prop
   method responseXML : Dom.element Dom.document t opt readonly_prop
+
+  inherit File.progressEventTarget
+  method ontimeout : ('self t, 'self File.progressEvent t) Dom.event_listener writeonly_prop
+end
+
+module Event = struct
+  type typ = xmlHttpRequest File.progressEvent t Dom.Event.typ
+  let readystatechange = Dom.Event.make "readystatechange"
+  let loadstart = Dom.Event.make "loadstart"
+  let progress = Dom.Event.make "progress"
+  let abort = Dom.Event.make "abort"
+  let error = Dom.Event.make "error"
+  let load = Dom.Event.make "load"
+  let timeout = Dom.Event.make "timeout"
+  let loadend = Dom.Event.make "loadend"
 end
 
 class type xmlHttpRequest_binary = object
@@ -127,6 +142,17 @@ type http_frame =
 
 exception Wrong_headers of (int * (string -> string option))
 
+let extract_get_param url =
+  let open Url in
+  match url_of_string url with
+    | Some (Http url) ->
+      Url.string_of_url (Http { url with hu_arguments = [] }),
+      url.hu_arguments
+    | Some (Https url) ->
+      Url.string_of_url (Https { url with hu_arguments = [] }),
+      url.hu_arguments
+    | _ -> url, []
+
 let perform_raw_url
     ?(headers = [])
     ?content_type
@@ -168,7 +194,8 @@ let perform_raw_url
 	  | `FormData f -> "POST", None, `Urlencode)
       | Some _, ct -> "POST", ct, `Urlencode
   in
-  let url = match get_args with
+  let url, url_get = extract_get_param url in
+  let url = match url_get@get_args with
     | [] -> url
     | _::_ as l -> url ^ "?" ^ encode l
   in

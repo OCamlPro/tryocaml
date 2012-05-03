@@ -64,6 +64,7 @@ class type cssStyleDeclaration = object
   method content : js_string t prop
   method counterIncrement : js_string t prop
   method counterReset : js_string t prop
+  method cssFloat : js_string t prop
   method cssText : js_string t prop
   method cursor : js_string t prop
   method direction : js_string t prop
@@ -124,30 +125,9 @@ class type cssStyleDeclaration = object
   method zIndex : js_string t prop
 end
 
-class type blob = object
-  method size : int readonly_prop
-  method _type : js_string t readonly_prop
-  method slice : int -> int -> blob meth
-  method slice_withContentType : int -> int -> js_string t -> blob meth
-end
-
-and file = object
-  inherit blob
-  method name : js_string t readonly_prop
-  method lastModifiedDate : js_string t readonly_prop
-end
-
-and fileList = object
-  inherit [file] Dom.nodeList
-end
-
-and dataTransfer = object ('self)
-  method files : fileList t prop
-end
-
 (** {2 Events} *)
 
-type (-'a, -'b) event_listener
+type (-'a, -'b) event_listener = ('a, 'b) Dom.event_listener
   (** The type of event listener functions.  The first type parameter
       ['a] is the type of the target object; the second parameter
       ['b] is the type of the event object. *)
@@ -159,14 +139,7 @@ type mouse_button =
   | Right_button
 
 class type event = object
-  method _type : js_string t readonly_prop
-  method target : element t optdef readonly_prop
-  method currentTarget : element t optdef readonly_prop
-  method dataTransfer : dataTransfer t readonly_prop
-  (* Legacy methods *)
-  method srcElement : element t optdef readonly_prop
-
-  method preventDefault : unit meth 
+  inherit [element] Dom.event
 end
 
 and mouseEvent = object
@@ -244,6 +217,24 @@ and touch = object
   method pageY : int readonly_prop
 end
 
+and dragEvent = object
+  inherit event
+  method dataTransfer : dataTransfer t readonly_prop
+end
+
+and dataTransfer = object
+  method dropEffect : js_string t prop
+  method effectAllowed : js_string t prop
+  method files : File.fileList t readonly_prop
+  method types : Dom.stringList t readonly_prop
+  method addElement : element t -> unit meth
+  method clearData : js_string t -> unit meth
+  method clearData_all : unit meth
+  method getData : js_string t -> js_string t meth
+  method setData : js_string t -> js_string t -> unit meth
+  method setDragImage : element t -> int -> int -> unit meth
+end
+
 (** Common properties of event target objects: [onclick],
     [onkeypress], ... *)
 and eventTarget = object ('self)
@@ -257,13 +248,13 @@ and eventTarget = object ('self)
   method onkeypress : ('self t, keyboardEvent t) event_listener writeonly_prop
   method onkeydown : ('self t, keyboardEvent t) event_listener writeonly_prop
   method onkeyup : ('self t, keyboardEvent t) event_listener writeonly_prop
-  method ondragstart : ('self t, mouseEvent t) event_listener writeonly_prop
-  method ondragenter : ('self t, mouseEvent t) event_listener writeonly_prop
-  method ondragover : ('self t, mouseEvent t) event_listener writeonly_prop
-  method ondragend : ('self t, mouseEvent t) event_listener writeonly_prop
-  method ondrop : ('self t, mouseEvent t) event_listener writeonly_prop
-  method ondrag : ('self t, mouseEvent t) event_listener writeonly_prop
-  method ondragleave : ('self t, mouseEvent t) event_listener writeonly_prop
+  method ondragstart : ('self t, dragEvent t) event_listener writeonly_prop
+  method ondragend : ('self t, dragEvent t) event_listener writeonly_prop
+  method ondragenter : ('self t, dragEvent t) event_listener writeonly_prop
+  method ondragover : ('self t, dragEvent t) event_listener writeonly_prop
+  method ondragleave : ('self t, dragEvent t) event_listener writeonly_prop
+  method ondrag : ('self t, dragEvent t) event_listener writeonly_prop
+  method ondrop : ('self t, dragEvent t) event_listener writeonly_prop
 end
 
 and popStateEvent = object
@@ -489,6 +480,7 @@ class type inputElement = object ('self)
   method focus : unit meth
   method select : unit meth
   method click : unit meth
+  method files : File.fileList t optdef readonly_prop
 
   method onselect : ('self t, event t) event_listener prop
   method onchange : ('self t, event t) event_listener prop
@@ -741,6 +733,8 @@ class type tableElement = object
   method deleteRow : int -> unit meth
 end
 
+type videoElement
+
 (** {2 Canvas object} *)
 
 type context
@@ -783,9 +777,8 @@ and canvasRenderingContext2D = object
   method createPattern : imageElement t -> js_string t -> canvasPattern t meth
   method createPattern_fromCanvas :
     canvasElement t -> js_string t -> canvasPattern t meth
-(*
-  CanvasPattern createPattern(in HTMLVideoElement image, in DOMJs_String repetition);
-*)
+  method createPattern_fromVideo :
+    videoElement t -> js_string t -> canvasPattern t meth
   method lineWidth : float_prop
   method lineCap : js_string t prop
   method lineJoin : js_string t prop
@@ -843,10 +836,13 @@ and canvasRenderingContext2D = object
   method drawImage_fullFromCanvas :
     canvasElement t -> float -> float -> float -> float ->
     float -> float -> float -> float -> unit meth
-(*
-  void drawImage(in HTMLVideoElement image, in float dx, in float dy, in optional float dw, in float dh);
-  void drawImage(in HTMLVideoElement image, in float sx, in float sy, in float sw, in float sh, in float dx, in float dy, in float dw, in float dh);
-*)
+  method drawImage_fromVideoWithVideo :
+    videoElement t -> float -> float -> unit meth
+  method drawImage_fromVideoWithSize :
+    videoElement t -> float -> float -> float -> float -> unit meth
+  method drawImage_fullFromVideo :
+    videoElement t -> float -> float -> float -> float ->
+    float -> float -> float -> float -> unit meth
   (* Method createImageData not available in Opera *)
   method createImageData : int -> int -> imageData t meth
   method getImageData : float -> float -> float -> float -> imageData t meth
@@ -929,8 +925,8 @@ class type history = object
   method go : int opt -> unit meth
   method back : unit meth
   method forward : unit meth
-  method pushState : Js.Unsafe.any -> js_string t -> js_string t opt -> unit meth
-  method replaceState : Js.Unsafe.any -> js_string t -> js_string t opt -> unit meth
+  method pushState : 'a. 'a -> js_string t -> js_string t opt -> unit meth
+  method replaceState : 'a. 'a -> js_string t -> js_string t opt -> unit meth
 end
 
 (** Undo manager *)
@@ -943,6 +939,19 @@ class type selection = object
 (*...*)
 end
 
+(** Navigator information *)
+class type navigator = object
+  method appCodeName : js_string t readonly_prop
+  method appName : js_string t readonly_prop
+  method appVersion : js_string t readonly_prop
+  method cookieEnabled : bool t readonly_prop
+  method online : bool t readonly_prop
+  method platform : js_string t readonly_prop
+  method userAgent : js_string t readonly_prop
+  method language : js_string t optdef readonly_prop
+  method userLanguage : js_string t optdef readonly_prop
+end
+
 type interval_id
 type timeout_id
 
@@ -953,6 +962,7 @@ class type window = object
   method location : location t readonly_prop
   method history : history t readonly_prop
   method undoManager : undoManager t readonly_prop
+  method navigator : navigator t
   method getSelection : selection t meth
   method close : unit meth
   method stop : unit meth
@@ -1040,25 +1050,22 @@ end
 (** {2 Event handlers} *)
 
 val no_handler : ('a, 'b) event_listener
-  (** Void event handler (Javascript [null] value). *)
+  (** see [Dom.no_handler] *)
 val handler : ((#event t as 'b) -> bool t) -> ('a, 'b) event_listener
-  (** Create an event handler that invokes the provided function.
-      If the handler returns false, the default action is prevented. *)
+  (** see [Dom.handler] *)
 val full_handler : ('a -> (#event t as 'b) -> bool t) -> ('a, 'b) event_listener
-  (** Create an event handler that invokes the provided function.
-      The event target (implicit parameter [this]) is also passed as
-      argument to the function.  *)
+  (** see [Dom.full_handler] *)
 val invoke_handler : ('a, 'b) event_listener -> 'a -> 'b -> bool t
-  (** Invoke an existing handler.  Useful to chain event handlers. *)
-
+  (** see [Dom.invoke_handler] *)
 val eventTarget : #event t -> element t
-  (** Returns which HTML element is the target of this event. *)
+  (** see [Dom.eventTarget] *)
+
 val eventRelatedTarget : #mouseEvent t -> element t opt
   (** Returns this event related target. *)
 
 (** Event types: [mousedown], [keypress], ... *)
 module Event : sig
-  type 'a typ
+  type 'a typ = 'a Dom.Event.typ
   val click : mouseEvent t typ
   val dblclick : mouseEvent t typ
   val mousedown : mouseEvent t typ
@@ -1075,9 +1082,18 @@ module Event : sig
   val touchmove : touchEvent t typ
   val touchend : touchEvent t typ
   val touchcancel : touchEvent t typ
+  val dragstart : dragEvent t typ
+  val dragend : dragEvent t typ
+  val dragenter : dragEvent t typ
+  val dragover : dragEvent t typ
+  val dragleave : dragEvent t typ
+  val drag : dragEvent t typ
+  val drop : dragEvent t typ
+
+  val make : string -> 'a typ
 end
 
-type event_listener_id
+type event_listener_id = Dom.event_listener_id
 
 val addEventListener :
   (#eventTarget t as 'a) -> 'b Event.typ ->
@@ -1363,6 +1379,7 @@ module CoerceTo : sig
   val wheelEvent : #event t -> wheelEvent t opt
   val mouseScrollEvent : #event t -> mouseScrollEvent t opt
   val popStateEvent : #event t -> popStateEvent t opt
+
 end
 
 (**/**)
