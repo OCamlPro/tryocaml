@@ -147,3 +147,9 @@ dl dt {
 #buttons {
     text-align: center;
 }
+
+#dragndrop { 
+    position: absolute;
+    top: 2%;
+    float: left
+ }
