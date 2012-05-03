@@ -124,6 +124,27 @@ class type cssStyleDeclaration = object
   method zIndex : js_string t prop
 end
 
+class type blob = object
+  method size : int readonly_prop
+  method _type : js_string t readonly_prop
+  method slice : int -> int -> blob meth
+  method slice_withContentType : int -> int -> js_string t -> blob meth
+end
+
+and file = object
+  inherit blob
+  method name : js_string t readonly_prop
+  method lastModifiedDate : js_string t readonly_prop
+end
+
+and fileList = object
+  inherit [file] Dom.nodeList
+end
+
+and dataTransfer = object ('self)
+  method files : fileList t prop
+end
+
 (** {2 Events} *)
 
 type (-'a, -'b) event_listener
@@ -141,9 +162,11 @@ class type event = object
   method _type : js_string t readonly_prop
   method target : element t optdef readonly_prop
   method currentTarget : element t optdef readonly_prop
-
+  method dataTransfer : dataTransfer t readonly_prop
   (* Legacy methods *)
   method srcElement : element t optdef readonly_prop
+
+  method preventDefault : unit meth 
 end
 
 and mouseEvent = object
@@ -234,6 +257,13 @@ and eventTarget = object ('self)
   method onkeypress : ('self t, keyboardEvent t) event_listener writeonly_prop
   method onkeydown : ('self t, keyboardEvent t) event_listener writeonly_prop
   method onkeyup : ('self t, keyboardEvent t) event_listener writeonly_prop
+  method ondragstart : ('self t, mouseEvent t) event_listener writeonly_prop
+  method ondragenter : ('self t, mouseEvent t) event_listener writeonly_prop
+  method ondragover : ('self t, mouseEvent t) event_listener writeonly_prop
+  method ondragend : ('self t, mouseEvent t) event_listener writeonly_prop
+  method ondrop : ('self t, mouseEvent t) event_listener writeonly_prop
+  method ondrag : ('self t, mouseEvent t) event_listener writeonly_prop
+  method ondragleave : ('self t, mouseEvent t) event_listener writeonly_prop
 end
 
 and popStateEvent = object
@@ -1333,7 +1363,6 @@ module CoerceTo : sig
   val wheelEvent : #event t -> wheelEvent t opt
   val mouseScrollEvent : #event t -> mouseScrollEvent t opt
   val popStateEvent : #event t -> popStateEvent t opt
-
 end
 
 (**/**)

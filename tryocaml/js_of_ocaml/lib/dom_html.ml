@@ -123,6 +123,27 @@ class type cssStyleDeclaration = object
   method zIndex : js_string t prop
 end
 
+class type blob = object
+  method size : int readonly_prop
+  method _type : js_string t readonly_prop
+  method slice : int -> int -> blob meth
+  method slice_withContentType : int -> int -> js_string t -> blob meth
+end
+
+and file = object
+  inherit blob
+  method name : js_string t readonly_prop
+  method lastModifiedDate : js_string t readonly_prop
+end
+
+and fileList = object
+  inherit [file] Dom.nodeList
+end
+
+and dataTransfer = object ('self)
+  method files : fileList t prop
+end
+
 type ('a, 'b) event_listener = ('a, 'b -> bool t) meth_callback opt
 
 type mouse_button =
@@ -135,7 +156,9 @@ class type event = object
   method _type : js_string t readonly_prop
   method target : element t optdef readonly_prop
   method currentTarget : element t optdef readonly_prop
-  method srcElement : element t optdef readonly_prop
+  method srcElement : element t optdef readonly_prop  
+  method dataTransfer : dataTransfer t readonly_prop
+  method preventDefault : unit meth 
 end
 
 and mouseEvent = object
@@ -200,7 +223,7 @@ and touchList = object
   method length : int readonly_prop
   method item : int -> touch t optdef meth
 end
-
+          
 and touch = object
   method identifier : int readonly_prop
   method target : element t optdef readonly_prop
@@ -212,7 +235,7 @@ and touch = object
   method pageY : int readonly_prop
 end
 
-and eventTarget = object ('self)
+and eventTarget = object ('self)  
   method onclick : ('self t, mouseEvent t) event_listener writeonly_prop
   method ondblclick : ('self t, mouseEvent t) event_listener writeonly_prop
   method onmousedown : ('self t, mouseEvent t) event_listener writeonly_prop
@@ -223,6 +246,13 @@ and eventTarget = object ('self)
   method onkeypress : ('self t, keyboardEvent t) event_listener writeonly_prop
   method onkeydown : ('self t, keyboardEvent t) event_listener writeonly_prop
   method onkeyup : ('self t, keyboardEvent t) event_listener writeonly_prop
+  method ondragstart : ('self t, mouseEvent t) event_listener writeonly_prop
+  method ondragenter : ('self t, mouseEvent t) event_listener writeonly_prop
+  method ondragover : ('self t, mouseEvent t) event_listener writeonly_prop
+  method ondragend : ('self t, mouseEvent t) event_listener writeonly_prop
+  method ondrop : ('self t, mouseEvent t) event_listener writeonly_prop
+  method ondrag : ('self t, mouseEvent t) event_listener writeonly_prop
+  method ondragleave : ('self t, mouseEvent t) event_listener writeonly_prop
 end
 
 and popStateEvent = object
@@ -1249,7 +1279,6 @@ module CoerceTo = struct
   let wheelEvent ev = unsafeCoerceEvent "window.WheelEvent" ev
   let mouseScrollEvent ev = unsafeCoerceEvent "window.MouseScrollEvent" ev
   let popStateEvent ev = unsafeCoerceEvent "window.PopStateEvent" ev
-
 end
 
 (****)
@@ -1540,7 +1569,7 @@ let taggedEvent (ev : #event Js.t) =
       (fun () -> Js.Opt.case (CoerceTo.wheelEvent ev)
 	(fun () -> Js.Opt.case (CoerceTo.mouseScrollEvent ev)
 	  (fun () -> Js.Opt.case (CoerceTo.popStateEvent ev)
-	    (fun () -> OtherEvent (ev :> event t))
+	      (fun () -> OtherEvent (ev :> event t))
 	    (fun ev -> PopStateEvent ev))
 	  (fun ev -> MouseScrollEvent ev))
 	(fun ev -> WheelEvent ev))
