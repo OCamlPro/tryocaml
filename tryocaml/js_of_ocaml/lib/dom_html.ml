@@ -63,6 +63,7 @@ class type cssStyleDeclaration = object
   method content : js_string t prop
   method counterIncrement : js_string t prop
   method counterReset : js_string t prop
+  method cssFloat : js_string t prop
   method cssText : js_string t prop
   method cursor : js_string t prop
   method direction : js_string t prop
@@ -123,28 +124,7 @@ class type cssStyleDeclaration = object
   method zIndex : js_string t prop
 end
 
-class type blob = object
-  method size : int readonly_prop
-  method _type : js_string t readonly_prop
-  method slice : int -> int -> blob meth
-  method slice_withContentType : int -> int -> js_string t -> blob meth
-end
-
-and file = object
-  inherit blob
-  method name : js_string t readonly_prop
-  method lastModifiedDate : js_string t readonly_prop
-end
-
-and fileList = object
-  inherit [file] Dom.nodeList
-end
-
-and dataTransfer = object ('self)
-  method files : fileList t prop
-end
-
-type ('a, 'b) event_listener = ('a, 'b -> bool t) meth_callback opt
+type ('a, 'b) event_listener = ('a, 'b) Dom.event_listener
 
 type mouse_button =
   | No_button
@@ -153,12 +133,7 @@ type mouse_button =
   | Right_button
 
 class type event = object
-  method _type : js_string t readonly_prop
-  method target : element t optdef readonly_prop
-  method currentTarget : element t optdef readonly_prop
-  method srcElement : element t optdef readonly_prop  
-  method dataTransfer : dataTransfer t readonly_prop
-  method preventDefault : unit meth 
+  inherit [element] Dom.event
 end
 
 and mouseEvent = object
@@ -223,7 +198,7 @@ and touchList = object
   method length : int readonly_prop
   method item : int -> touch t optdef meth
 end
-          
+
 and touch = object
   method identifier : int readonly_prop
   method target : element t optdef readonly_prop
@@ -235,7 +210,25 @@ and touch = object
   method pageY : int readonly_prop
 end
 
-and eventTarget = object ('self)  
+and dragEvent = object
+  inherit event
+  method dataTransfer : dataTransfer t readonly_prop
+end
+
+and dataTransfer = object
+  method dropEffect : js_string t prop
+  method effectAllowed : js_string t prop
+  method files : File.fileList t readonly_prop
+  method types : Dom.stringList t readonly_prop
+  method addElement : element t -> unit meth
+  method clearData : js_string t -> unit meth
+  method clearData_all : unit meth
+  method getData : js_string t -> js_string t meth
+  method setData : js_string t -> js_string t -> unit meth
+  method setDragImage : element t -> int -> int -> unit meth
+end
+
+and eventTarget = object ('self)
   method onclick : ('self t, mouseEvent t) event_listener writeonly_prop
   method ondblclick : ('self t, mouseEvent t) event_listener writeonly_prop
   method onmousedown : ('self t, mouseEvent t) event_listener writeonly_prop
@@ -246,13 +239,13 @@ and eventTarget = object ('self)
   method onkeypress : ('self t, keyboardEvent t) event_listener writeonly_prop
   method onkeydown : ('self t, keyboardEvent t) event_listener writeonly_prop
   method onkeyup : ('self t, keyboardEvent t) event_listener writeonly_prop
-  method ondragstart : ('self t, mouseEvent t) event_listener writeonly_prop
-  method ondragenter : ('self t, mouseEvent t) event_listener writeonly_prop
-  method ondragover : ('self t, mouseEvent t) event_listener writeonly_prop
-  method ondragend : ('self t, mouseEvent t) event_listener writeonly_prop
-  method ondrop : ('self t, mouseEvent t) event_listener writeonly_prop
-  method ondrag : ('self t, mouseEvent t) event_listener writeonly_prop
-  method ondragleave : ('self t, mouseEvent t) event_listener writeonly_prop
+  method ondragstart : ('self t, dragEvent t) event_listener writeonly_prop
+  method ondragend : ('self t, dragEvent t) event_listener writeonly_prop
+  method ondragenter : ('self t, dragEvent t) event_listener writeonly_prop
+  method ondragover : ('self t, dragEvent t) event_listener writeonly_prop
+  method ondragleave : ('self t, dragEvent t) event_listener writeonly_prop
+  method ondrag : ('self t, dragEvent t) event_listener writeonly_prop
+  method ondrop : ('self t, dragEvent t) event_listener writeonly_prop
 end
 
 and popStateEvent = object
@@ -342,79 +335,45 @@ and clientRectList = object
   method item : int -> clientRect t optdef meth
 end
 
-let no_handler : ('a, 'b) event_listener = Js.null
-let window_event () : #event t = Js.Unsafe.variable "event"
-(* The function preventDefault must be called explicitely when
-   using addEventListener... *)
-let handler f =
-  Js.some (Js.wrap_callback
-    (fun e ->
-      (* depending on the internet explorer version, e can be 0, null
-	 or undefined. This is the only way I know to test them all *)
-      if not (Obj.magic e)
-      then
-        let e = window_event () in
-        let res = f e in
-        e##returnValue <- res;
-	res
-      else
-	let res = f e in
-        if not (Js.to_bool res) then
-          (Js.Unsafe.coerce e)##preventDefault ();
-        res))
-let full_handler f =
-  Js.some (Js.wrap_meth_callback
-    (fun this e ->
-      (* depending on the internet explorer version, e can be 0, null
-	 or undefined. This is the only way I know to test them all *)
-      if not (Obj.magic e)
-      then
-        let e = window_event () in
-        let res = f this e in
-        e##returnValue <- res; res
-      else
-        let res = f this e in
-        if not (Js.to_bool res) then
-          (Js.Unsafe.coerce e)##preventDefault ();
-        res))
-let invoke_handler
-  (f : ('a, 'b) event_listener) (this : 'a) (event : 'b) : bool t =
-  Js.Unsafe.call f this [|Js.Unsafe.inject event|]
+let no_handler : ('a, 'b) event_listener = Dom.no_handler
+let handler = Dom.handler
+let full_handler = Dom.full_handler
+let invoke_handler = Dom.invoke_handler
 
 module Event = struct
-  type 'a typ = js_string t
-  let click = Js.string "click"
-  let dblclick = Js.string "dblclick"
-  let mousedown = Js.string "mousedown"
-  let mouseup = Js.string "mouseup"
-  let mouseover = Js.string "mouseover"
-  let mousemove = Js.string "mousemove"
-  let mouseout = Js.string "mouseout"
-  let keypress = Js.string "keypress"
-  let keydown = Js.string "keydown"
-  let keyup = Js.string "keyup"
-  let mousewheel = Js.string "mousewheel"
-  let _DOMMouseScroll = Js.string "DOMMouseScroll"
-  let touchstart = Js.string "touchstart"
-  let touchmove = Js.string "touchmove"
-  let touchend = Js.string "touchend"
-  let touchcancel = Js.string "touchcancel"
+  type 'a typ = 'a Dom.Event.typ
+  let click = Dom.Event.make "click"
+  let dblclick = Dom.Event.make "dblclick"
+  let mousedown = Dom.Event.make "mousedown"
+  let mouseup = Dom.Event.make "mouseup"
+  let mouseover = Dom.Event.make "mouseover"
+  let mousemove = Dom.Event.make "mousemove"
+  let mouseout = Dom.Event.make "mouseout"
+  let keypress = Dom.Event.make "keypress"
+  let keydown = Dom.Event.make "keydown"
+  let keyup = Dom.Event.make "keyup"
+  let mousewheel = Dom.Event.make "mousewheel"
+  let _DOMMouseScroll = Dom.Event.make "DOMMouseScroll"
+  let touchstart = Dom.Event.make "touchstart"
+  let touchmove = Dom.Event.make "touchmove"
+  let touchend = Dom.Event.make "touchend"
+  let touchcancel = Dom.Event.make "touchcancel"
+  let dragstart = Dom.Event.make "dragstart"
+  let dragend = Dom.Event.make "dragend"
+  let dragenter = Dom.Event.make "dragenter"
+  let dragover = Dom.Event.make "dragover"
+  let dragleave = Dom.Event.make "dragleave"
+  let drag = Dom.Event.make "drag"
+  let drop = Dom.Event.make "drop"
+
+  let make = Dom.Event.make
 end
 
-type event_listener_id = unit -> unit
+type event_listener_id = Dom.event_listener_id
 
-let addEventListener (e : #eventTarget t) typ h capt =
-  if (Js.Unsafe.coerce e)##addEventListener == Js.undefined then begin
-    let ev = (Js.string "on")##concat(typ) in
-    let callback = fun e -> Js.Unsafe.call (h, e, [||]) in
-    (Js.Unsafe.coerce e)##attachEvent(ev, callback);
-    fun () -> (Js.Unsafe.coerce e)##detachEvent(ev, callback)
-  end else begin
-    (Js.Unsafe.coerce e)##addEventListener(typ, h, capt);
-    fun () -> (Js.Unsafe.coerce e)##removeEventListener (typ, h, capt)
-  end
+let addEventListener = Dom.addEventListener
 
-let removeEventListener id = id ()
+let removeEventListener = Dom.removeEventListener
 
 class type ['node] collection = object
   method length : int readonly_prop
@@ -546,6 +505,7 @@ class type inputElement = object ('self)
   method focus : unit meth
   method select : unit meth
   method click : unit meth
+  method files : File.fileList t optdef readonly_prop
 
   method onselect : ('self t, event t) event_listener prop
   method onchange : ('self t, event t) event_listener prop
@@ -797,6 +757,8 @@ class type tableElement = object
   method deleteRow : int -> unit meth
 end
 
+type videoElement
+
 type context = js_string t
 let _2d_ = Js.string "2d"
 
@@ -837,9 +799,8 @@ and canvasRenderingContext2D = object
   method createPattern : imageElement t -> js_string t -> canvasPattern t meth
   method createPattern_fromCanvas :
     canvasElement t -> js_string t -> canvasPattern t meth
-(*
-  CanvasPattern createPattern(in HTMLVideoElement image, in DOMJs_String repetition);
-*)
+  method createPattern_fromVideo :
+    videoElement t -> js_string t -> canvasPattern t meth
   method lineWidth : float_prop
   method lineCap : js_string t prop
   method lineJoin : js_string t prop
@@ -897,10 +858,13 @@ and canvasRenderingContext2D = object
   method drawImage_fullFromCanvas :
     canvasElement t -> float -> float -> float -> float ->
     float -> float -> float -> float -> unit meth
-(*
-  void drawImage(in HTMLVideoElement image, in float dx, in float dy, in optional float dw, in float dh);
-  void drawImage(in HTMLVideoElement image, in float sx, in float sy, in float sw, in float sh, in float dx, in float dy, in float dw, in float dh);
-*)
+  method drawImage_fromVideoWithVideo :
+    videoElement t -> float -> float -> unit meth
+  method drawImage_fromVideoWithSize :
+    videoElement t -> float -> float -> float -> float -> unit meth
+  method drawImage_fullFromVideo :
+    videoElement t -> float -> float -> float -> float ->
+    float -> float -> float -> float -> unit meth
 
   method createImageData : int -> int -> imageData t meth
   method getImageData : float -> float -> float -> float -> imageData t meth
@@ -977,8 +941,8 @@ class type history = object
   method go : int opt -> unit meth
   method back : unit meth
   method forward : unit meth
-  method pushState : Js.Unsafe.any -> js_string t -> js_string t opt -> unit meth
-  method replaceState : Js.Unsafe.any -> js_string t -> js_string t opt -> unit meth
+  method pushState : 'a. 'a -> js_string t -> js_string t opt -> unit meth
+  method replaceState : 'a. 'a -> js_string t -> js_string t opt -> unit meth
 end
 
 class type undoManager = object
@@ -987,12 +951,25 @@ end
 class type selection = object
 end
 
+class type navigator = object
+  method appCodeName : js_string t readonly_prop
+  method appName : js_string t readonly_prop
+  method appVersion : js_string t readonly_prop
+  method cookieEnabled : bool t readonly_prop
+  method online : bool t readonly_prop
+  method platform : js_string t readonly_prop
+  method userAgent : js_string t readonly_prop
+  method language : js_string t optdef readonly_prop
+  method userLanguage : js_string t optdef readonly_prop
+end
+
 class type window = object
   method document : document t readonly_prop
   method name : js_string t prop
   method location : location t readonly_prop
   method history : history t readonly_prop
   method undoManager : undoManager t readonly_prop
+  method navigator : navigator t
   method getSelection : selection t meth
   method close : unit meth
   method stop : unit meth
@@ -1279,20 +1256,12 @@ module CoerceTo = struct
   let wheelEvent ev = unsafeCoerceEvent "window.WheelEvent" ev
   let mouseScrollEvent ev = unsafeCoerceEvent "window.MouseScrollEvent" ev
   let popStateEvent ev = unsafeCoerceEvent "window.PopStateEvent" ev
+
 end
 
 (****)
 
-let eventTarget (e : #event t) =
-  let target =
-    Optdef.get (e##target) (fun () ->
-    Optdef.get (e##srcElement) (fun () -> assert false))
-  in
-  (* Workaround for Safari bug *)
-  if target##nodeType == Dom.TEXT then
-    Js.Unsafe.coerce (Opt.get (target##parentNode) (fun () -> assert false))
-  else
-    target
+let eventTarget = Dom.eventTarget
 
 let eventRelatedTarget (e : #mouseEvent t) =
   Optdef.get (e##relatedTarget) (fun () ->
@@ -1569,7 +1538,7 @@ let taggedEvent (ev : #event Js.t) =
       (fun () -> Js.Opt.case (CoerceTo.wheelEvent ev)
 	(fun () -> Js.Opt.case (CoerceTo.mouseScrollEvent ev)
 	  (fun () -> Js.Opt.case (CoerceTo.popStateEvent ev)
-	      (fun () -> OtherEvent (ev :> event t))
+	    (fun () -> OtherEvent (ev :> event t))
 	    (fun ev -> PopStateEvent ev))
 	  (fun ev -> MouseScrollEvent ev))
 	(fun ev -> WheelEvent ev))
@@ -1604,6 +1573,7 @@ let _requestAnimationFrame : (unit -> unit) Js.callback -> unit =
          let last = ref (now ()) in
          fun callback ->
            let t = now () in
-           let dt = max 0. (!last +. 1000. /. 60. -. t) in
+           let dt = !last +. 1000. /. 60. -. t in
+           let dt = if dt < 0. then 0. else dt in
            last := t;
            ignore (window##setTimeout (callback, dt)))
