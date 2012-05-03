@@ -303,8 +303,6 @@ let set_cookie key value =
   doc##cookie <- Js.string (Printf.sprintf "%s=%s;expires=%f" key value
                               (Js.to_float expire_time))
 
-
-
 let get_by_id id =
   let container = get_element_by_id id in
   Js.to_string container##innerHTML
@@ -499,6 +497,7 @@ let add_history s =
   with
     | _ -> Firebug.console##warn(Js.string "can't set history")
 
+
 let run _ =
   let top = get_element_by_id "toplevel"  in
   let output_area = get_element_by_id "output" in
@@ -521,8 +520,6 @@ let run _ =
   textbox##focus();
   textbox##select();
   let container = get_element_by_id "toplevel-container" in
-  container##onclick <- Dom_html.handler (fun _ ->
-    textbox##focus();  textbox##select();  Js._true);
   let history = ref (get_history ()) in
   let history_bckwrd = ref !history in
   let history_frwrd = ref [] in
@@ -541,7 +538,7 @@ let run _ =
         execute ();
         Js._true)
     ) codes
-
+      
   and execute () =
     let s = Js.to_string textbox##value in
     if s <> "" then
@@ -556,9 +553,49 @@ let run _ =
     update_debug_message ();
     make_code_clickable ();
     textbox##focus();
-    container##scrollTop <- container##scrollHeight;
-  in
+    container##scrollTop <- container##scrollHeight 
+  in 
+  container##onclick <- Html.handler 
+    (fun _ ->
+      textbox##focus();  textbox##select();  Js._true);
 
+
+  (* Make the toplevel drop-able *)  
+  container##ondragover <- Html.handler (fun _ -> Js._false);
+  container##ondragend <- Html.handler (fun _ -> Js._false);
+  container##ondrop  <- Html.handler 
+    (fun e ->
+      container##className <- Js.string "";
+      let file =
+        match Js.Opt.to_option (e##dataTransfer##files##item(0)) with
+          | None -> assert false
+          | Some thing -> thing
+      in
+      e##preventDefault (); (*  Needed for FF and Safari *)
+      let reader = jsnew File.fileReader () in
+      reader##onload <- Html.handler
+        (fun event ->
+          let s = 
+            match Js.Opt.to_option (File.CoerceTo.string (reader##result)) with
+              | None -> assert false
+              | Some str -> str
+          in
+          textbox##value <- s;        
+          execute ();
+          textbox##value <- Js.string "";        
+          Js._true);
+      reader##onerror <- Html.handler
+        (fun _ ->
+          Firebug.console##log (Js.string "Drang and drop failed.");
+          textbox##value <- Js.string "Printf.printf \"Drag and drop failed. Try again\"";
+          execute ();
+          textbox##value <- Js.string "";
+          Js._true);
+      reader##readAsText ((file :> (File.blob Js.t)));
+      Js._true);
+  (* end drop-able part *)
+
+  
   let tbox_init_size = textbox##style##height in
   Html.document##onkeydown <-
     (Html.handler
@@ -633,7 +670,7 @@ let run _ =
     let uriContent =
       Js.string ("data:application/octet-stream," ^
                     (Js.to_string (Js.encodeURI content))) in
-    window##open_(uriContent, Js.string "Try OCaml", Js.null);
+    let _ = window##open_(uriContent, Js.string "Try OCaml", Js.null) in
     window##close ()
   )
   in
