@@ -18,14 +18,7 @@ val lessons_table : (string * string * (string * (string * string)) list * (stri
 
 val debug_fun : (string -> unit) ref
 val message_fun : (string -> unit) ref
-val clear_fun : (unit -> unit) ref
-val reset_fun : (unit -> unit) ref
 val update_lang_fun : (unit -> unit) ref
-val set_cols_fun : (int -> unit) ref
-
-val clear : unit -> unit
-val reset : unit -> unit
-val set_cols : int -> unit
 
 val lessons : unit -> unit
 val steps : unit -> unit

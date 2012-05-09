@@ -1,3 +1,4 @@
+
 let debug = ref false
 
 let debug_fun = ref (fun _ -> ())
@@ -31,7 +32,6 @@ let langs = List.sort compare !langs
 
 let current_lang = ref default_language
 let current_translation = ref default_translation
-
 
 let translate s =
   try Hashtbl.find !current_translation s with Not_found -> s
@@ -168,15 +168,6 @@ let back () = step (!this_step - 1)
 let debug d =
   debug := d;
   if not d then (!debug_fun "")
-
-let clear_fun = ref (fun _ -> ())
-let clear () = !clear_fun ()
-
-let reset_fun = ref (fun _ -> ())
-let reset () = !reset_fun ()
-
-let set_cols_fun = ref (fun (_ : int) -> ())
-let set_cols i = !set_cols_fun i
 
 let lessons () =
   Printf.printf "%s:\n%!" (translate "All lessons");
