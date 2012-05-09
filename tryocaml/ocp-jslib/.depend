@@ -1,0 +1,20 @@
+button.cmo: utils.cmi ../js_of_ocaml/lib/js.cmi \
+    ../js_of_ocaml/lib/dom_html.cmi button.cmi
+button.cmx: utils.cmx ../js_of_ocaml/lib/js.cmx \
+    ../js_of_ocaml/lib/dom_html.cmx button.cmi
+cookie.cmo: ../js_of_ocaml/lib/regexp.cmi ../js_of_ocaml/lib/js.cmi \
+    ../js_of_ocaml/lib/dom_html.cmi cookie.cmi
+cookie.cmx: ../js_of_ocaml/lib/regexp.cmx ../js_of_ocaml/lib/js.cmx \
+    ../js_of_ocaml/lib/dom_html.cmx cookie.cmi
+dragnDrop.cmo: utils.cmi ../js_of_ocaml/lib/js.cmi \
+    ../js_of_ocaml/lib/dom_html.cmi ../js_of_ocaml/lib/dom.cmi dragnDrop.cmi
+dragnDrop.cmx: utils.cmx ../js_of_ocaml/lib/js.cmx \
+    ../js_of_ocaml/lib/dom_html.cmx ../js_of_ocaml/lib/dom.cmx dragnDrop.cmi
+utils.cmo: ../js_of_ocaml/lib/js.cmi ../js_of_ocaml/lib/dom_html.cmi \
+    ../js_of_ocaml/lib/dom.cmi utils.cmi
+utils.cmx: ../js_of_ocaml/lib/js.cmx ../js_of_ocaml/lib/dom_html.cmx \
+    ../js_of_ocaml/lib/dom.cmx utils.cmi
+button.cmi: ../js_of_ocaml/lib/js.cmi ../js_of_ocaml/lib/dom_html.cmi
+cookie.cmi: ../js_of_ocaml/lib/js.cmi
+dragnDrop.cmi: ../js_of_ocaml/lib/js.cmi ../js_of_ocaml/lib/dom_html.cmi
+utils.cmi: ../js_of_ocaml/lib/js.cmi ../js_of_ocaml/lib/dom_html.cmi

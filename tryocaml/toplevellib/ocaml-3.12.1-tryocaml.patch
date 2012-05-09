@@ -1,0 +1,1197 @@
+diff -ruN ocaml-3.12.1/asmcomp/closure.ml ocaml-3.12.1-tryocaml/asmcomp/closure.ml
+--- ocaml-3.12.1/asmcomp/closure.ml	2010-09-02 15:29:21.000000000 +0200
++++ ocaml-3.12.1-tryocaml/asmcomp/closure.ml	2012-05-04 16:49:50.606385009 +0200
+@@ -574,6 +574,8 @@
+            Immutable -> Value_tuple(Array.of_list approxs)
+          | Mutable -> Value_unknown
+        end)
++  | Lprim(Prevapply loc, [arg; func]) ->
++      close fenv cenv (Lapply(func, [arg], loc))
+   | Lprim(Pfield n, [lam]) ->
+       let (ulam, approx) = close fenv cenv lam in
+       let fieldapprox =
+diff -ruN ocaml-3.12.1/bytecomp/bytegen.ml ocaml-3.12.1-tryocaml/bytecomp/bytegen.ml
+--- ocaml-3.12.1/bytecomp/bytegen.ml	2010-09-02 15:29:21.000000000 +0200
++++ ocaml-3.12.1-tryocaml/bytecomp/bytegen.ml	2012-02-16 11:16:34.411347846 +0100
+@@ -524,6 +524,8 @@
+       comp_expr env arg sz cont
+   | Lprim(Pignore, [arg]) ->
+       comp_expr env arg sz (add_const_unit cont)
++  | Lprim(Prevapply loc, [arg; f]) ->
++      comp_expr env (Lapply(f, [arg], loc)) sz cont
+   | Lprim(Pnot, [arg]) ->
+       let newcont =
+         match cont with
+diff -ruN ocaml-3.12.1/bytecomp/lambda.ml ocaml-3.12.1-tryocaml/bytecomp/lambda.ml
+--- ocaml-3.12.1/bytecomp/lambda.ml	2010-09-02 15:29:21.000000000 +0200
++++ ocaml-3.12.1-tryocaml/bytecomp/lambda.ml	2012-02-16 11:16:34.411347846 +0100
+@@ -19,6 +19,7 @@
+ type primitive =
+     Pidentity
+   | Pignore
++  | Prevapply of Location.t
+     (* Globals *)
+   | Pgetglobal of Ident.t
+   | Psetglobal of Ident.t
+diff -ruN ocaml-3.12.1/bytecomp/lambda.mli ocaml-3.12.1-tryocaml/bytecomp/lambda.mli
+--- ocaml-3.12.1/bytecomp/lambda.mli	2010-09-02 15:29:21.000000000 +0200
++++ ocaml-3.12.1-tryocaml/bytecomp/lambda.mli	2012-02-16 11:16:34.411347846 +0100
+@@ -19,6 +19,7 @@
+ type primitive =
+     Pidentity
+   | Pignore
++  | Prevapply of Location.t
+     (* Globals *)
+   | Pgetglobal of Ident.t
+   | Psetglobal of Ident.t
+diff -ruN ocaml-3.12.1/bytecomp/printlambda.ml ocaml-3.12.1-tryocaml/bytecomp/printlambda.ml
+--- ocaml-3.12.1/bytecomp/printlambda.ml	2010-09-02 15:29:21.000000000 +0200
++++ ocaml-3.12.1-tryocaml/bytecomp/printlambda.ml	2012-02-16 11:16:34.411347846 +0100
+@@ -92,6 +92,7 @@
+ let primitive ppf = function
+   | Pidentity -> fprintf ppf "id"
+   | Pignore -> fprintf ppf "ignore"
++  | Prevapply _ -> fprintf ppf "revapply"
+   | Pgetglobal id -> fprintf ppf "global %a" Ident.print id
+   | Psetglobal id -> fprintf ppf "setglobal %a" Ident.print id
+   | Pmakeblock(tag, Immutable) -> fprintf ppf "makeblock %i" tag
+diff -ruN ocaml-3.12.1/bytecomp/simplif.ml ocaml-3.12.1-tryocaml/bytecomp/simplif.ml
+--- ocaml-3.12.1/bytecomp/simplif.ml	2010-09-02 15:29:21.000000000 +0200
++++ ocaml-3.12.1-tryocaml/bytecomp/simplif.ml	2012-02-16 11:16:34.415347850 +0100
+@@ -375,7 +375,14 @@
+   | Llet(kind, v, l1, l2) -> Llet(kind, v, simplif l1, simplif l2)
+   | Lletrec(bindings, body) ->
+       Lletrec(List.map (fun (v, l) -> (v, simplif l)) bindings, simplif body)
+-  | Lprim(p, ll) -> Lprim(p, List.map simplif ll)
++  | Lprim(p, ll) -> begin
++    let ll = List.map simplif ll in
++    match p, ll with
++      | Prevapply loc, [x; Lapply(f, args, _)] -> Lapply(f, args@[x], loc)
++      | Prevapply loc, [x; f] -> Lapply(f, [x], loc)
++      | Prevapply _, _ -> assert false
++      | _ -> Lprim(p, ll)
++  end
+   | Lswitch(l, sw) ->
+       let new_l = simplif l
+       and new_consts =  List.map (fun (n, e) -> (n, simplif e)) sw.sw_consts
+diff -ruN ocaml-3.12.1/bytecomp/translcore.ml ocaml-3.12.1-tryocaml/bytecomp/translcore.ml
+--- ocaml-3.12.1/bytecomp/translcore.ml	2010-09-02 15:29:21.000000000 +0200
++++ ocaml-3.12.1-tryocaml/bytecomp/translcore.ml	2012-02-16 11:16:34.415347850 +0100
+@@ -285,7 +285,7 @@
+   { prim_name = "caml_obj_dup"; prim_arity = 1; prim_alloc = true;
+     prim_native_name = ""; prim_native_float = false }
+ 
+-let transl_prim prim args =
++let transl_prim loc prim args =
+   try
+     let (gencomp, intcomp, floatcomp, stringcomp,
+          nativeintcomp, int32comp, int64comp,
+@@ -322,7 +322,10 @@
+     end
+   with Not_found ->
+   try
+-    let p = Hashtbl.find primitives_table prim.prim_name in
++    let p =
++      match prim.prim_name with
++        | "%revapply" -> Prevapply loc
++        | _ -> Hashtbl.find primitives_table prim.prim_name in
+     (* Try strength reduction based on the type of the argument *)
+     begin match (p, args) with
+         (Psetfield(n, _), [arg1; arg2]) -> Psetfield(n, maybe_pointer arg2)
+@@ -620,7 +623,7 @@
+           wrap (Lsend(Cached, meth, obj, [cache; pos], e.exp_loc))
+         | _ -> assert false
+       else begin
+-        let prim = transl_prim p args in
++        let prim = transl_prim e.exp_loc p args in
+         match (prim, args) with
+           (Praise, [arg1]) ->
+             wrap0 (Lprim(Praise, [event_after arg1 (List.hd argl)]))
+diff -ruN ocaml-3.12.1/otherlibs/threads/pervasives.ml ocaml-3.12.1-tryocaml/otherlibs/threads/pervasives.ml
+--- ocaml-3.12.1/otherlibs/threads/pervasives.ml	2010-06-09 12:23:48.000000000 +0200
++++ ocaml-3.12.1-tryocaml/otherlibs/threads/pervasives.ml	2012-02-16 11:16:34.415347850 +0100
+@@ -28,6 +28,8 @@
+ 
+ exception Exit
+ 
++external ( |> ) : 'a -> ('a -> 'b) -> 'b = "%revapply"
++
+ (* Comparisons *)
+ 
+ external (=) : 'a -> 'a -> bool = "%equal"
+diff -ruN ocaml-3.12.1/parsing/lexer.mll ocaml-3.12.1-tryocaml/parsing/lexer.mll
+--- ocaml-3.12.1/parsing/lexer.mll	2010-04-08 05:58:41.000000000 +0200
++++ ocaml-3.12.1-tryocaml/parsing/lexer.mll	2012-05-04 17:10:14.172452351 +0200
+@@ -292,6 +292,9 @@
+           INT64 (cvt_int64_literal (Lexing.lexeme lexbuf))
+         with Failure _ ->
+           raise (Error(Literal_overflow "int64", Location.curr lexbuf)) }
++  | int_literal "I"
++      { let s = Lexing.lexeme lexbuf in
++        BIGINT (String.sub s 0 (String.length s - 1)) }
+   | int_literal "n"
+       { try
+           NATIVEINT (cvt_nativeint_literal (Lexing.lexeme lexbuf))
+@@ -346,6 +349,7 @@
+         token lexbuf
+       }
+   | "#"  { SHARP }
++  | "##" { SHARPJS }
+   | "&"  { AMPERSAND }
+   | "&&" { AMPERAMPER }
+   | "`"  { BACKQUOTE }
+diff -ruN ocaml-3.12.1/parsing/parser.mly ocaml-3.12.1-tryocaml/parsing/parser.mly
+--- ocaml-3.12.1/parsing/parser.mly	2011-04-29 06:56:21.000000000 +0200
++++ ocaml-3.12.1-tryocaml/parsing/parser.mly	2012-05-04 17:13:48.013512739 +0200
+@@ -83,29 +83,53 @@
+   then String.sub f 1 (String.length f - 1)
+   else "-" ^ f
+ 
+-let mkuminus name arg =
++let pexp_constant rev cst =
++  if !Clflags.wrap_constants then
++    match cst with
++        Const_string _
++      | Const_char _ ->
++        Pexp_constant cst
++      | _ ->
++        let name =
++          match cst with
++              Const_string _
++            | Const_char _ -> assert false
++            | Const_nativeint _ -> "nativeint"
++            | Const_int64 _ -> "int64"
++            | Const_int32 _ -> "int32"
++            | Const_float _ -> "float"
++            | Const_int _ -> "int"
++        in
++        Pexp_apply(ghexp(Pexp_ident (Lident (Printf.sprintf "%s_%s_%s" name
++                                               (if rev then "to" else "of")
++                                               name))),
++                   ["", mkexp (Pexp_constant cst)])
++  else
++    Pexp_constant cst
++
++let mkuminus rev name arg =
+   match name, arg.pexp_desc with
+   | "-", Pexp_constant(Const_int n) ->
+-      mkexp(Pexp_constant(Const_int(-n)))
++      mkexp(pexp_constant rev (Const_int(-n)))
+   | "-", Pexp_constant(Const_int32 n) ->
+-      mkexp(Pexp_constant(Const_int32(Int32.neg n)))
++      mkexp(pexp_constant rev (Const_int32(Int32.neg n)))
+   | "-", Pexp_constant(Const_int64 n) ->
+-      mkexp(Pexp_constant(Const_int64(Int64.neg n)))
++      mkexp(pexp_constant rev (Const_int64(Int64.neg n)))
+   | "-", Pexp_constant(Const_nativeint n) ->
+-      mkexp(Pexp_constant(Const_nativeint(Nativeint.neg n)))
++      mkexp(pexp_constant rev (Const_nativeint(Nativeint.neg n)))
+   | ("-" | "-."), Pexp_constant(Const_float f) ->
+-      mkexp(Pexp_constant(Const_float(neg_float_string f)))
++      mkexp(pexp_constant rev (Const_float(neg_float_string f)))
+   | _ ->
+       mkexp(Pexp_apply(mkoperator ("~" ^ name) 1, ["", arg]))
+ 
+ let mkuplus name arg =
+   let desc = arg.pexp_desc in
+   match name, desc with
+-  | "+", Pexp_constant(Const_int _)
+-  | "+", Pexp_constant(Const_int32 _)
+-  | "+", Pexp_constant(Const_int64 _)
+-  | "+", Pexp_constant(Const_nativeint _)
+-  | ("+" | "+."), Pexp_constant(Const_float _) -> mkexp desc
++  | "+", Pexp_constant (Const_int _)
++  | "+", Pexp_constant (Const_int32 _)
++  | "+", Pexp_constant (Const_int64 _)
++  | "+", Pexp_constant (Const_nativeint _)
++  | ("+" | "+."), Pexp_constant (Const_float _) -> mkexp desc
+   | _ ->
+       mkexp(Pexp_apply(mkoperator ("~" ^ name) 1, ["", arg]))
+ 
+@@ -208,6 +232,178 @@
+ let pat_of_label lbl =
+   mkpat (Ppat_var(Longident.last lbl))
+ 
++let rnd = Random.State.make [|0x513511d4|]
++let random_var () =
++  Format.sprintf "a%08Lx" (Random.State.int64 rnd 0x100000000L)
++let fresh_type () = mktyp (Ptyp_var (random_var ()))
++
++let unescape lab =
++  assert (lab <> "");
++  let lab =
++    if lab.[0] = '_' then String.sub lab 1 (String.length lab - 1) else lab
++  in
++  try
++    let i = String.rindex lab '_' in
++    if i = 0 then raise Not_found;
++    String.sub lab 0 i
++  with Not_found ->
++    lab
++
++let js_unsafe s = mkexp(Pexp_ident(Ldot(Ldot(Lident "Js","Unsafe"), s)))
++
++let js_prop_type field_name field_type =
++  mktyp( Ptyp_constr(
++    Ldot( Lident "Js", "gen_prop" ),
++    [mktyp(Ptyp_object [
++      mkfield (Pfield( field_name, field_type ));
++      mkfield Pfield_var ]) ]) )
++
++let js_field_type expr field_name field_type =
++  mkexp( Pexp_constraint(
++    expr,
++    Some( mktyp( Ptyp_constr(
++      Ldot( Lident "Js", "t" ),
++      [mktyp( Ptyp_object [
++	mkfield( Pfield( field_name, mktyp( Ptyp_poly( [], field_type ))));
++	mkfield Pfield_var ]) ]))),
++    None ))
++
++let make_js_get expr label =
++  let var = fresh_type () in
++  let t_var = js_prop_type "get" var in
++  let expr = js_field_type expr label t_var in
++  let call = mkexp(Pexp_apply(
++    js_unsafe "get",
++    [ "", expr;
++      "", mkexp(Pexp_constant(Const_string (unescape label)))] )) in
++  mkexp( Pexp_constraint( call, Some( mktyp( Ptyp_poly( [], var ))), None ))
++
++let make_js_set expr label param =
++  let var = fresh_type () in
++  let t_var = js_prop_type "set"
++    ( mktyp( Ptyp_poly(
++      [], mktyp( Ptyp_arrow(
++	"", var, mktyp (Ptyp_constr ((Lident "unit"), []))) )))) in
++  let expr = js_field_type expr label t_var in
++  mkexp(Pexp_apply(
++    js_unsafe "set",
++    [ "", expr;
++      "", mkexp(Pexp_constant(Const_string (unescape label)));
++      "", mkexp (Pexp_constraint( param, Some var, None )) ] ))
++
++let make_inject (expr,typ) =
++  mkexp(Pexp_apply(
++    js_unsafe "inject",
++    [ "",
++      mkexp (Pexp_constraint(
++	expr,
++	Some typ,
++	None ))]))
++
++let make_js_call expr label args =
++  let args = List.map (fun p -> p,fresh_type ()) args in
++  let ret_type = fresh_type () in
++  let method_type =
++    List.fold_right
++      (fun (_, arg_ty) rem_ty -> mktyp ( Ptyp_arrow ( "", arg_ty, rem_ty )))
++      args
++      ( mktyp ( Ptyp_constr( Ldot( Lident "Js", "meth" ), [ ret_type ] )))
++  in
++  let args = mkexp( Pexp_array( List.map make_inject args )) in
++  let expr = js_field_type expr label method_type in
++  let call = mkexp( Pexp_apply(
++    js_unsafe "meth_call",
++    [ "", expr;
++      "", mkexp( Pexp_constant( Const_string( unescape label )));
++      "", args ] )) in
++  mkexp( Pexp_constraint( call, Some ret_type, None ))
++
++let rnd = Random.State.make [|0x513511d4|]
++let random_var () =
++  Format.sprintf "a%08Lx" (Random.State.int64 rnd 0x100000000L)
++let fresh_type () = mktyp (Ptyp_var (random_var ()))
++
++let unescape lab =
++  assert (lab <> "");
++  let lab =
++    if lab.[0] = '_' then String.sub lab 1 (String.length lab - 1) else lab
++  in
++  try
++    let i = String.rindex lab '_' in
++    if i = 0 then raise Not_found;
++    String.sub lab 0 i
++  with Not_found ->
++    lab
++
++let js_unsafe s = mkexp(Pexp_ident(Ldot(Ldot(Lident "Js","Unsafe"), s)))
++
++let js_prop_type field_name field_type =
++  mktyp( Ptyp_constr(
++    Ldot( Lident "Js", "gen_prop" ),
++    [mktyp(Ptyp_object [
++      mkfield (Pfield( field_name,
++                       mktyp( Ptyp_poly( [], field_type )) ));
++      mkfield Pfield_var ]) ]) )
++
++let js_field_type expr field_name field_type =
++  mkexp( Pexp_constraint(
++    expr,
++    Some( mktyp( Ptyp_constr(
++      Ldot( Lident "Js", "t" ),
++      [mktyp( Ptyp_object [
++	mkfield( Pfield( field_name, mktyp( Ptyp_poly( [], field_type ))));
++	mkfield Pfield_var ]) ]))),
++    None ))
++
++let make_js_get expr label =
++  let var = fresh_type () in
++  let t_var = js_prop_type "get" var in
++  let expr = js_field_type expr label t_var in
++  let call = mkexp(Pexp_apply(
++    js_unsafe "get",
++    [ "", expr;
++      "", mkexp(Pexp_constant(Const_string (unescape label)))] )) in
++  mkexp( Pexp_constraint( call, Some( var ), None ))
++
++let make_js_set expr label param =
++  let var = fresh_type () in
++  let t_var = js_prop_type "set"
++    ( mktyp( Ptyp_arrow(
++      "", var, mktyp (Ptyp_constr ((Lident "unit"), []))) )) in
++  let expr = js_field_type expr label t_var in
++  mkexp(Pexp_apply(
++    js_unsafe "set",
++    [ "", expr;
++      "", mkexp(Pexp_constant(Const_string (unescape label)));
++      "", mkexp (Pexp_constraint( param, Some var, None )) ] ))
++
++let make_inject (expr,typ) =
++  mkexp(Pexp_apply(
++    js_unsafe "inject",
++    [ "",
++      mkexp (Pexp_constraint(
++	expr,
++	Some typ,
++	None ))]))
++
++let make_js_call expr label args =
++  let args = List.map (fun p -> p,fresh_type ()) args in
++  let ret_type = fresh_type () in
++  let method_type =
++    List.fold_right
++      (fun (_, arg_ty) rem_ty -> mktyp ( Ptyp_arrow ( "", arg_ty, rem_ty )))
++      args
++      ( mktyp ( Ptyp_constr( Ldot( Lident "Js", "meth" ), [ ret_type ] )))
++  in
++  let args = mkexp( Pexp_array( List.map make_inject args )) in
++  let expr = js_field_type expr label method_type in
++  let call = mkexp( Pexp_apply(
++    js_unsafe "meth_call",
++    [ "", expr;
++      "", mkexp( Pexp_constant( Const_string( unescape label )));
++      "", args ] )) in
++  mkexp( Pexp_constraint( call, Some ret_type, None ))
++
+ %}
+ 
+ /* Tokens */
+@@ -305,6 +501,7 @@
+ %token RPAREN
+ %token SEMI
+ %token SEMISEMI
++%token SHARPJS
+ %token SHARP
+ %token SIG
+ %token STAR
+@@ -323,6 +520,7 @@
+ %token WHEN
+ %token WHILE
+ %token WITH
++%token <string> BIGINT
+ 
+ /* Precedences and associativities.
+ 
+@@ -376,11 +574,12 @@
+ %nonassoc prec_constant_constructor     /* cf. simple_expr (C versus C x) */
+ %nonassoc prec_constr_appl              /* above AS BAR COLONCOLON COMMA */
+ %nonassoc below_SHARP
+-%nonassoc SHARP                         /* simple_expr/toplevel_directive */
++%nonassoc SHARP                  /* simple_expr/toplevel_directive */
++%left SHARPJS
+ %nonassoc below_DOT
+ %nonassoc DOT
+ /* Finally, the first tokens of simple_expr are above everything else. */
+-%nonassoc BACKQUOTE BANG BEGIN CHAR FALSE FLOAT INT INT32 INT64
++%nonassoc BACKQUOTE BANG BEGIN CHAR FALSE FLOAT BIGINT INT INT32 INT64
+           LBRACE LBRACELESS LBRACKET LBRACKETBAR LIDENT LPAREN
+           NEW NATIVEINT PREFIXOP STRING TRUE UIDENT
+ 
+@@ -928,7 +1127,7 @@
+   | expr COLONEQUAL expr
+       { mkinfix $1 ":=" $3 }
+   | subtractive expr %prec prec_unary_minus
+-      { mkuminus $1 $2 }
++      { mkuminus false $1 $2 }
+   | additive expr %prec prec_unary_plus
+       { mkuplus $1 $2 }
+   | simple_expr DOT label_longident LESSMINUS expr
+@@ -956,7 +1155,15 @@
+     val_longident
+       { mkexp(Pexp_ident $1) }
+   | constant
+-      { mkexp(Pexp_constant $1) }
++      { mkexp(pexp_constant false $1) }
++  | BIGINT
++      { mkexp(Pexp_apply(ghexp(Pexp_ident (Lident "big_int_of_string")),
++                         ["", mkexp(Pexp_constant(Const_string $1))])) }
++  | BACKQUOTE constant
++      { mkexp(pexp_constant true $2) }
++  | BACKQUOTE BIGINT
++      { mkexp(Pexp_apply(ghexp(Pexp_ident(Lident "string_to_big_int")),
++                         ["", mkexp(Pexp_constant(Const_string $2))])) }
+   | constr_longident %prec prec_constant_constructor
+       { mkexp(Pexp_construct($1, None, false)) }
+   | name_tag %prec prec_constant_constructor
+@@ -1021,6 +1228,16 @@
+       { mkexp(Pexp_override []) }
+   | simple_expr SHARP label
+       { mkexp(Pexp_send($1, $3)) }
++  | simple_expr SHARPJS label
++      { make_js_get $1 $3 }
++  | simple_expr SHARPJS label LESSMINUS expr
++      { make_js_set $1 $3 $5 }
++  | simple_expr SHARPJS label LPAREN expr_comma_list RPAREN
++      { make_js_call $1 $3 (List.rev $5) }
++  | simple_expr SHARPJS label LPAREN expr RPAREN
++      { make_js_call $1 $3 [$5] }
++  | simple_expr SHARPJS label LPAREN RPAREN
++      { make_js_call $1 $3 [] }
+   | LPAREN MODULE module_expr COLON package_type RPAREN
+       { mkexp (Pexp_pack ($3, $5)) }
+   | LPAREN MODULE module_expr COLON error
+diff -ruN ocaml-3.12.1/stdlib/pervasives.mli ocaml-3.12.1-tryocaml/stdlib/pervasives.mli
+--- ocaml-3.12.1/stdlib/pervasives.mli	2011-05-17 15:31:32.000000000 +0200
++++ ocaml-3.12.1-tryocaml/stdlib/pervasives.mli	2012-02-16 11:16:34.419347861 +0100
+@@ -40,7 +40,6 @@
+ (** The [Exit] exception is not raised by any library function.  It is
+     provided for use in your programs.*)
+ 
+-
+ (** {6 Comparisons} *)
+ 
+ external ( = ) : 'a -> 'a -> bool = "%equal"
+diff -ruN ocaml-3.12.1/toplevel/genprintval.ml ocaml-3.12.1-tryocaml/toplevel/genprintval.ml
+--- ocaml-3.12.1/toplevel/genprintval.ml	2009-10-26 11:53:16.000000000 +0100
++++ ocaml-3.12.1-tryocaml/toplevel/genprintval.ml	2012-05-04 17:23:18.640342322 +0200
+@@ -21,6 +21,8 @@
+ open Types
+ open Outcometree
+ 
++exception Not_handled
++
+ module type OBJ =
+   sig
+     type t
+@@ -45,6 +47,10 @@
+     val install_printer :
+           Path.t -> Types.type_expr -> (formatter -> t -> unit) -> unit
+     val remove_printer : Path.t -> unit
++    val install_printer2 :
++      Path.t -> Types.type_expr -> (Env.t -> Types.type_expr -> t -> 
++                                    Outcometree.out_value) -> unit
++    val remove_printer2 : Path.t -> unit
+     val outval_of_untyped_exception : t -> Outcometree.out_value
+     val outval_of_value :
+           int -> int ->
+@@ -52,6 +58,11 @@
+           Env.t -> t -> type_expr -> Outcometree.out_value
+   end
+ 
++    (* An abstract type *)
++
++let abstract_type =
++  Ctype.newty (Tconstr (Pident (Ident.create "abstract"), [], ref Mnil))
++
+ module Make(O : OBJ)(EVP : EVALPATH with type value = O.t) = struct
+ 
+     type t = O.t
+@@ -111,11 +122,12 @@
+         (fun x -> Oval_int64 (O.obj x : int64))
+     ] : (Path.t * type_expr * (O.t -> Outcometree.out_value)) list)
+ 
++
+     let install_printer path ty fn =
+       let print_val ppf obj =
+         try fn ppf obj with
+-        | exn ->
+-           fprintf ppf "<printer %a raised an exception>" Printtyp.path path in
++          | exn ->
++            fprintf ppf "<printer %a raised an exception>" Printtyp.path path in
+       let printer obj = Oval_printer (fun ppf -> print_val ppf obj) in
+       printers := (path, ty, printer) :: !printers
+ 
+@@ -168,8 +180,28 @@
+ 
+     (* The main printing function *)
+ 
++    let printers2 = ref []
++      
++    let install_printer2 path ty fn =
++      printers2 := (path, ty, fn) :: !printers2
++        
++    let remove_printer2 path =
++      let rec remove = function
++        | [] -> raise Not_found
++        | (p, ty, fn as printer) :: rem ->
++            if Path.same p path then rem else printer :: remove rem in
++      printers2 := remove !printers2
++        
++    let find_printer2 env ty obj =
++      let rec find = function
++        | [] -> raise Not_found
++        | (name, sch, printer) :: remainder ->
++            if Ctype.moregeneral env false sch ty
++            then printer env ty obj
++            else find remainder
++      in find !printers2
++      
+     let outval_of_value max_steps max_depth check_depth env obj ty =
+-
+       let printer_steps = ref max_steps in
+ 
+       let rec tree_of_val depth obj ty =
+@@ -179,149 +211,152 @@
+         try
+           find_printer env ty obj
+         with Not_found ->
+-          match (Ctype.repr ty).desc with
+-          | Tvar ->
+-              Oval_stuff "<poly>"
+-          | Tarrow(_, ty1, ty2, _) ->
+-              Oval_stuff "<fun>"
+-          | Ttuple(ty_list) ->
+-              Oval_tuple (tree_of_val_list 0 depth obj ty_list)
+-          | Tconstr(path, [], _) when Path.same path Predef.path_exn ->
+-              tree_of_exception depth obj
+-          | Tconstr(path, [ty_arg], _)
+-            when Path.same path Predef.path_list ->
+-              if O.is_block obj then
+-                match check_depth depth obj ty with
+-                  Some x -> x
+-                | None ->
+-                    let rec tree_of_conses tree_list obj =
+-                      if !printer_steps < 0 || depth < 0 then
+-                        Oval_ellipsis :: tree_list
+-                      else if O.is_block obj then
+-                        let tree =
+-                          tree_of_val (depth - 1) (O.field obj 0) ty_arg in
+-                        let next_obj = O.field obj 1 in
+-                        tree_of_conses (tree :: tree_list) next_obj
+-                      else tree_list
+-                    in
+-                    Oval_list (List.rev (tree_of_conses [] obj))
+-              else
+-                Oval_list []
+-          | Tconstr(path, [ty_arg], _)
+-            when Path.same path Predef.path_array ->
+-              let length = O.size obj in
+-              if length > 0 then
+-                match check_depth depth obj ty with
+-                  Some x -> x
+-                | None ->
+-                    let rec tree_of_items tree_list i =
+-                      if !printer_steps < 0 || depth < 0 then
+-                        Oval_ellipsis :: tree_list
+-                      else if i < length then
+-                        let tree =
+-                          tree_of_val (depth - 1) (O.field obj i) ty_arg in
+-                        tree_of_items (tree :: tree_list) (i + 1)
+-                      else tree_list
+-                    in
+-                    Oval_array (List.rev (tree_of_items [] 0))
+-              else
+-                Oval_array []
+-          | Tconstr (path, [ty_arg], _)
+-            when Path.same path Predef.path_lazy_t ->
+-              if Lazy.lazy_is_val (O.obj obj)
+-              then let v = tree_of_val depth (Lazy.force (O.obj obj)) ty_arg in
+-                   Oval_constr (Oide_ident "lazy", [v])
+-              else Oval_stuff "<lazy>"
+-          | Tconstr(path, ty_list, _) ->
+-              begin try
+-                let decl = Env.find_type path env in
+-                match decl with
+-                | {type_kind = Type_abstract; type_manifest = None} ->
+-                    Oval_stuff "<abstr>"
+-                | {type_kind = Type_abstract; type_manifest = Some body} ->
+-                    tree_of_val depth obj
+-                      (try Ctype.apply env decl.type_params body ty_list with
+-                         Ctype.Cannot_apply -> abstract_type)
+-                | {type_kind = Type_variant constr_list} ->
+-                    let tag =
+-                      if O.is_block obj
+-                      then Cstr_block(O.tag obj)
+-                      else Cstr_constant(O.obj obj) in
+-                    let (constr_name, constr_args) =
+-                      Datarepr.find_constr_by_tag tag constr_list in
+-                    let ty_args =
+-                      List.map
+-                        (function ty ->
+-                           try Ctype.apply env decl.type_params ty ty_list with
+-                             Ctype.Cannot_apply -> abstract_type)
+-                        constr_args in
+-                    tree_of_constr_with_args (tree_of_constr env path)
+-                                           constr_name 0 depth obj ty_args
+-                | {type_kind = Type_record(lbl_list, rep)} ->
+-                    begin match check_depth depth obj ty with
+-                      Some x -> x
+-                    | None ->
+-                        let rec tree_of_fields pos = function
+-                          | [] -> []
+-                          | (lbl_name, _, lbl_arg) :: remainder ->
+-                              let ty_arg =
+-                                try
+-                                  Ctype.apply env decl.type_params lbl_arg
+-                                    ty_list
+-                                with
+-                                  Ctype.Cannot_apply -> abstract_type in
+-                              let lid = tree_of_label env path lbl_name in
+-                              let v =
+-                                tree_of_val (depth - 1) (O.field obj pos)
+-                                  ty_arg
+-                              in
+-                              (lid, v) :: tree_of_fields (pos + 1) remainder
+-                        in
+-                        Oval_record (tree_of_fields 0 lbl_list)
+-                    end
+-              with
+-                Not_found ->                (* raised by Env.find_type *)
+-                  Oval_stuff "<abstr>"
+-              | Datarepr.Constr_not_found -> (* raised by find_constr_by_tag *)
+-                  Oval_stuff "<unknown constructor>"
+-              end
+-          | Tvariant row ->
+-              let row = Btype.row_repr row in
+-              if O.is_block obj then
+-                let tag : int = O.obj (O.field obj 0) in
+-                let rec find = function
+-                  | (l, f) :: fields ->
+-                      if Btype.hash_variant l = tag then
+-                        match Btype.row_field_repr f with
+-                        | Rpresent(Some ty) | Reither(_,[ty],_,_) ->
+-                            let args =
+-                              tree_of_val (depth - 1) (O.field obj 1) ty in
+-                            Oval_variant (l, Some args)
+-                        | _ -> find fields
+-                      else find fields
+-                  | [] -> Oval_stuff "<variant>" in
+-                find row.row_fields
+-              else
+-                let tag : int = O.obj obj in
+-                let rec find = function
+-                  | (l, _) :: fields ->
+-                      if Btype.hash_variant l = tag then
+-                        Oval_variant (l, None)
+-                      else find fields
+-                  | [] -> Oval_stuff "<variant>" in
+-                find row.row_fields
+-          | Tobject (_, _) ->
+-              Oval_stuff "<obj>"
+-          | Tsubst ty ->
+-              tree_of_val (depth - 1) obj ty
+-          | Tfield(_, _, _, _) | Tnil | Tlink _ ->
+-              fatal_error "Printval.outval_of_value"
+-          | Tpoly (ty, _) ->
+-              tree_of_val (depth - 1) obj ty
+-          | Tunivar ->
+-              Oval_stuff "<poly>"
+-          | Tpackage _ ->
+-              Oval_stuff "<module>"
++          try
++            find_printer2 env ty obj
++          with Not_found ->
++            match (Ctype.repr ty).desc with
++              | Tvar ->
++                  Oval_stuff "<poly>"
++              | Tarrow(_, ty1, ty2, _) ->
++                  Oval_stuff "<fun>"
++              | Ttuple(ty_list) ->
++                  Oval_tuple (tree_of_val_list 0 depth obj ty_list)
++              | Tconstr(path, [], _) when Path.same path Predef.path_exn ->
++                  tree_of_exception depth obj
++              | Tconstr(path, [ty_arg], _)
++                  when Path.same path Predef.path_list ->
++                  if O.is_block obj then
++                    match check_depth depth obj ty with
++                        Some x -> x
++                      | None ->
++                          let rec tree_of_conses tree_list obj =
++                            if !printer_steps < 0 || depth < 0 then
++                              Oval_ellipsis :: tree_list
++                            else if O.is_block obj then
++                              let tree =
++                                tree_of_val (depth - 1) (O.field obj 0) ty_arg in
++                              let next_obj = O.field obj 1 in
++                              tree_of_conses (tree :: tree_list) next_obj
++                            else tree_list
++                          in
++                          Oval_list (List.rev (tree_of_conses [] obj))
++                  else
++                    Oval_list []
++              | Tconstr(path, [ty_arg], _)
++                  when Path.same path Predef.path_array ->
++                  let length = O.size obj in
++                  if length > 0 then
++                    match check_depth depth obj ty with
++                        Some x -> x
++                      | None ->
++                          let rec tree_of_items tree_list i =
++                            if !printer_steps < 0 || depth < 0 then
++                              Oval_ellipsis :: tree_list
++                            else if i < length then
++                              let tree =
++                                tree_of_val (depth - 1) (O.field obj i) ty_arg in
++                              tree_of_items (tree :: tree_list) (i + 1)
++                            else tree_list
++                          in
++                          Oval_array (List.rev (tree_of_items [] 0))
++                  else
++                    Oval_array []
++              | Tconstr (path, [ty_arg], _)
++                  when Path.same path Predef.path_lazy_t ->
++                  if Lazy.lazy_is_val (O.obj obj)
++                  then let v = tree_of_val depth (Lazy.force (O.obj obj)) ty_arg in
++                       Oval_constr (Oide_ident "lazy", [v])
++                  else Oval_stuff "<lazy>"
++              | Tconstr(path, ty_list, _) ->
++                  begin try
++                          let decl = Env.find_type path env in
++                          match decl with
++                            | {type_kind = Type_abstract; type_manifest = None} ->
++                                Oval_stuff "<abstr>"
++                            | {type_kind = Type_abstract; type_manifest = Some body} ->
++                                tree_of_val depth obj
++                                  (try Ctype.apply env decl.type_params body ty_list with
++                                      Ctype.Cannot_apply -> abstract_type)
++                            | {type_kind = Type_variant constr_list} ->
++                                let tag =
++                                  if O.is_block obj
++                                  then Cstr_block(O.tag obj)
++                                  else Cstr_constant(O.obj obj) in
++                                let (constr_name, constr_args) =
++                                  Datarepr.find_constr_by_tag tag constr_list in
++                                let ty_args =
++                                  List.map
++                                    (function ty ->
++                                      try Ctype.apply env decl.type_params ty ty_list with
++                                          Ctype.Cannot_apply -> abstract_type)
++                                    constr_args in
++                                tree_of_constr_with_args (tree_of_constr env path)
++                                  constr_name 0 depth obj ty_args
++                            | {type_kind = Type_record(lbl_list, rep)} ->
++                                begin match check_depth depth obj ty with
++                                    Some x -> x
++                                  | None ->
++                                      let rec tree_of_fields pos = function
++                                        | [] -> []
++                                        | (lbl_name, _, lbl_arg) :: remainder ->
++                                            let ty_arg =
++                                              try
++                                                Ctype.apply env decl.type_params lbl_arg
++                                                  ty_list
++                                              with
++                                                  Ctype.Cannot_apply -> abstract_type in
++                                            let lid = tree_of_label env path lbl_name in
++                                            let v =
++                                              tree_of_val (depth - 1) (O.field obj pos)
++                                                ty_arg
++                                            in
++                                            (lid, v) :: tree_of_fields (pos + 1) remainder
++                                      in
++                                      Oval_record (tree_of_fields 0 lbl_list)
++                                end
++                    with
++                        Not_found ->                (* raised by Env.find_type *)
++                          Oval_stuff "<abstr>"
++                      | Datarepr.Constr_not_found -> (* raised by find_constr_by_tag *)
++                          Oval_stuff "<unknown constructor>"
++                  end
++              | Tvariant row ->
++                  let row = Btype.row_repr row in
++                  if O.is_block obj then
++                    let tag : int = O.obj (O.field obj 0) in
++                    let rec find = function
++                      | (l, f) :: fields ->
++                          if Btype.hash_variant l = tag then
++                            match Btype.row_field_repr f with
++                              | Rpresent(Some ty) | Reither(_,[ty],_,_) ->
++                                  let args =
++                                    tree_of_val (depth - 1) (O.field obj 1) ty in
++                                  Oval_variant (l, Some args)
++                              | _ -> find fields
++                          else find fields
++                      | [] -> Oval_stuff "<variant>" in
++                    find row.row_fields
++                  else
++                    let tag : int = O.obj obj in
++                    let rec find = function
++                      | (l, _) :: fields ->
++                          if Btype.hash_variant l = tag then
++                            Oval_variant (l, None)
++                          else find fields
++                      | [] -> Oval_stuff "<variant>" in
++                    find row.row_fields
++              | Tobject (_, _) ->
++                  Oval_stuff "<obj>"
++              | Tsubst ty ->
++                  tree_of_val (depth - 1) obj ty
++              | Tfield(_, _, _, _) | Tnil | Tlink _ ->
++                  fatal_error "Printval.outval_of_value"
++              | Tpoly (ty, _) ->
++                  tree_of_val (depth - 1) obj ty
++              | Tunivar ->
++                  Oval_stuff "<poly>"
++              | Tpackage _ ->
++                  Oval_stuff "<module>"
+         end
+ 
+       and tree_of_val_list start depth obj ty_list =
+diff -ruN ocaml-3.12.1/toplevel/genprintval.mli ocaml-3.12.1-tryocaml/toplevel/genprintval.mli
+--- ocaml-3.12.1/toplevel/genprintval.mli	2002-04-18 09:27:47.000000000 +0200
++++ ocaml-3.12.1-tryocaml/toplevel/genprintval.mli	2012-04-18 17:21:03.029631882 +0200
+@@ -17,6 +17,8 @@
+ open Types
+ open Format
+ 
++val abstract_type : Types.type_expr
++
+ module type OBJ =
+   sig
+     type t
+@@ -34,13 +36,16 @@
+     exception Error
+     val same_value: value -> value -> bool
+   end
+-
++exception Not_handled
+ module type S =
+   sig
+     type t
+     val install_printer :
+           Path.t -> Types.type_expr -> (formatter -> t -> unit) -> unit
+     val remove_printer : Path.t -> unit
++    val install_printer2 :
++          Path.t -> Types.type_expr -> (Env.t -> Types.type_expr -> t -> Outcometree.out_value) -> unit
++    val remove_printer2 : Path.t -> unit
+     val outval_of_untyped_exception : t -> Outcometree.out_value
+     val outval_of_value :
+           int -> int ->
+diff -ruN ocaml-3.12.1/toplevel/opttopdirs.ml ocaml-3.12.1-tryocaml/toplevel/opttopdirs.ml
+--- ocaml-3.12.1/toplevel/opttopdirs.ml	2010-01-22 13:48:24.000000000 +0100
++++ ocaml-3.12.1-tryocaml/toplevel/opttopdirs.ml	2012-02-16 11:16:34.419347861 +0100
+@@ -97,8 +97,10 @@
+ 
+ (* Install, remove a printer *)
+ 
+-type 'a printer_type_new = Format.formatter -> 'a -> unit
+-type 'a printer_type_old = 'a -> unit
++type 'a printer_type2 = Format.formatter -> Types.type_expr -> 'a -> unit
++type 'a printer_type1 = Format.formatter -> 'a -> unit
++type 'a printer_type0 = 'a -> unit
++
+ 
+ let match_printer_type ppf desc typename =
+   let (printer_type, _) =
+@@ -122,9 +124,12 @@
+     let (path, desc) = Env.lookup_value lid !toplevel_env in
+     let (ty_arg, is_old_style) =
+       try
+-        (match_printer_type ppf desc "printer_type_new", false)
++        (match_printer_type ppf desc "printer_type2", 2)
++      with Ctype.Unify _ ->
++      try
++        (match_printer_type ppf desc "printer_type1", 1)
+       with Ctype.Unify _ ->
+-        (match_printer_type ppf desc "printer_type_old", true) in
++        (match_printer_type ppf desc "printer_type0", 0) in
+     (ty_arg, path, is_old_style)
+   with
+   | Not_found ->
+@@ -139,12 +144,14 @@
+   try
+     let (ty_arg, path, is_old_style) = find_printer_type ppf lid in
+     let v = eval_path path in
+-    let print_function =
+-      if is_old_style then
+-        (fun formatter repr -> Obj.obj v (Obj.obj repr))
+-      else
+-        (fun formatter repr -> Obj.obj v formatter (Obj.obj repr)) in
+-    install_printer path ty_arg print_function
++    match is_old_style with
++      | 0 -> install_printer path ty_arg
++          (fun formatter repr -> Obj.obj v (Obj.obj repr))
++      | 1 -> install_printer path ty_arg
++          (fun formatter repr -> Obj.obj v (Obj.obj repr))
++      | 2 -> install_printer2 path ty_arg
++        (fun formatter ty repr -> Obj.obj v formatter ty (Obj.obj repr))
++      | _ -> assert false
+   with Exit -> ()
+ 
+ let dir_remove_printer ppf lid =
+diff -ruN ocaml-3.12.1/toplevel/topdirs.ml ocaml-3.12.1-tryocaml/toplevel/topdirs.ml
+--- ocaml-3.12.1/toplevel/topdirs.ml	2010-01-22 13:48:24.000000000 +0100
++++ ocaml-3.12.1-tryocaml/toplevel/topdirs.ml	2012-02-16 11:16:34.423347882 +0100
+@@ -135,8 +135,10 @@
+ 
+ (* Install, remove a printer *)
+ 
+-type 'a printer_type_new = Format.formatter -> 'a -> unit
+-type 'a printer_type_old = 'a -> unit
++type 'a printer_type2 = Env.t -> Types.type_expr -> 'a -> Outcometree.out_value
++type 'a printer_type1 = Format.formatter -> 'a -> unit
++type 'a printer_type0 = 'a -> unit
++
+ 
+ let match_printer_type ppf desc typename =
+   let (printer_type, _) =
+@@ -160,9 +162,12 @@
+     let (path, desc) = Env.lookup_value lid !toplevel_env in
+     let (ty_arg, is_old_style) =
+       try
+-        (match_printer_type ppf desc "printer_type_new", false)
++        (match_printer_type ppf desc "printer_type2", 2)
++      with Ctype.Unify _ ->
++      try
++        (match_printer_type ppf desc "printer_type1", 1)
+       with Ctype.Unify _ ->
+-        (match_printer_type ppf desc "printer_type_old", true) in
++        (match_printer_type ppf desc "printer_type0", 0) in
+     (ty_arg, path, is_old_style)
+   with
+   | Not_found ->
+@@ -177,12 +182,13 @@
+   try
+     let (ty_arg, path, is_old_style) = find_printer_type ppf lid in
+     let v = eval_path path in
+-    let print_function =
+-      if is_old_style then
+-        (fun formatter repr -> Obj.obj v (Obj.obj repr))
+-      else
+-        (fun formatter repr -> Obj.obj v formatter (Obj.obj repr)) in
+-    install_printer path ty_arg print_function
++    match is_old_style with
++      | 0 -> install_printer path ty_arg
++          (fun formatter repr -> Obj.obj v (Obj.obj repr))
++      | 1 -> install_printer path ty_arg
++          (fun formatter repr -> Obj.obj v formatter (Obj.obj repr))
++      | 2 -> install_printer2 path ty_arg (Obj.obj v)
++      | _ -> assert false
+   with Exit -> ()
+ 
+ let dir_remove_printer ppf lid =
+diff -ruN ocaml-3.12.1/toplevel/topdirs.mli ocaml-3.12.1-tryocaml/toplevel/topdirs.mli
+--- ocaml-3.12.1/toplevel/topdirs.mli	2002-04-18 09:27:47.000000000 +0200
++++ ocaml-3.12.1-tryocaml/toplevel/topdirs.mli	2012-02-16 11:16:34.423347882 +0100
+@@ -27,8 +27,9 @@
+ val dir_untrace : formatter -> Longident.t -> unit
+ val dir_untrace_all : formatter -> unit -> unit
+ 
+-type 'a printer_type_new = Format.formatter -> 'a -> unit
+-type 'a printer_type_old = 'a -> unit
++type 'a printer_type2 = Env.t -> Types.type_expr -> 'a -> Outcometree.out_value
++type 'a printer_type1 = Format.formatter -> 'a -> unit
++type 'a printer_type0 = 'a -> unit
+ 
+ (* For topmain.ml. Maybe shouldn't be there *)
+ val load_file : formatter -> string -> bool
+diff -ruN ocaml-3.12.1/toplevel/toploop.ml ocaml-3.12.1-tryocaml/toplevel/toploop.ml
+--- ocaml-3.12.1/toplevel/toploop.ml	2009-01-25 23:46:15.000000000 +0100
++++ ocaml-3.12.1-tryocaml/toplevel/toploop.ml	2012-05-04 16:51:45.902956740 +0200
+@@ -95,6 +95,8 @@
+ 
+ let install_printer = Printer.install_printer
+ let remove_printer = Printer.remove_printer
++let install_printer2 = Printer.install_printer2
++let remove_printer2 = Printer.remove_printer2
+ 
+ (* Hooks for parsing functions *)
+ 
+@@ -435,3 +437,134 @@
+   toplevel_env := Compile.initial_env();
+   Sys.interactive := false;
+   use_silently ppf name
++
++let rec find_type2 env ty =
++  match (Ctype.repr ty).desc with
++    | Tconstr(path, ty_list, _) ->
++      begin
++      let decl = Env.find_type path env in
++      match decl with
++        | {type_kind = Type_abstract; type_manifest = None} ->
++          begin
++            match ty_list with
++                [ty1; ty2] -> (ty1, ty2)
++              | _ -> raise Not_found
++          end
++        | {type_kind = Type_abstract; type_manifest = Some body} ->
++          find_type2 env
++            ( Ctype.apply env decl.type_params body ty_list )
++        | _ -> raise Not_found
++      end
++    | _ -> raise Not_found
++
++let find_type2 env ty =
++  try
++    find_type2 env ty
++  with _ ->
++    (Genprintval.abstract_type, Genprintval.abstract_type)
++
++let rec find_type1 env ty =
++  match (Ctype.repr ty).desc with
++    | Tconstr(path, ty_list, _) ->
++      begin
++      let decl = Env.find_type path env in
++      match decl with
++        | {type_kind = Type_abstract; type_manifest = None} ->
++          begin
++            match ty_list with
++                [ty1] -> ty1
++              | _ -> raise Not_found
++          end
++        | {type_kind = Type_abstract; type_manifest = Some body} ->
++          find_type1 env
++            ( Ctype.apply env decl.type_params body ty_list )
++        | _ -> raise Not_found
++      end
++    | _ -> raise Not_found
++
++let find_type1 env ty =
++  try
++    find_type1 env ty
++  with _ ->
++    Genprintval.abstract_type
++
++let stringers = [
++  Predef.type_int, (fun i -> string_of_int (Obj.magic i));
++  Predef.type_float, (fun i -> string_of_float (Obj.magic i));
++  Predef.type_string, (fun i -> Printf.sprintf "\"%s\"" (String.escaped (Obj.magic i)));
++  Predef.type_char, (fun i -> String.make 1 (Obj.magic i));
++  Predef.type_int32, (fun i -> Int32.to_string (Obj.magic i));
++  Predef.type_int64, (fun i -> Int64.to_string (Obj.magic i));
++]
++
++let rec find_stringer env ty list =
++  match list with
++      [] -> raise Not_found
++    | (ty', stringer) :: tail ->
++      if Ctype.moregeneral env false ty' ty then stringer else find_stringer env ty tail
++
++let print_hashtbl env ty t =
++  let (t1, t2) = find_type2 env ty in
++  let stringer =
++    try
++      find_stringer env t1 stringers
++    with _ -> (fun _ -> "<too complex>")
++  in
++  let list = ref [] in
++  Hashtbl.iter (fun k v ->
++    list := (Oide_ident (stringer k), outval_of_value env (Obj.repr v) t2) :: !list
++  ) t;
++  Oval_record (List.rev !list)
++
++let exn_printer = ref (fun _ _ _ -> raise Genprintval.Not_handled)
++let print_exn env ty exn = !exn_printer env ty exn
++let set_exn_printer printer = exn_printer := printer
++
++let print_queue env ty t =
++  let t1 = find_type1 env ty in
++  let list = ref [] in
++  Queue.iter (fun v ->
++    list := (outval_of_value env (Obj.repr v) t1) :: !list
++  ) t;
++  Oval_list (List.rev !list)
++
++let print_stack env ty t =
++  let t1 = find_type1 env ty in
++  let list = ref [] in
++  Stack.iter (fun v ->
++    list := (outval_of_value env (Obj.repr v) t1) :: !list
++  ) t;
++  Oval_list (List.rev !list)
++
++let print_lazy env ty t =
++  let t1 = find_type1 env ty in
++  if Lazy.lazy_is_val t then
++    let v = Lazy.force t in
++    Oval_constr (Oide_ident "lazy", [outval_of_value env (Obj.repr v) t1])
++  else
++    Oval_stuff "<not evaluated>"
++
++(*
++ #install_printer Toploop.print_hashtbl;;
++ #install_printer Toploop.print_queue;;
++ #install_printer Toploop.print_stack;;
++ #install_printer Toploop.print_lazy;;
++
++ let of_list list =
++  let t = Hashtbl.create 13 in
++  List.iter (fun (k,v) -> Hashtbl.add t k v) list;
++ t;;
++
++of_list [1,1; 2,2 ];;
++of_list [ "a", [1]; "b", [1;2] ];;
++of_list [ (1,1) , [1] ];;
++
++let x = lazy (4 * 4);;
++x;;
++Lazy.force x;;
++x;;
++
++*)
++
++let set_wrap x = Clflags.wrap_constants := x
++
+diff -ruN ocaml-3.12.1/toplevel/toploop.mli ocaml-3.12.1-tryocaml/toplevel/toploop.mli
+--- ocaml-3.12.1/toplevel/toploop.mli	2007-12-04 14:38:58.000000000 +0100
++++ ocaml-3.12.1-tryocaml/toplevel/toploop.mli	2012-05-04 16:54:55.803898411 +0200
+@@ -72,6 +72,10 @@
+   Path.t -> Types.type_expr -> (formatter -> Obj.t -> unit) -> unit
+ val remove_printer : Path.t -> unit
+ 
++val outval_of_value : Env.t -> Obj.t -> Types.type_expr -> Outcometree.out_value
++val install_printer2 : Path.t -> Types.type_expr -> (Env.t -> Types.type_expr -> Obj.t -> Outcometree.out_value) -> unit
++val remove_printer2 : Path.t -> unit
++
+ val max_printer_depth: int ref
+ val max_printer_steps: int ref
+ 
+@@ -110,3 +114,20 @@
+ (* Used by Trace module *)
+ 
+ val may_trace : bool ref
++
++val print_hashtbl : Env.t -> Types.type_expr -> ('a, 'b) Hashtbl.t -> Outcometree.out_value
++val print_stack : Env.t -> Types.type_expr -> 'a Stack.t -> Outcometree.out_value
++val print_queue : Env.t -> Types.type_expr -> 'a Queue.t -> Outcometree.out_value
++val print_lazy : Env.t -> Types.type_expr -> 'a Lazy.t -> Outcometree.out_value
++ 
++val set_wrap : bool -> unit
++
++val print_exn : Env.t -> Types.type_expr -> exn -> Outcometree.out_value
++val set_exn_printer : (Env.t -> Types.type_expr -> exn -> Outcometree.out_value) -> unit
++
++val print_hashtbl : Env.t -> Types.type_expr -> ('a, 'b) Hashtbl.t -> Outcometree.out_value
++val print_stack : Env.t -> Types.type_expr -> 'a Stack.t -> Outcometree.out_value
++val print_queue : Env.t -> Types.type_expr -> 'a Queue.t -> Outcometree.out_value
++val print_lazy : Env.t -> Types.type_expr -> 'a Lazy.t -> Outcometree.out_value
++
++val set_wrap : bool -> unit
+diff -ruN ocaml-3.12.1/utils/clflags.ml ocaml-3.12.1-tryocaml/utils/clflags.ml
+--- ocaml-3.12.1/utils/clflags.ml	2009-12-09 10:17:12.000000000 +0100
++++ ocaml-3.12.1-tryocaml/utils/clflags.ml	2012-02-16 11:16:34.423347882 +0100
+@@ -92,3 +92,5 @@
+ 
+ let shared = ref false (* -shared *)
+ let dlcode = ref true (* not -nodynlink *)
++
++let wrap_constants = ref false
+diff -ruN ocaml-3.12.1/utils/clflags.mli ocaml-3.12.1-tryocaml/utils/clflags.mli
+--- ocaml-3.12.1/utils/clflags.mli	2009-12-09 10:17:12.000000000 +0100
++++ ocaml-3.12.1-tryocaml/utils/clflags.mli	2012-05-04 17:14:53.661838260 +0200
+@@ -76,3 +76,4 @@
+ val std_include_dir : unit -> string list
+ val shared : bool ref
+ val dlcode : bool ref
++val wrap_constants : bool ref

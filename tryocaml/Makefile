@@ -4,13 +4,19 @@ TOPLEVELLIB=toplevellib/
 
 COMPILER=js_of_ocaml
 LIBNAME=js_of_ocaml
+CMICOMP=./cmicomp
 
-TOPLEVEL_CMIS=toplevel.cmi
+# LIB_CMOS= lib/utils.cmi lib/button.cmi lib/cookie.cmi lib/dragnDrop.cmi
+# LIB_CMOS= lib/utils.cmo lib/button.cmo lib/cookie.cmo lib/dragnDrop.cmo
+OCPJS=ocp-jslib
+OCPJSLIB=$(OCPJS)/ocp-jslib.cma
+TOPLEVEL_CMIS= toplevel.cmi
 TOPLEVEL_CMOS= toplevel.cmo topmain.cmo
-TOPLEVEL_CMAS= $(JS)/lib/$(LIBNAME).cma $(JS)/compiler/compiler.cma  $(TOPLEVELLIB)toplevellib.cma ocaml-num/ocaml-num.cma tutorial/tutorial.cma
+TOPLEVEL_CMAS= $(JS)/lib/$(LIBNAME).cma $(JS)/compiler/compiler.cma  $(TOPLEVELLIB)toplevellib.cma ocaml-num/ocaml-num.cma tutorial/tutorial.cma $(OCPJSLIB)
 
 JS=js_of_ocaml
-INCLUDES= -I $(JS)/lib -I $(JS)/compiler -I tutorial $(INCLUDE_TOPLEVELLIB) -I ocaml-num -I .
+JS_CMIS=$(JS)/lib/*.cmi
+INCLUDES= -I $(JS)/lib -I $(JS)/compiler -I tutorial $(INCLUDE_TOPLEVELLIB) -I ocaml-num -I $(OCPJS) -I .
 
 # To add a new toplevel, add a new name below, add it to TOPLEVELS, copy
 # the lines defining TRYOCAML_WITH_JS* at the end, and replace with
@@ -20,7 +26,13 @@ TRYOCAML_NAME=toplevel
 TRYOCAML_WITH_JS_NAME=toplevel-with-js
 TOPLEVELS= $(TRYOCAML_NAME).js $(TRYOCAML_WITH_JS_NAME).js
 
-all: num compiler tuto $(TOPLEVELS)
+all: num ocp-jslib compiler tuto $(TOPLEVELS)
+
+opt: num ocp-jslib compiler tuto compression $(TOPLEVELS)
+
+compression:
+	$(CMICOMP) -without-log $(JS_CMIS)
+
 tryocaml: toplevel.js
 
 compiler:
@@ -97,10 +109,14 @@ tuto:
 num:
 	$(MAKE) -C ocaml-num all
 
+ocp-jslib/ocp-jslib.cma:
+	$(MAKE) -C $(OCPJS) all
+
 clean::
-	rm -f *.cm[io] $(TOPLEVELS:.js=.byte) *.annot *~
+	rm -f *.cm[i]o $(TOPLEVELS:.js=.byte) *.annot *~
 	$(MAKE) -C tutorial clean
 	$(MAKE) -C $(JS) clean
+	$(MAKE) -C $(OCPJS) clean
 
 depend:
 	ocamldep -pp "camlp4o $(JS)/lib/syntax/pa_js.cmo" $(INCLUDES) *.ml *.mli > .depend
@@ -119,8 +135,8 @@ TRYOCAML_EXTRA_MODULES=
 $(TRYOCAML_NAME).js: $(TRYOCAML_NAME).byte $(JSFILES)
 	$(COMP) $(INCLUDES) -toplevel -noinline -noruntime $(JSFILES) $(TRYOCAML_NAME).byte $(OPTIONS)
 
-$(TRYOCAML_NAME).byte: $(TOPLEVEL_CMIS) $(TOPLEVEL_CMOS) $(TOPLEVEL_CMAS) $(TRYOCAML_EXTRA_CMAS) $(TRYOCAML_EXTRA_CMIS)
-	$(OCAMLC) $(INCLUDES) -linkall -package str -linkpkg -o $@.tmp $(TOPLEVEL_CMAS) $(TRYOCAML_EXTRA_CMAS) $(TOPLEVEL_CMOS)
+$(TRYOCAML_NAME).byte: $(TOPLEVEL_CMIS) $(TOPLEVEL_CMOS) $(OCPJSLIB) $(TOPLEVEL_CMAS) $(TRYOCAML_EXTRA_CMAS) $(TRYOCAML_EXTRA_CMIS)
+	$(OCAMLC) $(INCLUDES) -linkall -package str -linkpkg -o $@.tmp $(TOPLEVEL_CMAS) $(TRYOCAML_EXTRA_CMAS) $(OCPJSLIB)  $(TOPLEVEL_CMOS) 
 	$(EXPUNGE) $@.tmp $@ $(TOPLEVEL_MODULES) $(TRYOCAML_EXTRA_MODULES)
 	rm -f $@.tmp
 
@@ -150,8 +166,8 @@ TRYOCAML_WITH_JS_EXTRA_MODULES= \
 $(TRYOCAML_WITH_JS_NAME).js: $(TRYOCAML_WITH_JS_NAME).byte $(JSFILES)
 	$(COMP) $(INCLUDES) -toplevel -noinline -noruntime $(JSFILES) $(TRYOCAML_WITH_JS_NAME).byte $(OPTIONS)
 
-$(TRYOCAML_WITH_JS_NAME).byte: $(TOPLEVEL_CMIS) $(TOPLEVEL_CMOS) $(TOPLEVEL_CMAS) $(TRYOCAML_WITH_JS_EXTRA_CMAS) $(TRYOCAML_WITH_JS_EXTRA_CMIS)
-	$(OCAMLC) $(INCLUDES) -linkall -package str -linkpkg -o $@.tmp $(TOPLEVEL_CMAS) $(TRYOCAML_WITH_JS_EXTRA_CMAS) $(TOPLEVEL_CMOS)
+$(TRYOCAML_WITH_JS_NAME).byte: $(TOPLEVEL_CMIS) $(TOPLEVEL_CMOS) $(OCPJSLIB) $(TOPLEVEL_CMAS) $(TRYOCAML_WITH_JS_EXTRA_CMAS) $(TRYOCAML_WITH_JS_EXTRA_CMIS)
+	$(OCAMLC) $(INCLUDES) -linkall -package str -linkpkg -o $@.tmp $(TOPLEVEL_CMAS) $(TRYOCAML_WITH_JS_EXTRA_CMAS) $(OCPJSLIB) $(TOPLEVEL_CMOS)
 	$(EXPUNGE) $@.tmp $@ $(TOPLEVEL_MODULES) $(TRYOCAML_WITH_JS_EXTRA_MODULES)
 	rm -f $@.tmp
 
