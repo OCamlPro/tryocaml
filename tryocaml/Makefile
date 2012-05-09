@@ -26,9 +26,9 @@ TRYOCAML_NAME=toplevel
 TRYOCAML_WITH_JS_NAME=toplevel-with-js
 TOPLEVELS= $(TRYOCAML_NAME).js $(TRYOCAML_WITH_JS_NAME).js
 
-all: num ocp-jslib compiler tuto $(TOPLEVELS)
+all: num ocp-jslib compiler tuto $(TOPLEVELS) examples
 
-opt: num ocp-jslib compiler tuto compression $(TOPLEVELS)
+opt: num ocp-jslib compiler tuto compression $(TOPLEVELS) examples
 
 compression:
 	$(CMICOMP) -without-log $(JS_CMIS)
@@ -112,11 +112,15 @@ num:
 ocp-jslib/ocp-jslib.cma:
 	$(MAKE) -C $(OCPJS) all
 
+examples:
+	$(MAKE) -C examples all
+
 clean::
 	rm -f *.cm[i]o $(TOPLEVELS:.js=.byte) *.annot *~
 	$(MAKE) -C tutorial clean
 	$(MAKE) -C $(JS) clean
 	$(MAKE) -C $(OCPJS) clean
+	$(MAKE) -C examples clean
 
 depend:
 	ocamldep -pp "camlp4o $(JS)/lib/syntax/pa_js.cmo" $(INCLUDES) *.ml *.mli > .depend
