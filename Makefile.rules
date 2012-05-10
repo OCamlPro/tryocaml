@@ -1,6 +1,6 @@
 
 depend: $(SOURCES)
-	$(OCAMLDEP)  $(PP) $(SOURCES) *.ml *.mli > .depend
+	$(OCAMLDEP) $(INCLUDES) $(PP) $(SOURCES) *.ml *.mli > .depend
 
 clean:
 	rm -f *.cm[aiox] *.o *.annot *~ $(TARGETS)

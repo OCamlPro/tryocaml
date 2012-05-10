@@ -1,6 +1,8 @@
 all:
 	$(MAKE) -C js_of_ocaml
 	$(MAKE) -C js_of_ocaml/compiler compiler.cma
+	$(MAKE) -C cmicomp
+	$(MAKE) -C ocp-jslib
 	$(MAKE) -C toplevel
 	$(MAKE) -C ocaml-num
 	$(MAKE) -C tutorial

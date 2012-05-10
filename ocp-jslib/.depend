@@ -1,0 +1,12 @@
+button.cmo: utils.cmi button.cmi
+button.cmx: utils.cmx button.cmi
+cookie.cmo: cookie.cmi
+cookie.cmx: cookie.cmi
+dragnDrop.cmo: utils.cmi dragnDrop.cmi
+dragnDrop.cmx: utils.cmx dragnDrop.cmi
+utils.cmo: utils.cmi
+utils.cmx: utils.cmi
+button.cmi:
+cookie.cmi:
+dragnDrop.cmi:
+utils.cmi:

@@ -2,6 +2,8 @@ byte: toplevel.cma
 
 ROOT=..
 include ../Makefile.config
+include ../Makefile.jsconfig
+
 # remove this variable to use the default ocaml toplevel
 INCLUDE_TOPLEVELLIB= -I $(TOPLEVELLIB_DIR)/
 TOPLEVELLIB=$(TOPLEVELLIB_DIR)/
@@ -13,13 +15,13 @@ toplevel.cma: $(TOPLEVEL_CMOS) $(TOPLEVEL_CMIS)
 	$(OCAMLC) -a -o toplevel.cma $(TOPLEVEL_CMOS)
 
 INCLUDES= \
-   -I $(JS_DIR)/lib -I $(JS_DIR)/compiler \
+   -I $(CMICOMP_DIR) \
+   -I $(JS_DIR)/compiler \
    -I $(TUTORIAL_DIR)/ \
    $(INCLUDE_TOPLEVELLIB) \
    -I $(OCAMLNUM_DIR) \
+   -I $(OCPJSLIB_DIR) \
    -I $(TOPLEVEL_DIR) \
    -I .
-
-PP=-pp "camlp4o $(JS_DIR)/lib/syntax/pa_js.cmo"
 
 include ../Makefile.rules

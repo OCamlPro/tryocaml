@@ -1,0 +1,10 @@
+cookies.cmo: ../ocp-jslib/utils.cmi ../js_of_ocaml/lib/js.cmi
+cookies.cmx: ../ocp-jslib/utils.cmx ../js_of_ocaml/lib/js.cmx
+moving_box.cmo: ../js_of_ocaml/lib/js.cmi ../js_of_ocaml/lib/dom_html.cmi \
+    ../js_of_ocaml/lib/dom.cmi
+moving_box.cmx: ../js_of_ocaml/lib/js.cmx ../js_of_ocaml/lib/dom_html.cmx \
+    ../js_of_ocaml/lib/dom.cmx
+moving_box2.cmo: ../js_of_ocaml/lib/js.cmi ../js_of_ocaml/lib/dom_html.cmi \
+    ../js_of_ocaml/lib/dom.cmi
+moving_box2.cmx: ../js_of_ocaml/lib/js.cmx ../js_of_ocaml/lib/dom_html.cmx \
+    ../js_of_ocaml/lib/dom.cmx

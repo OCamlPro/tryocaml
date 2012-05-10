@@ -1,5 +1,7 @@
 all: byte $(TRYOCAML_NAME).js
 
+include $(ROOT)/Makefile.jsconfig
+
 SOURCES= lessons.ml lessons.mli
 TARGETS=$(TRYOCAML_NAME).byte $(TRYOCAML_NAME).js
 
@@ -23,9 +25,6 @@ TOPLEVELLIB=$(TOPLEVELLIB_DIR)/
 COMP=$(JS_DIR)/compiler/js_of_ocaml
 JSFILES=$(JS_DIR)/runtime/runtime.js $(JS_DIR)/runtime/weak.js $(TOPLEVEL_DIR)/toplevel_runtime.js
 #OCAMLC=ocamlfind ocamlc -annot -pp "camlp4o $(JS_DIR)/lib/syntax/pa_js.cmo"
-PP= -pp "camlp4o $(JS_DIR)/lib/syntax/pa_js.cmo"
-OCAMLFIND=ocamlfind
-OCAMLFIND_OPTIONS= -package lwt,str
 EXPUNGE=$(shell ocamlc -where)/expunge
 # Removed gc and sys
 STDLIB_MODULES=\
@@ -77,14 +76,16 @@ TOPLEVEL_MODULES=$(STDLIB_MODULES) n regexp tutorial outcometree topdirs toploop
 TOPLEVEL_CMIS=$(TOPLEVEL_DIR)/toplevel.cmi
 TOPLEVEL_CMOS=$(TOPLEVEL_DIR)/toplevel.cmo $(TOPLEVEL_DIR)/topmain.cmo
 TOPLEVEL_CMAS= \
-  $(JS_DIR)/lib/js_of_ocaml.cma $(JS_DIR)/compiler/compiler.cma \
+  $(CMICOMP_DIR)/js_of_ocaml.cma $(JS_DIR)/compiler/compiler.cma \
   $(TOPLEVELLIB)toplevellib.cma \
   $(OCAMLNUM_DIR)/ocaml-num.cma \
   lessons.cmo \
-  $(TUTORIAL_DIR)/tutorial.cma
+  $(TUTORIAL_DIR)/tutorial.cma \
+  $(OCPJSLIB_DIR)/ocp-jslib.cma
 
 INCLUDES= \
-   -I $(JS_DIR)/lib -I $(JS_DIR)/compiler \
+   -I $(CMICOMP_DIR) \
+   -I $(JS_DIR)/compiler \
    -I $(TUTORIAL_DIR)/ \
    $(INCLUDE_TOPLEVELLIB) \
    -I $(OCAMLNUM_DIR) \
@@ -104,3 +105,4 @@ $(TRYOCAML_NAME).byte: $(TOPLEVEL_CMIS) $(TOPLEVEL_CMOS) $(TOPLEVEL_CMAS) \
 	rm -f $@.tmp
 
 byte: lessons.cmo try-ocaml.byte
+

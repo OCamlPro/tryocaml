@@ -1,9 +1,14 @@
 lessons.cmi:
-lessons.cmo: lessons.cmi
-lessons.cmx: lessons.cmi
 n.cmo: n.cmi
 n.cmx: n.cmi
+tutorial.cmo: n.cmi lessons.cmi tutorial.cmi
+tutorial.cmx: n.cmx lessons.cmi tutorial.cmi
+make_lessons.cmo:
+make_lessons.cmx:
+n.cmo: n.cmi
+n.cmx: n.cmi
+tutorial.cmo: n.cmi lessons.cmi tutorial.cmi
+tutorial.cmx: n.cmx lessons.cmi tutorial.cmi
+lessons.cmi:
 n.cmi:
 tutorial.cmi:
-tutorial.cmo: n.cmi lessons.cmi tutorial.cmi
-tutorial.cmx: n.cmx lessons.cmx tutorial.cmi
