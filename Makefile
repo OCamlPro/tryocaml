@@ -1,5 +1,6 @@
 all:
 	$(MAKE) -C tryocaml
+	$(MAKE) -C ocaml-num
 	$(MAKE) -C tutorial
 	$(MAKE) -C ocaml-lessons
 	$(MAKE) -C ml2js-lessons
