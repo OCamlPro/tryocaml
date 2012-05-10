@@ -1,0 +1,3 @@
+PP=-pp "camlp4o $(JS_DIR)/lib/syntax/pa_js.cmo"
+OCAMLFIND=ocamlfind
+OCAMLFIND_OPTIONS= -package lwt,str
