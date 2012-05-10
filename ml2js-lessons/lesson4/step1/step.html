@@ -1,0 +1,27 @@
+<h3>Pattern-matching on integers</h3>
+
+<p>A powerful feature of OCaml is pattern-matching.
+
+  For simple values as integers, pattern-matching is quite similar to
+  case switches in other languages (<em>_</em> corresponds to the
+  default case). Moreover, each case is handled in chronological order:
+
+<pre><code>let string_of_int x = match x with
+   | 0 -> "zero"
+   | 1 -> "one"
+   | 2 -> "two"
+   | _ -> "many"
+</code></pre>
+
+In this case, the pattern matching is done on the last function
+argument, so this function can be rewritten in a shorter form:
+
+<pre><code>let string_of_int = function
+    | 0 -> "zero"
+    | 1 -> "one"
+    | 2 -> "two"
+    | _ -> "many"
+</code></pre>
+
+</p>
+

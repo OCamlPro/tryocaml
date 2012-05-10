@@ -1,0 +1,44 @@
+
+LESSON 1: (cagdas)
+1       Simple Expressions : int, char, string
+> 1+2
+> "Mary"
+> 'a'
+2       List and arrays
+> [ 1; 2; 3 ]
+> [
+3       Functions on these things (length, uppercase) String.length, Array.length, List.length ...
+4       Operations on string
+5       Tuples
+
+LESSON 2
+1      Variables
+2      Bindings
+3      for-loops
+4      Computing Conditions
+5      ifthenelse and while-loop
+
+LESSON 3    Creating functions (Cagdas)
+1      Defining a one-argument function
+2      Defining a multi-argument function
+3      Returning multiple values
+4      Partial application (Functions types)
+5      Anonymous functions
+6      Iterators (List.iter)
+
+LESSON 4    Pattern-matching
+1      Pattern-matching on ints
+2      Pattern-matching on chars 'a'..'z'
+3      Pattern-matching on tuples
+4      Pattern-matching on lists
+5      Pattern-matching on arrays
+6      Exhaustiveness
+
+LESSON 5 : Variant types
+1      Variant types
+2      Pattern-matching
+
+LESSON 6: Records
+1      Records (non mutable)
+2      More about records (mutable)
+3      Pattern-matching on records

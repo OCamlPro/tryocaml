@@ -1,0 +1,11 @@
+<h3>Local opens</h3>
+
+<p>Since OCaml 3.12, you can locally open a module within an
+expression, using the <code>let open</code> syntax. It can be very
+useful when accessing multiple values of a modules, without exposing
+them elsewhere:</p>
+
+<code>let open List in
+map fst (map (fun x -&gt; (x,1)) [1;2;3;4])</code>
+
+

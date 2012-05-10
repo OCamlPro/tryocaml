@@ -1,0 +1,17 @@
+<h3>Returning multiple values</h3>
+
+<p>You will notice that in OCaml, there is no <code>return</code>
+statement; to return a value, the whole body expression is implicitly returned.</p>
+
+<br />
+<p>To return multiple values, we will use tuples. For example:</p>
+<p><code>(2, 3, 4, 5)</code></p>
+
+<br />
+<p>We can write functions which will return multiple values thanks to
+tuples. For example:</p>
+<p><code>let divide x y = (x / y, x mod y)</code></p>
+
+<br />
+<p>Then we get:</p>
+<p><code>divide 10 3</code></p>

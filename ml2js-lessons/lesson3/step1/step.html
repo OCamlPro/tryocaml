@@ -1,0 +1,18 @@
+<h3>Defining a one-argument function</h3>
+
+<p>In OCaml defining a function with one argument, will look like this:</p>
+<p><code>let incr n = n + 1</code></p>
+
+
+<br />
+<p>You can also use tuples:<p>
+<p><code>let plus_and_divide (x, y, z) = (x + y) / z</code></p>
+<p>Note that even you have <code>x</code>, <code>y</code> and <code>z</code> as
+arguments, this syntax with tuples means that you call the function
+plus_and_divide with <strong>one</strong> argument which is a triple in
+this case.<p>
+
+<br />
+<p>To call a function, nothing is simpler:</p>
+<p><code>incr 42</code></p>
+<p><code>plus_and_divide (10, 20, 2)</code></p>

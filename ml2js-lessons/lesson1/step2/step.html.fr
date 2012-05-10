@@ -1,0 +1,9 @@
+<h3>Listes et tableaux</h3>
+
+<p>Les listes et tableaux sont des structures de données
+  prédéfinies. Par exemple on peut avoir une liste d'entier:</p>
+<p><code>[ 42; 1; 55 ]</code></p>
+
+<br />
+<p>Un tableau de chaîne de caractères:<p>
+<p><code>[|"John"; "Doe"|]</code></p>
