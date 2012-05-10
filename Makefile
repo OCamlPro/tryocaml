@@ -3,15 +3,14 @@ all:
 	$(MAKE) -C js_of_ocaml/compiler compiler.cma
 	$(MAKE) -C cmicomp
 	$(MAKE) -C ocp-jslib
-	$(MAKE) -C toplevel
 	$(MAKE) -C ocaml-num
+	$(MAKE) -C toplevel
 	$(MAKE) -C tutorial
 	$(MAKE) -C try-ocaml
 	$(MAKE) -C try-js_of_ocaml
 
 clean:
 	$(MAKE) -C js_of_ocaml clean
-	$(MAKE) -C cmicomp clean
 	$(MAKE) -C ocp-jslib clean
 	$(MAKE) -C toplevel clean
 	$(MAKE) -C ocaml-num clean
