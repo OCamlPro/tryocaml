@@ -1,0 +1,14 @@
+
+depend: $(SOURCES)
+	$(OCAMLDEP)  $(PP) $(SOURCES) *.ml *.mli > .depend
+
+clean:
+	rm -f *.cm[aiox] *.o *.annot *~ $(TARGETS)
+
+-include .depend
+
+.SUFFIXES: .ml .mli .cmo .cmi .cmx
+%.cmo: %.ml
+	$(OCAMLFIND) $(OCAMLC) $(OCAMLFIND_OPTIONS) $(COMPFLAGS) $(PP) $(INCLUDES) -c $<
+%.cmi: %.mli
+	$(OCAMLFIND) $(OCAMLC) $(OCAMLFIND_OPTIONS) $(COMPFLAGS) $(PP) $(INCLUDES) -c $<

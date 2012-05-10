@@ -57,7 +57,7 @@ let get_title html =
     raise e
 
 let _ =
-  let lessons_dir = "../../lessons" in
+  let lessons_dir = Sys.argv.(1) in
   let goodies = string_of_file (Filename.concat lessons_dir "goodies.ml") in
   let lesson_dirs = list_directory lessons_dir in
   let langs = ref [] in

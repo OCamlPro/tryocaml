@@ -1,0 +1,106 @@
+all: byte $(TRYOCAML_NAME).js
+
+SOURCES= lessons.ml lessons.mli
+TARGETS=$(TRYOCAML_NAME).byte $(TRYOCAML_NAME).js
+
+include $(ROOT)/Makefile.config
+
+all: lessons.ml byte
+
+lessons.mli: $(TUTORIAL_DIR)/lessons.mli
+	cp -f  $(TUTORIAL_DIR)/lessons.mli lessons.mli
+lessons.ml: lessons.cmi $(LESSON_SET)/goodies.ml
+	$(TUTORIAL_DIR)/make_lessons $(LESSON_SET) > lessons.ml
+
+CMOS= $(SOURCES:.ml=.cmo)
+
+############### TRYOCAML_NAME=toplevel
+# remove this variable to use the default ocaml toplevel
+INCLUDE_TOPLEVELLIB= -I $(TOPLEVELLIB_DIR)/
+TOPLEVELLIB=$(TOPLEVELLIB_DIR)/
+
+
+COMP=$(JS_DIR)/compiler/js_of_ocaml
+JSFILES=$(JS_DIR)/runtime/runtime.js $(JS_DIR)/runtime/weak.js $(TOPLEVEL_DIR)/toplevel_runtime.js
+#OCAMLC=ocamlfind ocamlc -annot -pp "camlp4o $(JS_DIR)/lib/syntax/pa_js.cmo"
+PP= -pp "camlp4o $(JS_DIR)/lib/syntax/pa_js.cmo"
+OCAMLFIND=ocamlfind
+OCAMLFIND_OPTIONS= -package lwt,str
+EXPUNGE=$(shell ocamlc -where)/expunge
+# Removed gc and sys
+STDLIB_MODULES=\
+  arg \
+  array \
+  arrayLabels \
+  buffer \
+  callback \
+  camlinternalLazy \
+  camlinternalMod \
+  camlinternalOO \
+  char \
+  complex \
+  digest \
+  filename \
+  format \
+  genlex \
+  hashtbl \
+  int32 \
+  int64 \
+  lazy \
+  lexing \
+  list \
+  listLabels \
+  map \
+  marshal \
+  moreLabels \
+  nativeint \
+  obj \
+  oo \
+  parsing \
+  pervasives \
+  printexc \
+  printf \
+  queue \
+  random \
+  scanf \
+  set \
+  sort \
+  stack \
+  stdLabels \
+  stream \
+  string \
+  stringLabels \
+  weak
+
+TOPLEVEL_MODULES=$(STDLIB_MODULES) n regexp tutorial outcometree topdirs toploop toplevel clflags n big_int num topnum
+
+TOPLEVEL_CMIS=$(TOPLEVEL_DIR)/toplevel.cmi
+TOPLEVEL_CMOS=$(TOPLEVEL_DIR)/toplevel.cmo $(TOPLEVEL_DIR)/topmain.cmo
+TOPLEVEL_CMAS= \
+  $(JS_DIR)/lib/js_of_ocaml.cma $(JS_DIR)/compiler/compiler.cma \
+  $(TOPLEVELLIB)toplevellib.cma \
+  $(OCAMLNUM_DIR)/ocaml-num.cma \
+  lessons.cmo \
+  $(TUTORIAL_DIR)/tutorial.cma
+
+INCLUDES= \
+   -I $(JS_DIR)/lib -I $(JS_DIR)/compiler \
+   -I $(TUTORIAL_DIR)/ \
+   $(INCLUDE_TOPLEVELLIB) \
+   -I $(OCAMLNUM_DIR) \
+   -I $(TOPLEVEL_DIR) \
+   $(TRYOCAML_EXTRA_INCLUDES) \
+   -I .
+
+$(TRYOCAML_NAME).js: $(TRYOCAML_NAME).byte $(JSFILES)
+	$(COMP) $(INCLUDES) -toplevel -noinline -noruntime $(JSFILES) $(TRYOCAML_NAME).byte $(OPTIONS)
+
+$(TRYOCAML_NAME).byte: $(TOPLEVEL_CMIS) $(TOPLEVEL_CMOS) $(TOPLEVEL_CMAS) \
+                       $(TRYOCAML_EXTRA_CMAS) $(TRYOCAML_EXTRA_CMIS)
+	$(OCAMLFIND) $(OCAMLC) $(INCLUDES) -linkall $(OCAMLFIND_OPTIONS) -package str -linkpkg \
+                  -o $@.tmp $(TOPLEVEL_CMAS) \
+                  $(TRYOCAML_EXTRA_CMAS) $(TRYOCAML_EXTRA_CMOS) $(TOPLEVEL_CMOS)
+	$(EXPUNGE) $@.tmp $@ $(TOPLEVEL_MODULES) $(TRYOCAML_EXTRA_MODULES)
+	rm -f $@.tmp
+
+byte: lessons.cmo try-ocaml.byte

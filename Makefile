@@ -1,9 +1,11 @@
 all:
-	$(MAKE) -C tryocaml
+	$(MAKE) -C js_of_ocaml
+	$(MAKE) -C js_of_ocaml/compiler compiler.cma
+	$(MAKE) -C toplevel
 	$(MAKE) -C ocaml-num
 	$(MAKE) -C tutorial
-	$(MAKE) -C ocaml-lessons
-	$(MAKE) -C ml2js-lessons
+	$(MAKE) -C try-ocaml
+	$(MAKE) -C try-js_of_ocaml
 
 clean:
 	$(MAKE) -C tryocaml clean
