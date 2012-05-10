@@ -358,7 +358,6 @@ class type date = object
   method setMilliseconds : int -> float t meth
   method setUTCMilliseconds : int -> float t meth
   method toUTCString : js_string t meth
-  method toGMTString : js_string t meth
   method toISOString : js_string t meth
   method toJSON : 'a -> js_string t meth
 end

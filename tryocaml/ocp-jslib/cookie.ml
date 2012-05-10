@@ -14,11 +14,11 @@ let set_cookie key value =
       (today##getFullYear () + 1, today##getMonth (), today##getDay (), 
        today##getHours (), today##getMinutes (), today##getSeconds (), 
        today##getMilliseconds ()) in
-  let expire_time = Js.to_string expire_date##toGMTString () in
+  let expire_time = Js.to_string expire_date##toUTCString () in
   Dom_html.document##cookie <- 
     Js.string (Printf.sprintf "%s=%s;expires=%s" key value expire_time)
 
 let set_cookie_with_timeout key value date =
-  let expire_time = Js.to_string date##toGMTString () in
+  let expire_time = Js.to_string date##toUTCString () in
   Dom_html.document##cookie <- 
     Js.string (Printf.sprintf "%s=%s;expires=%s" key value expire_time)
