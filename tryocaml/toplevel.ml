@@ -563,7 +563,11 @@ let run () =
     update_lesson_number ();
     update_lesson_step_number ();
     update_lesson_text ();
-    make_code_clickable () in
+    make_code_clickable ();
+    Cookie.set_cookie "lang" (Tutorial.lang ());
+    Cookie.set_cookie "lesson" (string_of_int !Tutorial.this_lesson);
+    Cookie.set_cookie "step" (string_of_int !Tutorial.this_step)
+  in
   
   (* Choose your language *)
   let form = Html.createDiv doc in
