@@ -4,6 +4,7 @@ LESSON_SET=$(ROOT)/js_of_ocaml-lessons
 
 TRYOCAML_EXTRA_CMIS=
 TRYOCAML_EXTRA_CMAS=
+TRYOCAML_EXTRA_INCLUDES=-I $(OCPJSLIB_DIR)
 TRYOCAML_EXTRA_MODULES= \
   css \
   dom \
@@ -20,6 +21,11 @@ TRYOCAML_EXTRA_MODULES= \
   regexp \
   url \
   xmlHttpRequest \
+  \
+  utils \
+  button \
+  cookie \
+  dragnDrop
 
 include $(ROOT)/Makefile.config
 include $(ROOT)/Makefile.tryocaml

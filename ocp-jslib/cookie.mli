@@ -10,7 +10,5 @@ val set_cookie_with_timeout : string -> string -> Js.date Js.t -> unit
 
 
 
-
-
-
+val initial_cookies : (string * string) list
 

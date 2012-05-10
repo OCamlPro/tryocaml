@@ -1,0 +1,155 @@
+body {
+  font-family: "DejaVu Sans",sans-serif;
+  background-color: #EEE;
+}
+
+#toplevel {
+    margin-left: 5px;
+    width: 300px;
+    height: 50px;
+    float: left;
+}
+
+#sharp {
+    text-width: 10px;
+    margin-left: 8px;
+    float: left;
+    color: #CCC;
+}
+
+#toplevel textarea {
+    border: 0;
+    background: transparent;
+    padding-top: 0;
+    padding-bottom: 0;
+    resize: none;
+    outline: none;
+    font-size: 12px;
+    color: white;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+    font-family: Monaco, Andale Mono, Courier New, monospace;
+}
+
+#toplevel-container {
+   padding: 10px;
+   height: 500px;
+   width: 600px;
+   overflow: auto;
+   overflow-x: hidden;
+   color: #CCC;
+   background-color: black;
+   -moz-border-radius: 20px;
+   -webkit-border-radius: 20px;
+   -khtml-border-radius: 20px;
+   border-radius: 20px;
+}
+
+.content {
+  padding-top: 50px;
+  padding-bottom: 50px;
+  min-height: 600px;
+  background-color: white;
+}
+
+.footer {
+   border-top: 1px #CCC solid;
+   padding-top: 10px;
+   padding-bottom: 10px;
+}
+
+pre {
+    background: transparent;
+    color: #CCC;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+table td {
+    font-size: 12px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+table {
+   margin-top: 20px;
+   margin-bottom: 20px;
+}
+
+.copyright, .ressources {
+    width: auto;
+    text-align: center;
+}
+
+.copyright {
+    padding-top: 30px;
+    font-size: 10px;
+}
+
+.copyright a {
+    color: black;
+}
+
+#lesson-step-spacer {
+   margin-left: 20px;
+}
+
+.menu-lessons {
+    overflow: hidden;
+    width: 100%;
+    height: 500px;
+}
+
+dl dt {
+   font-weight: normal;
+}
+
+#lesson-position {
+    text-align: center;
+}
+
+#lesson-text h3 {
+   font-size: 14px;
+   color: #404040;
+}
+
+#lesson-text pre {
+    font-family: Monaco, Andale Mono, Courier New, monospace;
+    font-size: 12px;
+    border: 0;
+    color: rgba(0, 0, 0, 0.75);
+    background-color: #FEE9CC;
+    padding: 5px;
+    margin-bottom: 10px;
+    margin-top: 10px;
+}
+
+.lesson {
+    font-weight: bold;
+    color: #404040;
+    font-size: 16px;
+    line-height: 36px;
+}
+
+.step {
+    font-weight: bold;
+    color: #808080;
+    font-size: 12px;
+}
+
+#buttons button {
+    margin-top: 10px;
+    margin-right: 10px;
+    padding: 7px;
+ }
+
+#buttons {
+    text-align: center;
+}
+
+#dragndrop { 
+    position: absolute;
+    top: 2%;
+    float: left
+ }

@@ -104,5 +104,5 @@ $(TRYOCAML_NAME).byte: $(TOPLEVEL_CMIS) $(TOPLEVEL_CMOS) $(TOPLEVEL_CMAS) \
 	$(EXPUNGE) $@.tmp $@ $(TOPLEVEL_MODULES) $(TRYOCAML_EXTRA_MODULES)
 	rm -f $@.tmp
 
-byte: lessons.cmo try-ocaml.byte
+byte: lessons.cmo $(TRYOCAML_NAME).byte
 

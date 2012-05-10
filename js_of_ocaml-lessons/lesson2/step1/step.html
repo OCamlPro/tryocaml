@@ -1,17 +1,21 @@
-<h3>Variables</h3>
+<h3>Play with Cookies</h3>
 
-<p>As in other languages, you can associate a name to a value. To do
-that, we use the <code>let</code> syntax which associates the result
-of some computation with a name:</p>
+<pre><code>
+open Utils
 
-<p><code>let x = 6 * 7</code></p>
+let _ =
+  let title = get_element_by_id "main-title" in
+  let v = try
+            int_of_string (List.assoc "counter" (Cookie.get_cookie () ))
+    with Not_found -> 0 in
 
-<br />
-
-<p>We can now check the value associated with <code>x</code> in the
-toplevel:</p>
-<p><code>x</code></p>
-
-<br />
-<p>And we can use the name where we would like the value:</p>
-<p><code>let y = x + 1</code></p>
+  let v = v + 1 in
+  Cookie.set_cookie "counter" (string_of_int v);
+  title##innerHTML <- _s (
+    Printf.sprintf "This is your %s time in TryOCaml"
+      (match v with
+          1 -> "first"
+        | 2 -> "second"
+        | 3 -> "third"
+        | _ -> string_of_int v ^ "th"))
+</code></pre>

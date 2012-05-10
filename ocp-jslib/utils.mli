@@ -21,19 +21,22 @@ val get_by_name : string -> string
 
 (** {2 Constructors}  *)
 
-(** [jsnew0] is a syntax extension to build an object using contructor [constr] 
+(** [jsnew0] is a function to build an object using contructor [constr]
     without arguments. *)
 val jsnew0 : 'a Js.t Js.constr -> unit -> 'a Js.t
 
-(** [jsnew1] is a syntax extension to build an object using contructor [constr] 
+(** [jsnew1] is a function to build an object using contructor [constr]
     and argument [a].*)
 val jsnew1 : ('a -> 'b Js.t) Js.constr -> 'a -> 'b Js.t
 
-(** [jsnew2] is a syntax extension to build an object using contructor [constr] 
+(** [jsnew2] is a function to build an object using contructor [constr]
     and arguments [a] and [b].*)
 val jsnew2 : ('a -> 'b -> 'c Js.t) Js.constr -> 'a * 'b -> 'c Js.t
 
-(** [jsnew3] is a syntax extension to build an object using contructor [constr] 
+(** [jsnew3] is a function to build an object using contructor [constr]
     and arguments [a], [b] and [c].*)
 val jsnew3 : ('a -> 'b -> 'c -> 'd Js.t) Js.constr -> 'a * 'b * 'c -> 'd Js.t
 
+val setIntervalUntilFalse : (unit -> bool) -> float -> unit
+val setInterval : (unit -> unit) -> float -> (unit -> unit)
+val setTimeout : (unit -> unit) -> float -> (unit -> unit)

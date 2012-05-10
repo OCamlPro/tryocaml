@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Try OCaml</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link type="text/css" href="bootstrap.css" rel="stylesheet" />
+    <link type="text/css" href="style.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-22552764-4']);
+      _gaq.push(['_trackPageview']);
+      (function() {
+        var ga = document.createElement('script');
+        ga.type = 'text/javascript';
+        ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    </head>
+    <body>
+    <div class="content">
+    <div class="container">
+      <div class="row">
+       <div class="span7">
+          <h1 id="main-title">Try js_of_ocaml</h1>
+          <p id="short-intro">OCaml is a strongly typed functional language. It is concise
+             and fast, enabling you to improve your coding efficiency
+             while producing code with higher quality.</p>
+          <div id="lesson-position">
+            <span id="lesson-left-button"></span>
+            <span id="lesson-number"></span>
+            <span id="lesson-right-button"></span>
+            <span id="lesson-step-spacer"></span>
+            <span id="step-left-button"></span>
+            <span id="lesson-step"></span>
+            <span id="step-right-button"></span>
+       </div>
+          <div class="alert-message block-message info" id="lesson-text">
+            Type <code>lesson 1</code> to start the tutorial. <br />
+            <em>(click on the code to insert)</em>
+          </div>
+          <div id="lesson-message"></div>
+          <div id="languages"></div>
+          <div id="menu-lessons"></div>
+
+<script type="text/javascript" src="http://widgets.twimg.com/j/2/widget.js"></script>
+<script type="text/javascript">
+new TWTR.Widget({
+  version: 2,
+  type: 'profile',
+  rpp: 4,
+  interval: 30000,
+  width: 'auto',
+  height: 300,
+  theme: {
+    shell: {
+      background: '#ffffff',
+      color: '#000000'
+    },
+    tweets: {
+      background: '#ddf4fb',
+      color: '#15156b',
+      links: '#0a0f07'
+    }
+  },
+  features: {
+    scrollbar: true,
+    loop: false,
+    live: false,
+    behavior: 'default'
+  }
+}).render().setUser('tryocaml').start();
+</script>
+
+        </div>
+
+        <div class="span9 ocaml">
+          <div id="toplevel-container">
+          <div id="dragndrop"><img src="images/arrow.png" width="140" height="70"/></div>
+            <pre id="output"></pre>
+            <div id="sharp">#</div>
+            <div id="toplevel"></div>
+          </div>
+          <div id="buttons"></div>
+
+          <table class="zebra-striped">
+            <thead><tr><th id="text-commands">Commands</th><th id="text-effects">Effects</th></tr></thead>
+            <tr><td id="text-enter">Enter / Return</td> <td id="text-submit">Submit code</td></tr>
+            <tr><td id="text-arrows">Up / Down</td><td id="text-history">Cycle through history</td></tr>
+            <tr><td id="text-newline">Shift + Enter</td><td id="text-multiline">Multiline edition</td></tr>
+            <tr><td><code>lesson 1</code></td> <td id="text-lesson-1">Move to lesson 1</td></tr>
+            <tr><td><code>step 1</code></td> <td id="text-step-1">Move to step 1 of the current lesson</td></tr>
+            <tr><td><code>lessons ()</code></td> <td id="text-lessons">See available lessons</td></tr>
+            <tr><td><code>steps ()</code></td> <td id="text-steps">See available steps in the current lesson</td></tr>
+          </table>
+
+          <div>All Try OCaml sites:
+            <ul>
+              <li><a href="/">Official Try OCaml site</a></li>
+              <li><a href="/js_of_ocaml/">Try OCaml with Js_of_ocaml modules</a></li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div></div>
+
+    <div class="footer">
+      <div class="container">
+        <div class="ressources">
+          <a href="https://github.com/OCamlPro/tryocaml">Contribute</a>
+          (<a href="https://github.com/OCamlPro/tryocaml/issues/new">Submit a bug report</a>)
+          |
+          <a href="http://www.ocaml-lang.org/">OCaml</a> |
+          <a href="http://www.ocamlpro.com/">OCamlPro</a> |
+          <a href="http://ocsigen.org/js_of_ocaml/">Js_of_ocaml</a>
+        </div>
+        <div class="copyright">
+          © 2011 <a href="http://ocamlpro.com/">OCamlPro</a> SAS, All rights reserved.
+          <a href="mailto:contact@ocamlpro.com">Contact an administrator</a>
+        </div>
+      </div>
+    </div>
+  <script type="text/javascript" src="try-js_of_ocaml.js"></script>
+  </body>
+</html>

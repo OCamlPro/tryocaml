@@ -10,11 +10,27 @@ all:
 	$(MAKE) -C try-js_of_ocaml
 
 clean:
-	$(MAKE) -C tryocaml clean
+	$(MAKE) -C js_of_ocaml clean
+	$(MAKE) -C cmicomp clean
+	$(MAKE) -C ocp-jslib clean
+	$(MAKE) -C toplevel clean
+	$(MAKE) -C ocaml-num clean
+	$(MAKE) -C tutorial clean
+	$(MAKE) -C try-ocaml clean
+	$(MAKE) -C try-js_of_ocaml clean
+
 
 depend:
-	$(MAKE) -C depend
+	$(MAKE) -C js_of_ocaml depend
+	$(MAKE) -C cmicomp depend
+	$(MAKE) -C ocp-jslib depend
+	$(MAKE) -C toplevel depend
+	$(MAKE) -C ocaml-num depend
+	$(MAKE) -C tutorial depend
+	$(MAKE) -C try-ocaml depend
+	$(MAKE) -C try-js_of_ocaml depend
 
 update-lessons:
-	touch lessons/goodies.ml
-	$(MAKE) -C tryocaml tuto tryocaml
+	touch ocaml-lessons/goodies.ml
+	$(MAKE) -C try-ocaml
+

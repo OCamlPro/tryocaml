@@ -1,17 +1,24 @@
-<h3>Simple Expressions</h3>
+<h3>A moving box</h3>
 
-<p>Numerical expressions are easy to compute in OCaml. For example:</p>
+<pre><code>
+open Utils
 
-<p><code>1+2</code></p>
+let canvas = Dom_html.createCanvas doc
+let body = get_element_by_id "main-title"
+let context = canvas##getContext (Dom_html._2d_)
 
-<br/>
+let x = ref 10.
+let y = ref 60.
 
-<p>Strings are also easy to define. For example, you can define a string with your name:</p>
+let redraw _ =
+  context##clearRect (!x, !y, 20., 20. );
+  x := if !x > 400. then 0. else !x +. 2.;
+  y := if !y > 150. then 0. else !y +. 1.;
+  context##fillStyle <- Js.string "red";
+  context##fillRect (!x,!y, 20., 20.)
 
-<p><code>"Mary"</code></p>
-
-<br/>
-
-<p>The basic element of a string is a char:</p>
-
-<p><code>'a'</code></p>
+let _ =
+  Dom.appendChild body canvas;
+  let _ = window##setInterval (_f redraw, 2.5) in
+  ()
+</code></pre>

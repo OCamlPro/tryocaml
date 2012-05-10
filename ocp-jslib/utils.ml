@@ -49,3 +49,22 @@ let jsnew3 (constr : ('a -> 'b -> 'c -> 'z Js.t) Js.constr) (a,b,c) =
     Js.Unsafe.inject (b : 'b);
     Js.Unsafe.inject (c : 'c);
                             |] : 'z Js.t)
+
+let setIntervalUntilFalse f time =
+  let interval_id = ref None in
+  let f () =
+    if not (f ()) then
+      match !interval_id with
+          None -> ()
+        | Some interval_id ->
+          window##clearInterval (interval_id)
+  in
+  interval_id := Some (window##setInterval (_f f, time))
+
+let setInterval f time =
+  let interval_id = window##setInterval (_f f, time) in
+  (fun _ -> window##clearInterval (interval_id))
+
+let setTimeout f time =
+  let interval_id = window##setTimeout (_f f, time) in
+  (fun _ -> window##clearTimeout (interval_id))
