@@ -33,3 +33,6 @@ update-lessons:
 	touch ocaml-lessons/goodies.ml
 	$(MAKE) -C try-ocaml
 
+upload:
+	$(MAKE) -C try-ocaml upload
+	$(MAKE) -C try-js_of_ocaml upload
