@@ -167,11 +167,11 @@ and keyboardEvent = object
   method metaKey : bool t readonly_prop
 end
 
-and wheelEvent = object (* All browsers but Firefox *)
+and mousewheelEvent = object (* All browsers but Firefox *)
   inherit mouseEvent
-  method delta : int readonly_prop
-  method deltaX : int optdef readonly_prop
-  method deltaY : int optdef readonly_prop
+  method wheelDelta : int readonly_prop
+  method wheelDeltaX : int optdef readonly_prop
+  method wheelDeltaY : int optdef readonly_prop
 end
 
 and mouseScrollEvent = object (* Firefox *)
@@ -332,7 +332,7 @@ end
 
 and clientRectList = object
   method length : int readonly_prop
-  method item : int -> clientRect t optdef meth
+  method item : int -> clientRect t opt meth
 end
 
 let no_handler : ('a, 'b) event_listener = Dom.no_handler
@@ -377,7 +377,7 @@ let removeEventListener = Dom.removeEventListener
 
 class type ['node] collection = object
   method length : int readonly_prop
-  method item : int -> 'node t optdef meth
+  method item : int -> 'node t opt meth
   method namedItem : js_string t -> 'node t opt meth
 end
 
@@ -963,6 +963,13 @@ class type navigator = object
   method userLanguage : js_string t optdef readonly_prop
 end
 
+class type screen = object
+  method width : int readonly_prop
+  method height : int readonly_prop
+  method availWidth : int readonly_prop
+  method availHeight : int readonly_prop
+end
+
 class type window = object
   method document : document t readonly_prop
   method name : js_string t prop
@@ -972,10 +979,12 @@ class type window = object
   method navigator : navigator t
   method getSelection : selection t meth
   method close : unit meth
+  method closed : bool t readonly_prop
   method stop : unit meth
   method focus : unit meth
   method blur : unit meth
   method scroll : int -> int -> unit meth
+  method screen : screen t readonly_prop
 
   method sessionStorage : storage t optdef readonly_prop
   method localStorage : storage t optdef readonly_prop
@@ -1313,10 +1322,10 @@ let addMousewheelEventListener e h capt =
   if hasMousewheelEvents () then
     addEventListener e Event.mousewheel
       (handler
-         (fun (e : wheelEvent t) ->
-            let dx = - Optdef.get (e##deltaX) (fun () -> 0) / 40 in
+         (fun (e : mousewheelEvent t) ->
+            let dx = - Optdef.get (e##wheelDeltaX) (fun () -> 0) / 40 in
             let dy =
-              - Optdef.get (e##deltaY) (fun () -> e##delta) / 40 in
+              - Optdef.get (e##wheelDeltaY) (fun () -> e##wheelDelta) / 40 in
             h (e :> mouseEvent t) ~dx ~dy))
       capt
   else
@@ -1527,7 +1536,7 @@ let opt_tagged e = Opt.case e (fun () -> None) (fun e -> Some (tagged e))
 type taggedEvent =
   | MouseEvent of mouseEvent t
   | KeyboardEvent of keyboardEvent t
-  | WheelEvent of wheelEvent t
+  | MousewheelEvent of mousewheelEvent t
   | MouseScrollEvent of mouseScrollEvent t
   | PopStateEvent of popStateEvent t
   | OtherEvent of event t
@@ -1541,7 +1550,7 @@ let taggedEvent (ev : #event Js.t) =
 	    (fun () -> OtherEvent (ev :> event t))
 	    (fun ev -> PopStateEvent ev))
 	  (fun ev -> MouseScrollEvent ev))
-	(fun ev -> WheelEvent ev))
+	(fun ev -> MousewheelEvent ev))
       (fun ev -> KeyboardEvent ev))
     (fun ev -> MouseEvent ev)
 
