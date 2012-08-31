@@ -67,14 +67,14 @@ let exec ppf s =
     | x    -> Errors.report_error ppf x
 
 let _ =
-  Toploop.set_exn_printer 
-    (fun _ _ exn -> 
-      if Js.instanceof (Obj.magic exn) Js.array_empty then 
+  Toploop.set_exn_printer
+    (fun _ _ exn ->
+      if Js.instanceof (Obj.magic exn) Js.array_empty then
         raise Not_found
-      else 
-        Outcometree.Oval_printer (fun fmt ->          
+      else
+        Outcometree.Oval_printer (fun fmt ->
           Format.fprintf fmt "%s"
-            (Js.to_string 
+            (Js.to_string
                (Js.Unsafe.meth_call (Obj.magic exn) "toString" [||]))
         )
     )
@@ -89,6 +89,7 @@ let start ppf =
     with e ->
       Printf.printf "Exception %s while processing [%s]\n%!" (Printexc.to_string e) s
   )  [
+(*
     "Toploop.set_wrap true";
     "open Tutorial";
     "#install_printer Toploop.print_hashtbl";
@@ -100,8 +101,9 @@ let start ppf =
 (* for Num/Big_int: *)
     "#install_printer Topnum.print_big_int";
     "#install_printer Topnum.print_num";
-    "#install_printer Toploop.print_exn";    
+    "#install_printer Toploop.print_exn";
     "open Topnum";
+*)
   ];
   ()
 
@@ -158,14 +160,14 @@ let update_lesson_text () =
     !init_in_lesson ();
     set_div_by_id "lesson-text" !Tutorial.this_step_html
   end
-    
+
 let update_lesson_number () =
   if  !Tutorial.this_lesson <> 0 then
     set_div_by_id "lesson-number"
       (Printf.sprintf "<span class=\"lesson\">%s %d</span>"
          (Tutorial.translate "Lesson")
          !Tutorial.this_lesson)
-      
+
 let update_lesson_step_number () =
   if !Tutorial.this_lesson <> 0 then
     set_div_by_id "lesson-step"
@@ -261,6 +263,7 @@ let loop s ppf buffer =
         Buffer.clear buffer;
         Tutorial.print_debug s;
         ignore (Toploop.execute_phrase true ppf phr);
+        Tutorial.print_debug (Printf.sprintf "debug: phrase executed");
         let res = Buffer.contents buffer in
         Tutorial.check_step ppf input res;
         update_lesson_text ();
@@ -271,6 +274,7 @@ let loop s ppf buffer =
             ensure_at_bol ppf;
             raise End_of_input
         | x ->
+          Tutorial.print_debug (Printf.sprintf "execption %s" (Printexc.to_string x));
           let do_report_error =
             if !Tutorial.use_multiline then
               match !output with
@@ -335,7 +339,7 @@ let _ =
       [ to_update; !Button.registered_buttons ]
   )
 
-let get_storage () = 
+let get_storage () =
   match Js.Optdef.to_option window##localStorage with
       None -> assert false
     | Some t -> t
@@ -421,7 +425,7 @@ let run () =
         execute ();
         Js._true)
     ) codes
-      
+
   and execute () =
     let s = Js.to_string textbox##value in
     if s <> "" then
@@ -436,14 +440,14 @@ let run () =
     Tutorial.debug_fun := (fun s -> Firebug.console##log (Js.string s));
     make_code_clickable ();
     textbox##focus();
-    container##scrollTop <- container##scrollHeight 
-  in 
-  container##onclick <- Html.handler 
+    container##scrollTop <- container##scrollHeight
+  in
+  container##onclick <- Html.handler
     (fun _ ->
       textbox##focus();  textbox##select();  Js._true);
 
   (* Start drag and drop part *)
-  let ev = DragnDrop.init () in  
+  let ev = DragnDrop.init () in
   (* Customize dropable part *)
   ev.DragnDrop.ondrop <- (fun e  ->
     container##className <- Js.string "";
@@ -452,7 +456,7 @@ let run () =
         | None -> assert false
         | Some file -> file in
 
-    let reader = jsnew File.fileReader () in    
+    let reader = jsnew File.fileReader () in
     reader##onload <- Dom.handler
       (fun _ ->
         let s =
@@ -475,7 +479,7 @@ let run () =
     Js._false);
   DragnDrop.make ~events:ev container;
   (* End of Drag and drop part *)
-  
+
   let tbox_init_size = textbox##style##height in
   Html.document##onkeydown <-
     (Html.handler
@@ -519,8 +523,8 @@ let run () =
 	     | _ -> Js._true
 	 end
 	 | _ -> Js._true));
-  
-  let clear () = 
+
+  let clear () =
     output_area##innerHTML <- (Js.string "");
     textbox##focus();
     textbox##select() in
@@ -532,17 +536,17 @@ let run () =
     exec ppf "open Tutorial";
     textbox##focus();
     textbox##select() in
-  let set_cols i = 
+  let set_cols i =
     textbox##style##width <- Js.string ((string_of_int (i * 7)) ^ "px") in
 
-  let send_button = 
+  let send_button =
     Button.create (Tutorial.translate "Send") (fun () -> execute ()) in
-  let clear_button = 
-    Button.create 
+  let clear_button =
+    Button.create
       (Tutorial.translate "Clear") (fun () -> clear ()) in
-  let reset_button = 
+  let reset_button =
     Button.create (Tutorial.translate "Reset") (fun () -> reset ()) in
-  let save_button =  
+  let save_button =
     Button.create (Tutorial.translate "Save") (fun () ->
     let content = Js.to_string output_area##innerHTML in
     let l = Regexp.split (Regexp.regexp ("\n")) content in
@@ -558,7 +562,7 @@ let run () =
                     (Js.to_string (Js.encodeURI content))) in
     let _ = window##open_(uriContent, Js.string "Try OCaml", Js.null) in
     window##close ()) in
-  
+
   let update_lesson () =
     update_lesson_number ();
     update_lesson_step_number ();
@@ -568,7 +572,7 @@ let run () =
     Cookie.set_cookie "lesson" (string_of_int !Tutorial.this_lesson);
     Cookie.set_cookie "step" (string_of_int !Tutorial.this_step)
   in
-  
+
   (* Choose your language *)
   let form = Html.createDiv doc in
   let sel = Dom_html.createSelect doc in
@@ -644,24 +648,24 @@ let run () =
   let get_lang_from_cookie () =
     let default_lang = "en" in
     let cookie = Cookie.get_cookie () in
-    try 
+    try
       snd (List.find (fun (key, value) -> key = "lang" ) cookie)
     with Not_found -> default_lang in
-                
+
   let get_lesson_from_cookie () =
     let cookie = Cookie.get_cookie () in
-    try 
+    try
       let _, lesson = List.find (fun (key, value) -> key = "lesson" ) cookie in
       int_of_string lesson
     with Not_found -> 0 in
-  
+
   let get_step_from_cookie () =
     let cookie = Cookie.get_cookie () in
-    try 
+    try
       let _, step = List.find (fun (key, value) -> key = "step" ) cookie in
       int_of_string step
     with Not_found -> 0 in
-  
+
   let set_lang_from_cookie () =
     let lang = get_lang_from_cookie () in
     if lang <> "" then Tutorial.set_lang lang in
@@ -670,7 +674,7 @@ let run () =
     let lesson = get_lesson_from_cookie () in
     let step = get_step_from_cookie () in
     update_lesson_step lesson step in
-  
+
   (* Check if language has change in URL *)
   let url = Js.decodeURI loc##href in
   let reg = Regexp.regexp ".*lang=([a-z][a-z]).*" in

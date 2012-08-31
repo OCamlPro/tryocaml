@@ -7,14 +7,14 @@ dom.cmi		file.cmi	  json.cmi    url.cmi            \
 dom_events.cmi	firebug.cmi	  lwt_js.cmi  webGL.cmi          \
 dom_html.cmi	form.cmi	  regexp.cmi  xmlHttpRequest.cmi
 
-all: $(TOPLEVELLIB_DIR)/cmicomp $(JS_CMIS)
-
 ROOT=..
 include $(ROOT)/Makefile.config
-
 CMICOMP=$(TOPLEVELLIB_DIR)/cmicomp
+
+all: $(CMICOMP) $(JS_CMIS)
+
 
 $(JS_CMIS):  $(JS_DIR)/lib/*.cmi
 	cp -f $(JS_DIR)/lib/*.cmi .
 	cp -f $(JS_DIR)/lib/js_of_ocaml.cma .
-	$(CMICOMP) compress $(JS_CMIS)
+	ocamlrun $(CMICOMP) compress $(JS_CMIS)
