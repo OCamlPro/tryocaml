@@ -112,7 +112,7 @@ let float_const f = val_float (J.ENum f)
 let rec constant x =
   match x with
     String s ->
-      Primitive.mark_used "MlString";
+      Primitives.mark_used "MlString";
       J.ENew (J.EVar ("MlString"), Some [J.EStr (s, `Bytes)])
   | Float f ->
       float_const f
@@ -336,7 +336,7 @@ let rec visit visited prev s m x l =
     (visited, None, l)
 
 let visit_all params args =
-  let m = Subst.build_mapping params args in
+  let m = Varsubst.build_mapping params args in
   let s = List.fold_left (fun s x -> VarSet.add x s) VarSet.empty params in
   let (_, l) =
     VarSet.fold
@@ -375,7 +375,7 @@ let get_apply_fun n =
   try
     Util.IntMap.find n !apply_funs
   with Not_found ->
-    Primitive.mark_used "caml_call_gen";
+    Primitives.mark_used "caml_call_gen";
     let x = Var.fresh () in
     apply_funs := Util.IntMap.add n x !apply_funs;
     x
@@ -409,7 +409,7 @@ let generate_apply_funs cont =
 let to_int cx = J.EBin(J.Bor, cx, J.ENum 0.) (* 32 bit ints *)
 
 let _ =
-  List.iter (fun (nm, nm') -> Primitive.alias nm nm')
+  List.iter (fun (nm, nm') -> Primitives.alias nm nm')
     ["%int_mul", "caml_mul";
      "%int_div", "caml_div";
      "%int_mod", "caml_mod";
@@ -476,7 +476,7 @@ let internal_prim name =
   try Hashtbl.find internal_primitives name with Not_found -> None
 
 let register_prim name k f =
-  Primitive.register name k;
+  Primitives.register name k;
   Hashtbl.add internal_primitives name (Some f)
 
 let register_un_prim name k f =
@@ -606,7 +606,7 @@ let _ =
     (fun cx -> J.ECall (J.EDot (cx, "toString"), []));
   register_un_prim "caml_js_to_string" `Mutable
     (fun cx ->
-       Primitive.mark_used "MlString";
+       Primitives.mark_used "MlString";
        J.ENew (J.EVar "MlWrappedString", Some [cx]));
   register_tern_prim "caml_js_set"
     (fun cx cy cz -> J.EBin (J.Eq, J.EAccess (cx, cy), cz));
@@ -771,15 +771,15 @@ let rec translate_expr ctx queue x e =
           in
           (J.EObj (build_fields fields), const_p, queue)
       | Extern name, l ->
-          let name = Primitive.resolve name in
+          let name = Primitives.resolve name in
           begin match internal_prim name with
             Some f ->
               f l queue
           | None ->
-              Primitive.mark_used name;
+              Primitives.mark_used name;
               Code.add_reserved_name name;  (*XXX HACK *)
                                (* FIX: this is done at the wrong time... *)
-              let prim_kind = kind (Primitive.kind name) in
+              let prim_kind = kind (Primitives.kind name) in
               let (args, prop, queue) =
                 List.fold_right
                   (fun x (args, prop, queue) ->
@@ -943,7 +943,7 @@ Format.eprintf "===== %d ===== (%b)@." pc3 limit_body;
         let handler = compile_block st [] pc2 inner_frontier interm in
         let x =
           let block2 = AddrMap.find pc2 st.blocks in
-          let m = Subst.build_mapping args2 block2.params in
+          let m = Varsubst.build_mapping args2 block2.params in
           try VarMap.find x m with Not_found -> x
         in
         if debug () then Format.eprintf "}@]@ ";
@@ -1229,7 +1229,7 @@ and compile_exn_handling ctx queue (pc, args) handler continuation =
         (* When an extra block is inserted during code generation,
            args is [] *)
         let m =
-          Subst.build_mapping (if args = [] then [] else block.params) args in
+          Varsubst.build_mapping (if args = [] then [] else block.params) args in
         let h_block = AddrMap.find h_pc ctx.Ctx.blocks in
         let rec loop continuation old args params queue =
           match args, params with
@@ -1332,7 +1332,7 @@ let compile_program standalone ctx pc =
   let res = compile_closure ctx (pc, []) in
   if debug () then Format.eprintf "@.@.";
 (*
-  Primitive.list_used ();
+  Primitives.list_used ();
 *)
   if standalone then
     let f = J.EFun (None, [], generate_apply_funs res) in
@@ -1360,7 +1360,7 @@ let f ch ?(standalone=true) ((pc, blocks, _) as p) live_vars =
     Pretty_print.string ch
       "// This program was compiled from OCaml by js_of_ocaml 1.0";
     Pretty_print.newline ch;
-    let missing = Linker.resolve_deps !compact ch (Primitive.get_used ()) in
+    let missing = Linker.resolve_deps !compact ch (Primitives.get_used ()) in
     list_missing missing
   end;
   Hashtbl.clear add_names;

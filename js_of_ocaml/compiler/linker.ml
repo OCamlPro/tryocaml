@@ -164,7 +164,7 @@ let add_file f =
               | _ ->
                   error loc (Format.sprintf "invalid primitive kind '%s'" kind)
             in
-            Primitive.register nm kind;
+            Primitives.register nm kind;
             Hashtbl.add provided nm (id, loc))
          prov;
        Hashtbl.add code_pieces id (code, req))

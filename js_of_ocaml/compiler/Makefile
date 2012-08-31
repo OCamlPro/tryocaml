@@ -7,7 +7,7 @@ PACKAGES=findlib,str,unix
 
 OBJS=pretty_print.cmx util.cmx dgraph.cmx \
      javascript.cmx js_output.cmx js_simpl.cmx \
-     instr.cmx code.cmx primitive.cmx subst.cmx pure_fun.cmx deadcode.cmx \
+     instr.cmx code.cmx primitives.cmx varsubst.cmx pure_fun.cmx deadcode.cmx \
      flow.cmx inline.cmx \
      tailcall.cmx freevars.cmx phisimpl.cmx \
      linker.cmx generate.cmx parse.cmx driver.cmx

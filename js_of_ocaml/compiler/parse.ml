@@ -1067,7 +1067,7 @@ and compile code limit pc state instrs =
       compile code limit (pc + 1) state instrs
   | C_CALL1 ->
       let prim = primitive_name state (getu code (pc + 1)) in
-      if Primitive.resolve prim = "%identity" then
+      if Primitives.resolve prim = "%identity" then
         (* This is a no-op *)
         compile code limit (pc + 2) state instrs
       else begin
@@ -1747,8 +1747,8 @@ let from_channel ~paths ic =
   let globals = make_globals (Array.length init_data) init_data primitives in
   if !is_toplevel then begin
     Tbl.iter (fun _ n -> globals.is_exported.(n) <- true) symbols.num_tbl;
-    Primitive.mark_used "caml_string_greaterthan";
-    Primitive.mark_used "caml_js_meth_call"
+    Primitives.mark_used "caml_string_greaterthan";
+    Primitives.mark_used "caml_js_meth_call"
   end;
 
   fix_min_max_int code;

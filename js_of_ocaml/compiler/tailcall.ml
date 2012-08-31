@@ -47,7 +47,7 @@ let rewrite_block (f, f_params, f_pc, args) pc blocks =
     Return x ->
       begin match tail_call x f block.body with
         Some f_args ->
-          let m = Subst.build_mapping f_params f_args in
+          let m = Varsubst.build_mapping f_params f_args in
           AddrMap.add pc
             { params = block.params;
               handler = block.handler;

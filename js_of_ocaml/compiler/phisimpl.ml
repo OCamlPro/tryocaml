@@ -172,6 +172,6 @@ let f p =
   let t' = Util.Timer.make () in
   let subst = solver1 vars deps defs in
   if times () then Format.eprintf "    phi-simpl. 2: %a@." Util.Timer.print t';
-  let p = Subst.program (Subst.from_array subst) p in
+  let p = Varsubst.program (Varsubst.from_array subst) p in
   if times () then Format.eprintf "  phi-simpl.: %a@." Util.Timer.print t;
   p

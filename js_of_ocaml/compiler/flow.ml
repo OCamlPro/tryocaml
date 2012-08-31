@@ -499,7 +499,7 @@ let f ((pc, blocks, free_pc) as p) =
   let t5 = Util.Timer.make () in
   let p = specialize_instrs (defs, known_origins, maybe_unknown) p in
   let s = build_subst defs vars known_origins maybe_unknown possibly_mutable in
-  let p = Subst.program (Subst.from_array s) p in
+  let p = Varsubst.program (Varsubst.from_array s) p in
   if times () then Format.eprintf "    flow analysis 5: %a@." Util.Timer.print t5;
   if times () then Format.eprintf "  flow analysis: %a@." Util.Timer.print t;
   p

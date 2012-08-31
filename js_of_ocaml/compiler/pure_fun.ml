@@ -34,7 +34,7 @@ let pure_expr pure_funs e =
       end
   | Prim (p, l) ->
       match p with
-        Extern f -> Primitive.is_pure f
+        Extern f -> Primitives.is_pure f
       | _        -> true
 
 let pure_instr pure_funs i =
