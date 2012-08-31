@@ -511,6 +511,9 @@ module Unsafe : sig
   external set : 'a -> 'b -> 'c -> unit = "caml_js_set"
     (** Set an object property.  The expression [set o s v]
         set the property [s] of object [o] to value [v]. *)
+  external delete : 'a -> 'b -> unit = "caml_js_delete"
+    (** Delete an object property.  The expression [delete o s]
+        deletes property [s] of object [o]. *)
   external call : 'a -> 'b -> any array -> 'c = "caml_js_call"
     (** Performs a Javascript function call.  The expression
         [call f o a] calls the Javascript function [f] with the
@@ -527,6 +530,11 @@ module Unsafe : sig
     (** Create a Javascript object.  The expression [new_obj c a]
         creates a Javascript object with constructor [c] using the
         arguments given by the array [a]. *)
+
+  external obj : (string * any) array -> 'a = "caml_js_object"
+    (** Creates a Javascript literal object.  The expression
+        [obj a] creates a Javascript object whose fields are given by
+        the array [a] *)
 
   external pure_expr : (unit -> 'a) -> 'a = "caml_js_pure_expr"
     (** Asserts that an expression is pure, and can therefore be
