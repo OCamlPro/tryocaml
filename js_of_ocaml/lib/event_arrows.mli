@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
-(** WARNING: EXPERIMENTAL *)
+(** Warning: this module is now deprecated. Use Lwt_js_events instead. *)
 
 type canceller (*VVV ? *)
 type ('a, 'b) t
@@ -122,3 +122,5 @@ val keyups : ?use_capture : bool ->  ?keep_default : bool ->
   ?propagate : bool ->
   #Dom_html.eventTarget Js.t -> (Dom_html.mousewheelEvent Js.t, 'a) t -> ('b, 'c) t
 *)
+
+
