@@ -1,4 +1,6 @@
-all:
+
+
+all: Makefile.config
 	$(MAKE) -C js_of_ocaml
 	$(MAKE) -C js_of_ocaml/compiler compiler.cma
 	$(MAKE) -C cmicomp
@@ -8,6 +10,9 @@ all:
 	$(MAKE) -C tutorial
 	$(MAKE) -C try-ocaml
 	$(MAKE) -C try-js_of_ocaml
+
+Makefile.config:
+	./configure
 
 clean:
 	$(MAKE) -C js_of_ocaml clean

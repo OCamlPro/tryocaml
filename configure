@@ -1,0 +1,16 @@
+#!/bin/sh
+echo Generating Makefile.config
+
+echo OCAMLC=ocamlc > Makefile.config.temp
+echo OCAMLDEP=ocamldep.opt >> Makefile.config.temp
+echo OCAMLVNUM=`ocamlc -version` >> Makefile.config.temp
+echo 'JS_DIR=$(ROOT)/js_of_ocaml' >> Makefile.config.temp
+echo 'TOPLEVEL_DIR=$(ROOT)/toplevel' >> Makefile.config.temp
+echo 'OCAMLNUM_DIR=$(ROOT)/ocaml-num' >> Makefile.config.temp
+echo 'TUTORIAL_DIR=$(ROOT)/tutorial' >> Makefile.config.temp
+echo 'TOPLEVELLIB_DIR=$(ROOT)/toplevellib-$(OCAMLVNUM)' >> Makefile.config.temp
+echo 'CMICOMP_DIR=$(ROOT)/cmicomp' >> Makefile.config.temp
+echo 'OCPJSLIB_DIR=$(ROOT)/ocp-jslib' >> Makefile.config.temp
+
+mv Makefile.config.temp Makefile.config
+echo Makefile.config generated

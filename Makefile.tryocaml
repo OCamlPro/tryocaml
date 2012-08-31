@@ -18,8 +18,7 @@ CMOS= $(SOURCES:.ml=.cmo)
 
 ############### TRYOCAML_NAME=toplevel
 # remove this variable to use the default ocaml toplevel
-INCLUDE_TOPLEVELLIB= -I $(TOPLEVELLIB_DIR)/
-TOPLEVELLIB=$(TOPLEVELLIB_DIR)/
+include $(ROOT)/toplevellib-$(OCAMLVNUM)/Makefile.config
 
 
 COMP=$(JS_DIR)/compiler/js_of_ocaml
@@ -77,7 +76,7 @@ TOPLEVEL_CMIS=$(TOPLEVEL_DIR)/toplevel.cmi
 TOPLEVEL_CMOS=$(TOPLEVEL_DIR)/toplevel.cmo $(TOPLEVEL_DIR)/topmain.cmo
 TOPLEVEL_CMAS= \
   $(CMICOMP_DIR)/js_of_ocaml.cma $(JS_DIR)/compiler/compiler.cma \
-  $(TOPLEVELLIB)toplevellib.cma \
+  $(TOPLEVELLIB_CMAS) \
   $(OCAMLNUM_DIR)/ocaml-num.cma \
   lessons.cmo \
   $(TUTORIAL_DIR)/tutorial.cma \
@@ -86,6 +85,7 @@ TOPLEVEL_CMAS= \
 INCLUDES= \
    -I $(CMICOMP_DIR) \
    -I $(JS_DIR)/compiler \
+   -I $(JS_DIR)/lib \
    -I $(TUTORIAL_DIR)/ \
    $(INCLUDE_TOPLEVELLIB) \
    -I $(OCAMLNUM_DIR) \

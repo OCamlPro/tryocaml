@@ -31,3 +31,4 @@ try-js_of_ocaml/lessons.ml
 try-js_of_ocaml/lessons.mli
 try-js_of_ocaml/try-js_of_ocaml.js
 try-js_of_ocaml/try-ocaml.js
+Makefile.config
