@@ -89,7 +89,7 @@ let start ppf =
     with e ->
       Printf.printf "Exception %s while processing [%s]\n%!" (Printexc.to_string e) s
   )  [
-(*
+
     "Toploop.set_wrap true";
     "open Tutorial";
     "#install_printer Toploop.print_hashtbl";
@@ -103,7 +103,6 @@ let start ppf =
     "#install_printer Topnum.print_num";
     "#install_printer Toploop.print_exn";
     "open Topnum";
-*)
   ];
   ()
 
