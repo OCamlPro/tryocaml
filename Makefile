@@ -16,9 +16,11 @@ Makefile.config:
 
 clean:
 	$(MAKE) -C js_of_ocaml clean
+	$(MAKE) -C cmicomp clean
 	$(MAKE) -C ocp-jslib clean
 	$(MAKE) -C toplevel clean
 	$(MAKE) -C ocaml-num clean
+	$(MAKE) -C toplevel clean
 	$(MAKE) -C tutorial clean
 	$(MAKE) -C try-ocaml clean
 	$(MAKE) -C try-js_of_ocaml clean

@@ -9,6 +9,7 @@ dom_html.cmi	form.cmi	  regexp.cmi  xmlHttpRequest.cmi
 
 ROOT=..
 include $(ROOT)/Makefile.config
+include $(TOPLEVELLIB_DIR)/Makefile.config
 CMICOMP=$(TOPLEVELLIB_DIR)/cmicomp
 
 all: $(CMICOMP) $(JS_CMIS)
@@ -17,4 +18,7 @@ all: $(CMICOMP) $(JS_CMIS)
 $(JS_CMIS):  $(JS_DIR)/lib/*.cmi
 	cp -f $(JS_DIR)/lib/*.cmi .
 	cp -f $(JS_DIR)/lib/js_of_ocaml.cma .
-	ocamlrun $(CMICOMP) compress $(JS_CMIS)
+	ocamlrun $(CMICOMP) $(CMICOMP_FLAGS) $(JS_CMIS)
+
+clean:
+	rm -f *.cmi *.cmi.old
