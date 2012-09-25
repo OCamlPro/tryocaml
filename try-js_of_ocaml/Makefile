@@ -23,6 +23,7 @@ TRYOCAML_EXTRA_MODULES= \
   xmlHttpRequest \
   \
   utils \
+  graphics \
   button \
   cookie \
   dragnDrop

@@ -3,7 +3,7 @@ ROOT=..
 include $(ROOT)/Makefile.config
 include $(ROOT)/Makefile.jsconfig
 
-MLOBJS= utils.cmo button.cmo cookie.cmo dragnDrop.cmo
+MLOBJS= utils.cmo button.cmo cookie.cmo dragnDrop.cmo graphics.cmo
 MLINTFS= $(MLOBJS:.cmo=.cmi)
 
 INCLUDES= -I $(JS_DIR)/lib
