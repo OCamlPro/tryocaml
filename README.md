@@ -12,7 +12,7 @@ js_of_ocaml (see http://ocsigen.org/js_of_ocaml/).
 # Requirements
 
   * Findlib
-  * Lwt (version 2.3.0** at least, see http://ocsigen.org/lwt/)
+  * Lwt (version 2.4.0** at least, see http://ocsigen.org/lwt/)
 
 # Try it
 
