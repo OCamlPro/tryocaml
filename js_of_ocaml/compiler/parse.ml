@@ -431,14 +431,16 @@ let get_global state instrs i =
           (x, state, instrs)
       end
 
+let tagged_blocks = ref AddrSet.empty
 let compiled_blocks = ref AddrMap.empty
 
 let rec compile_block code pc state =
-  if not (AddrMap.mem pc !compiled_blocks) then begin
+  if not (AddrSet.mem pc !tagged_blocks) then begin
     let len = String.length code  / 4 in
     let limit = next_block len pc in
     if debug () then Format.eprintf "Compiling from %d to %d@." pc (limit - 1);
     let state = State.start_block state in
+    tagged_blocks := AddrSet.add pc !tagged_blocks;
     let (instr, last, state') = compile code limit pc state [] in
     compiled_blocks :=
       AddrMap.add pc (state, List.rev instr, last) !compiled_blocks;
@@ -1561,6 +1563,7 @@ let parse_bytecode code state standalone_info =
       !compiled_blocks
   in
   compiled_blocks := AddrMap.empty;
+  tagged_blocks := AddrSet.empty;
 
   let free_pc = String.length code / 4 in
   let g = State.globals state in
@@ -1581,6 +1584,7 @@ let parse_bytecode code state standalone_info =
         register_global 2; (* Failure *)
         register_global 3; (* Invalid_argument *)
         register_global 5; (* Division_by_zero *)
+        register_global 6; (* Not_found *)
         for i = Array.length g.constants - 1  downto 0 do
           match g.vars.(i) with
             Some x when g.is_const.(i) ->
