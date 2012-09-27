@@ -15,7 +15,6 @@ Makefile.config:
 	./configure
 
 clean:
-	$(MAKE) -C js_of_ocaml clean
 	$(MAKE) -C cmicomp clean
 	$(MAKE) -C ocp-jslib clean
 	$(MAKE) -C toplevel clean
@@ -25,6 +24,8 @@ clean:
 	$(MAKE) -C try-ocaml clean
 	$(MAKE) -C try-js_of_ocaml clean
 
+cleanall: clean
+	$(MAKE) -C js_of_ocaml clean
 
 depend:
 	$(MAKE) -C js_of_ocaml depend
