@@ -1,0 +1,956 @@
+diff -C 2 -r ocaml-4.00.0.orig/asmcomp/closure.ml ocaml-4.00.0/asmcomp/closure.ml
+*** ocaml-4.00.0.orig/asmcomp/closure.ml	2012-02-21 18:41:02.000000000 +0100
+--- ocaml-4.00.0/asmcomp/closure.ml	2012-08-31 14:50:22.626024946 +0200
+***************
+*** 497,501 ****
+        close_one_function fenv cenv (Ident.create "fun") funct
+  
+!     (* We convert [f a] to [let a' = a in fun b c -> f a' b c] 
+         when fun_arity > nargs *)
+    | Lapply(funct, args, loc) ->
+--- 497,501 ----
+        close_one_function fenv cenv (Ident.create "fun") funct
+  
+!     (* We convert [f a] to [let a' = a in fun b c -> f a' b c]
+         when fun_arity > nargs *)
+    | Lapply(funct, args, loc) ->
+diff -C 2 -r ocaml-4.00.0.orig/bytecomp/simplif.ml ocaml-4.00.0/bytecomp/simplif.ml
+*** ocaml-4.00.0.orig/bytecomp/simplif.ml	2012-02-20 18:45:10.000000000 +0100
+--- ocaml-4.00.0/bytecomp/simplif.ml	2012-08-31 14:14:22.577996428 +0200
+***************
+*** 450,454 ****
+    | Lletrec(bindings, body) ->
+        Lletrec(List.map (fun (v, l) -> (v, simplif l)) bindings, simplif body)
+!   | Lprim(p, ll) -> Lprim(p, List.map simplif ll)
+    | Lswitch(l, sw) ->
+        let new_l = simplif l
+--- 450,461 ----
+    | Lletrec(bindings, body) ->
+        Lletrec(List.map (fun (v, l) -> (v, simplif l)) bindings, simplif body)
+!   | Lprim(p, ll) -> begin
+!     let ll = List.map simplif ll in
+!     match p, ll with
+!       | Prevapply loc, [x; Lapply(f, args, _)] -> Lapply(f, args@[x], loc)
+!       | Prevapply loc, [x; f] -> Lapply(f, [x], loc)
+!       | Prevapply _, _ -> assert false
+!       | _ -> Lprim(p, ll)
+!   end
+    | Lswitch(l, sw) ->
+        let new_l = simplif l
+diff -C 2 -r ocaml-4.00.0.orig/otherlibs/threads/pervasives.ml ocaml-4.00.0/otherlibs/threads/pervasives.ml
+*** ocaml-4.00.0.orig/otherlibs/threads/pervasives.ml	2011-07-27 16:17:02.000000000 +0200
+--- ocaml-4.00.0/otherlibs/threads/pervasives.ml	2012-08-31 14:14:22.577996428 +0200
+***************
+*** 29,32 ****
+--- 29,34 ----
+  exception Exit
+  
++ external ( |> ) : 'a -> ('a -> 'b) -> 'b = "%revapply"
++ 
+  (* Comparisons *)
+  
+diff -C 2 -r ocaml-4.00.0.orig/parsing/lexer.mll ocaml-4.00.0/parsing/lexer.mll
+*** ocaml-4.00.0.orig/parsing/lexer.mll	2012-05-30 15:29:48.000000000 +0200
+--- ocaml-4.00.0/parsing/lexer.mll	2012-08-31 14:14:22.581996428 +0200
+***************
+*** 302,305 ****
+--- 302,308 ----
+          with Failure _ ->
+            raise (Error(Literal_overflow "int64", Location.curr lexbuf)) }
++   | int_literal "I"
++       { let s = Lexing.lexeme lexbuf in
++         BIGINT (String.sub s 0 (String.length s - 1)) }
+    | int_literal "n"
+        { try
+***************
+*** 367,370 ****
+--- 370,374 ----
+        }
+    | "#"  { SHARP }
++   | "##" { SHARPJS }
+    | "&"  { AMPERSAND }
+    | "&&" { AMPERAMPER }
+diff -C 2 -r ocaml-4.00.0.orig/parsing/parser.mly ocaml-4.00.0/parsing/parser.mly
+*** ocaml-4.00.0.orig/parsing/parser.mly	2012-06-21 19:10:58.000000000 +0200
+--- ocaml-4.00.0/parsing/parser.mly	2012-08-31 14:29:08.494008124 +0200
+***************
+*** 50,53 ****
+--- 50,55 ----
+      ptyp_loc = d.ptyp_loc}
+  
++ let mkexpid lid = mkexp (Pexp_ident (mkloc lid (symbol_rloc())))
++ 
+  let reloc_pat x = { x with ppat_loc = symbol_rloc () };;
+  let reloc_exp x = { x with pexp_loc = symbol_rloc () };;
+***************
+*** 80,83 ****
+--- 82,86 ----
+  let ghpat d = { ppat_desc = d; ppat_loc = symbol_gloc () };;
+  let ghtyp d = { ptyp_desc = d; ptyp_loc = symbol_gloc () };;
++ let ghexpid lid = ghexp (Pexp_ident (mkloc lid (symbol_gloc())))
+  
+  let mkassert e =
+***************
+*** 97,112 ****
+    else "-" ^ f
+  
+! let mkuminus name arg =
+    match name, arg.pexp_desc with
+    | "-", Pexp_constant(Const_int n) ->
+!       mkexp(Pexp_constant(Const_int(-n)))
+    | "-", Pexp_constant(Const_int32 n) ->
+!       mkexp(Pexp_constant(Const_int32(Int32.neg n)))
+    | "-", Pexp_constant(Const_int64 n) ->
+!       mkexp(Pexp_constant(Const_int64(Int64.neg n)))
+    | "-", Pexp_constant(Const_nativeint n) ->
+!       mkexp(Pexp_constant(Const_nativeint(Nativeint.neg n)))
+    | ("-" | "-."), Pexp_constant(Const_float f) ->
+!       mkexp(Pexp_constant(Const_float(neg_float_string f)))
+    | _ ->
+        mkexp(Pexp_apply(mkoperator ("~" ^ name) 1, ["", arg]))
+--- 100,140 ----
+    else "-" ^ f
+  
+! let pexp_constant rev cst =
+!   if !Clflags.wrap_constants then
+!     match cst with
+!         Const_string _
+!       | Const_char _ ->
+!         Pexp_constant cst
+!       | _ ->
+!         let name =
+!           match cst with
+!               Const_string _
+!             | Const_char _ -> assert false
+!             | Const_nativeint _ -> "nativeint"
+!             | Const_int64 _ -> "int64"
+!             | Const_int32 _ -> "int32"
+!             | Const_float _ -> "float"
+!             | Const_int _ -> "int"
+!         in
+!         Pexp_apply(ghexpid (Lident (Printf.sprintf "%s_%s_%s" name
+!                                       (if rev then "to" else "of")
+!                                       name)),
+!                    ["", mkexp (Pexp_constant cst)])
+!   else
+!     Pexp_constant cst
+! 
+! 
+! let mkuminus rev name arg =
+    match name, arg.pexp_desc with
+    | "-", Pexp_constant(Const_int n) ->
+!       mkexp(pexp_constant rev (Const_int(-n)))
+    | "-", Pexp_constant(Const_int32 n) ->
+!       mkexp(pexp_constant rev (Const_int32(Int32.neg n)))
+    | "-", Pexp_constant(Const_int64 n) ->
+!       mkexp(pexp_constant rev (Const_int64(Int64.neg n)))
+    | "-", Pexp_constant(Const_nativeint n) ->
+!       mkexp(pexp_constant rev (Const_nativeint(Nativeint.neg n)))
+    | ("-" | "-."), Pexp_constant(Const_float f) ->
+!       mkexp(pexp_constant rev (Const_float(neg_float_string f)))
+    | _ ->
+        mkexp(Pexp_apply(mkoperator ("~" ^ name) 1, ["", arg]))
+***************
+*** 115,123 ****
+    let desc = arg.pexp_desc in
+    match name, desc with
+!   | "+", Pexp_constant(Const_int _)
+!   | "+", Pexp_constant(Const_int32 _)
+!   | "+", Pexp_constant(Const_int64 _)
+!   | "+", Pexp_constant(Const_nativeint _)
+!   | ("+" | "+."), Pexp_constant(Const_float _) -> mkexp desc
+    | _ ->
+        mkexp(Pexp_apply(mkoperator ("~" ^ name) 1, ["", arg]))
+--- 143,151 ----
+    let desc = arg.pexp_desc in
+    match name, desc with
+!   | "+", Pexp_constant (Const_int _)
+!   | "+", Pexp_constant (Const_int32 _)
+!   | "+", Pexp_constant (Const_int64 _)
+!   | "+", Pexp_constant (Const_nativeint _)
+!   | ("+" | "+."), Pexp_constant (Const_float _) -> mkexp desc
+    | _ ->
+        mkexp(Pexp_apply(mkoperator ("~" ^ name) 1, ["", arg]))
+***************
+*** 292,295 ****
+--- 320,498 ----
+    (exp, ghtyp(Ptyp_poly(newtypes,varify_constructors newtypes core_type)))
+  
++ let rnd = Random.State.make [|0x513511d4|]
++ let random_var () =
++   Format.sprintf "a%08Lx" (Random.State.int64 rnd 0x100000000L)
++ let fresh_type () = mktyp (Ptyp_var (random_var ()))
++ 
++ let unescape lab =
++   assert (lab <> "");
++   let lab =
++     if lab.[0] = '_' then String.sub lab 1 (String.length lab - 1) else lab
++   in
++   try
++     let i = String.rindex lab '_' in
++     if i = 0 then raise Not_found;
++     String.sub lab 0 i
++   with Not_found ->
++     lab
++ 
++ let js_unsafe s = mkexpid (Ldot(Ldot(Lident "Js","Unsafe"), s))
++ 
++ let js_prop_type field_name field_type =
++   mktyp( Ptyp_constr(
++     mkloc (Ldot( Lident "Js", "gen_prop" )) Location.none,
++     [mktyp(Ptyp_object [
++       mkfield (Pfield( field_name, field_type ));
++       mkfield Pfield_var ]) ]) )
++ 
++ let js_field_type expr field_name field_type =
++   mkexp( Pexp_constraint(
++     expr,
++     Some( mktyp( Ptyp_constr(
++       mkloc (Ldot( Lident "Js", "t" )) Location.none,
++       [mktyp( Ptyp_object [
++ 	mkfield( Pfield( field_name, mktyp( Ptyp_poly( [], field_type ))));
++ 	mkfield Pfield_var ]) ]))),
++     None ))
++ 
++ let make_js_get expr label =
++   let var = fresh_type () in
++   let t_var = js_prop_type "get" var in
++   let expr = js_field_type expr label t_var in
++   let call = mkexp(Pexp_apply(
++     js_unsafe "get",
++     [ "", expr;
++       "", mkexp(Pexp_constant(Const_string (unescape label)))] )) in
++   mkexp( Pexp_constraint( call, Some( mktyp( Ptyp_poly( [], var ))), None ))
++ 
++ let make_js_set expr label param =
++   let var = fresh_type () in
++   let t_var = js_prop_type "set"
++     ( mktyp( Ptyp_poly(
++       [], mktyp( Ptyp_arrow(
++ 	"", var, mktyp (Ptyp_constr (mkloc (Lident "unit") Location.none, []))) )))) in
++   let expr = js_field_type expr label t_var in
++   mkexp(Pexp_apply(
++     js_unsafe "set",
++     [ "", expr;
++       "", mkexp(Pexp_constant(Const_string (unescape label)));
++       "", mkexp (Pexp_constraint( param, Some var, None )) ] ))
++ 
++ let make_inject (expr,typ) =
++   mkexp(Pexp_apply(
++     js_unsafe "inject",
++     [ "",
++       mkexp (Pexp_constraint(
++ 	expr,
++ 	Some typ,
++ 	None ))]))
++ 
++ let make_js_call expr label args =
++   let args = List.map (fun p -> p,fresh_type ()) args in
++   let ret_type = fresh_type () in
++   let method_type =
++     List.fold_right
++       (fun (_, arg_ty) rem_ty -> mktyp ( Ptyp_arrow ( "", arg_ty, rem_ty )))
++       args
++       ( mktyp ( Ptyp_constr(
++         mkloc (Ldot( Lident "Js", "meth" )) Location.none, [ ret_type ] )))
++   in
++   let args = mkexp( Pexp_array( List.map make_inject args )) in
++   let expr = js_field_type expr label method_type in
++   let call = mkexp( Pexp_apply(
++     js_unsafe "meth_call",
++     [ "", expr;
++       "", mkexp( Pexp_constant( Const_string( unescape label )));
++       "", args ] )) in
++   mkexp( Pexp_constraint( call, Some ret_type, None ))
++ 
++ let rnd = Random.State.make [|0x513511d4|]
++ let random_var () =
++   Format.sprintf "a%08Lx" (Random.State.int64 rnd 0x100000000L)
++ let fresh_type () = mktyp (Ptyp_var (random_var ()))
++ 
++ let unescape lab =
++   assert (lab <> "");
++   let lab =
++     if lab.[0] = '_' then String.sub lab 1 (String.length lab - 1) else lab
++   in
++   try
++     let i = String.rindex lab '_' in
++     if i = 0 then raise Not_found;
++     String.sub lab 0 i
++   with Not_found ->
++     lab
++ 
++ let js_unsafe s = mkexpid(Ldot(Ldot(Lident "Js","Unsafe"), s))
++ 
++ let js_prop_type field_name field_type =
++   mktyp( Ptyp_constr(
++     mkloc (Ldot( Lident "Js", "gen_prop" )) Location.none,
++     [mktyp(Ptyp_object [
++       mkfield (Pfield( field_name,
++                        mktyp( Ptyp_poly( [], field_type )) ));
++       mkfield Pfield_var ]) ]) )
++ 
++ let js_field_type expr field_name field_type =
++   mkexp( Pexp_constraint(
++     expr,
++     Some( mktyp( Ptyp_constr(
++       mkloc (Ldot( Lident "Js", "t" )) Location.none,
++       [mktyp( Ptyp_object [
++ 	mkfield( Pfield( field_name, mktyp( Ptyp_poly( [], field_type ))));
++ 	mkfield Pfield_var ]) ]))),
++     None ))
++ 
++ let make_js_get expr label =
++   let var = fresh_type () in
++   let t_var = js_prop_type "get" var in
++   let expr = js_field_type expr label t_var in
++   let call = mkexp(Pexp_apply(
++     js_unsafe "get",
++     [ "", expr;
++       "", mkexp(Pexp_constant(Const_string (unescape label)))] )) in
++   mkexp( Pexp_constraint( call, Some( var ), None ))
++ 
++ let make_js_set expr label param =
++   let var = fresh_type () in
++   let t_var = js_prop_type "set"
++     ( mktyp( Ptyp_arrow(
++       "", var, mktyp (Ptyp_constr (mkloc (Lident "unit") Location.none,
++                                    []))) )) in
++   let expr = js_field_type expr label t_var in
++   mkexp(Pexp_apply(
++     js_unsafe "set",
++     [ "", expr;
++       "", mkexp(Pexp_constant(Const_string (unescape label)));
++       "", mkexp (Pexp_constraint( param, Some var, None )) ] ))
++ 
++ let make_inject (expr,typ) =
++   mkexp(Pexp_apply(
++     js_unsafe "inject",
++     [ "",
++       mkexp (Pexp_constraint(
++ 	expr,
++ 	Some typ,
++ 	None ))]))
++ 
++ let make_js_call expr label args =
++   let args = List.map (fun p -> p,fresh_type ()) args in
++   let ret_type = fresh_type () in
++   let method_type =
++     List.fold_right
++       (fun (_, arg_ty) rem_ty -> mktyp ( Ptyp_arrow ( "", arg_ty, rem_ty )))
++       args
++       ( mktyp ( Ptyp_constr(
++         mkloc (Ldot( Lident "Js", "meth" )) Location.none, [ ret_type ] )))
++   in
++   let args = mkexp( Pexp_array( List.map make_inject args )) in
++   let expr = js_field_type expr label method_type in
++   let call = mkexp( Pexp_apply(
++     js_unsafe "meth_call",
++     [ "", expr;
++       "", mkexp( Pexp_constant( Const_string( unescape label )));
++       "", args ] )) in
++   mkexp( Pexp_constraint( call, Some ret_type, None ))
++ 
+  %}
+  
+***************
+*** 389,392 ****
+--- 592,596 ----
+  %token SEMI
+  %token SEMISEMI
++ %token SHARPJS
+  %token SHARP
+  %token SIG
+***************
+*** 407,410 ****
+--- 611,615 ----
+  %token WHILE
+  %token WITH
++ %token <string> BIGINT
+  %token <string * Location.t> COMMENT
+  
+***************
+*** 461,469 ****
+  %nonassoc prec_constr_appl              /* above AS BAR COLONCOLON COMMA */
+  %nonassoc below_SHARP
+! %nonassoc SHARP                         /* simple_expr/toplevel_directive */
+  %nonassoc below_DOT
+  %nonassoc DOT
+  /* Finally, the first tokens of simple_expr are above everything else. */
+! %nonassoc BACKQUOTE BANG BEGIN CHAR FALSE FLOAT INT INT32 INT64
+            LBRACE LBRACELESS LBRACKET LBRACKETBAR LIDENT LPAREN
+            NEW NATIVEINT PREFIXOP STRING TRUE UIDENT
+--- 666,675 ----
+  %nonassoc prec_constr_appl              /* above AS BAR COLONCOLON COMMA */
+  %nonassoc below_SHARP
+! %nonassoc SHARP                  /* simple_expr/toplevel_directive */
+! %left SHARPJS
+  %nonassoc below_DOT
+  %nonassoc DOT
+  /* Finally, the first tokens of simple_expr are above everything else. */
+! %nonassoc BACKQUOTE BANG BEGIN CHAR FALSE FLOAT BIGINT INT INT32 INT64
+            LBRACE LBRACELESS LBRACKET LBRACKETBAR LIDENT LPAREN
+            NEW NATIVEINT PREFIXOP STRING TRUE UIDENT
+***************
+*** 1033,1037 ****
+        { mkinfix $1 ":=" $3 }
+    | subtractive expr %prec prec_unary_minus
+!       { mkuminus $1 $2 }
+    | additive expr %prec prec_unary_plus
+        { mkuplus $1 $2 }
+--- 1239,1243 ----
+        { mkinfix $1 ":=" $3 }
+    | subtractive expr %prec prec_unary_minus
+!       { mkuminus false $1 $2 }
+    | additive expr %prec prec_unary_plus
+        { mkuplus $1 $2 }
+***************
+*** 1061,1065 ****
+        { mkexp(Pexp_ident (mkrhs $1 1)) }
+    | constant
+!       { mkexp(Pexp_constant $1) }
+    | constr_longident %prec prec_constant_constructor
+        { mkexp(Pexp_construct(mkrhs $1 1, None, false)) }
+--- 1267,1279 ----
+        { mkexp(Pexp_ident (mkrhs $1 1)) }
+    | constant
+!       { mkexp(pexp_constant false $1) }
+!   | BIGINT
+!       { mkexp(Pexp_apply(ghexpid (Lident "big_int_of_string"),
+!                          ["", mkexp(Pexp_constant(Const_string $1))])) }
+!   | BACKQUOTE constant
+!       { mkexp(pexp_constant true $2) }
+!   | BACKQUOTE BIGINT
+!       { mkexp(Pexp_apply(ghexpid (Lident "string_to_big_int"),
+!                          ["", mkexp(Pexp_constant(Const_string $2))])) }
+    | constr_longident %prec prec_constant_constructor
+        { mkexp(Pexp_construct(mkrhs $1 1, None, false)) }
+***************
+*** 1126,1129 ****
+--- 1340,1353 ----
+    | simple_expr SHARP label
+        { mkexp(Pexp_send($1, $3)) }
++   | simple_expr SHARPJS label
++       { make_js_get $1 $3 }
++   | simple_expr SHARPJS label LESSMINUS expr
++       { make_js_set $1 $3 $5 }
++   | simple_expr SHARPJS label LPAREN expr_comma_list RPAREN
++       { make_js_call $1 $3 (List.rev $5) }
++   | simple_expr SHARPJS label LPAREN expr RPAREN
++       { make_js_call $1 $3 [$5] }
++   | simple_expr SHARPJS label LPAREN RPAREN
++       { make_js_call $1 $3 [] }
+    | LPAREN MODULE module_expr RPAREN
+        { mkexp (Pexp_pack $3) }
+diff -C 2 -r ocaml-4.00.0.orig/stdlib/pervasives.mli ocaml-4.00.0/stdlib/pervasives.mli
+*** ocaml-4.00.0.orig/stdlib/pervasives.mli	2012-05-02 16:39:52.000000000 +0200
+--- ocaml-4.00.0/stdlib/pervasives.mli	2012-08-31 14:14:22.581996428 +0200
+***************
+*** 41,45 ****
+      provided for use in your programs.*)
+  
+- 
+  (** {6 Comparisons} *)
+  
+--- 41,44 ----
+diff -C 2 -r ocaml-4.00.0.orig/toplevel/genprintval.ml ocaml-4.00.0/toplevel/genprintval.ml
+*** ocaml-4.00.0.orig/toplevel/genprintval.ml	2012-07-10 16:54:19.000000000 +0200
+--- ocaml-4.00.0/toplevel/genprintval.ml	2012-08-31 14:31:35.918010071 +0200
+***************
+*** 22,25 ****
+--- 22,27 ----
+  open Outcometree
+  
++ exception Not_handled
++ 
+  module type OBJ =
+    sig
+***************
+*** 46,49 ****
+--- 48,55 ----
+            Path.t -> Types.type_expr -> (formatter -> t -> unit) -> unit
+      val remove_printer : Path.t -> unit
++     val install_printer2 :
++       Path.t -> Types.type_expr -> (Env.t -> Types.type_expr -> t ->
++                                     Outcometree.out_value) -> unit
++     val remove_printer2 : Path.t -> unit
+      val outval_of_untyped_exception : t -> Outcometree.out_value
+      val outval_of_value :
+***************
+*** 53,56 ****
+--- 59,68 ----
+    end
+  
++ (* An abstract type *)
++ 
++ let abstract_type =
++   Ctype.newty (Tconstr (Pident (Ident.create "abstract"), [], ref Mnil))
++ 
++ 
+  module Make(O : OBJ)(EVP : EVALPATH with type valu = O.t) = struct
+  
+***************
+*** 112,120 ****
+      ] : (Path.t * type_expr * (O.t -> Outcometree.out_value)) list)
+  
+      let install_printer path ty fn =
+        let print_val ppf obj =
+          try fn ppf obj with
+!         | exn ->
+!            fprintf ppf "<printer %a raised an exception>" Printtyp.path path in
+        let printer obj = Oval_printer (fun ppf -> print_val ppf obj) in
+        printers := (path, ty, printer) :: !printers
+--- 124,133 ----
+      ] : (Path.t * type_expr * (O.t -> Outcometree.out_value)) list)
+  
++ 
+      let install_printer path ty fn =
+        let print_val ppf obj =
+          try fn ppf obj with
+!           | exn ->
+!             fprintf ppf "<printer %a raised an exception>" Printtyp.path path in
+        let printer obj = Oval_printer (fun ppf -> print_val ppf obj) in
+        printers := (path, ty, printer) :: !printers
+***************
+*** 162,174 ****
+        tree_of_qualified (fun lid env -> (snd (Env.lookup_label lid env)).lbl_res)
+  
+!     (* An abstract type *)
+  
+!     let abstract_type =
+!       Ctype.newty (Tconstr (Pident (Ident.create "abstract"), [], ref Mnil))
+  
+!     (* The main printing function *)
+  
+!     let outval_of_value max_steps max_depth check_depth env obj ty =
+  
+        let printer_steps = ref max_steps in
+  
+--- 175,202 ----
+        tree_of_qualified (fun lid env -> (snd (Env.lookup_label lid env)).lbl_res)
+  
+!     (* The main printing function *)
+! 
+!     let printers2 = ref []
+  
+!     let install_printer2 path ty fn =
+!       printers2 := (path, ty, fn) :: !printers2
+  
+!     let remove_printer2 path =
+!       let rec remove = function
+!         | [] -> raise Not_found
+!         | (p, ty, fn as printer) :: rem ->
+!             if Path.same p path then rem else printer :: remove rem in
+!       printers2 := remove !printers2
+  
+!     let find_printer2 env ty obj =
+!       let rec find = function
+!         | [] -> raise Not_found
+!         | (name, sch, printer) :: remainder ->
+!             if Ctype.moregeneral env false sch ty
+!             then printer env ty obj
+!             else find remainder
+!       in find !printers2
+  
++     let outval_of_value max_steps max_depth check_depth env obj ty =
+        let printer_steps = ref max_steps in
+  
+***************
+*** 180,183 ****
+--- 208,214 ----
+            find_printer env ty obj
+          with Not_found ->
++          try
++            find_printer2 env ty obj
++          with Not_found ->
+            match (Ctype.repr ty).desc with
+            | Tvar _ | Tunivar _ ->
+diff -C 2 -r ocaml-4.00.0.orig/toplevel/genprintval.mli ocaml-4.00.0/toplevel/genprintval.mli
+*** ocaml-4.00.0.orig/toplevel/genprintval.mli	2012-07-10 16:54:19.000000000 +0200
+--- ocaml-4.00.0/toplevel/genprintval.mli	2012-08-31 14:14:22.585996428 +0200
+***************
+*** 18,21 ****
+--- 18,23 ----
+  open Format
+  
++ val abstract_type : Types.type_expr
++ 
+  module type OBJ =
+    sig
+***************
+*** 35,39 ****
+      val same_value: valu -> valu -> bool
+    end
+! 
+  module type S =
+    sig
+--- 37,41 ----
+      val same_value: valu -> valu -> bool
+    end
+! exception Not_handled
+  module type S =
+    sig
+***************
+*** 42,45 ****
+--- 44,50 ----
+            Path.t -> Types.type_expr -> (formatter -> t -> unit) -> unit
+      val remove_printer : Path.t -> unit
++     val install_printer2 :
++           Path.t -> Types.type_expr -> (Env.t -> Types.type_expr -> t -> Outcometree.out_value) -> unit
++     val remove_printer2 : Path.t -> unit
+      val outval_of_untyped_exception : t -> Outcometree.out_value
+      val outval_of_value :
+diff -C 2 -r ocaml-4.00.0.orig/toplevel/opttopdirs.ml ocaml-4.00.0/toplevel/opttopdirs.ml
+*** ocaml-4.00.0.orig/toplevel/opttopdirs.ml	2012-01-20 15:23:34.000000000 +0100
+--- ocaml-4.00.0/toplevel/opttopdirs.ml	2012-08-31 14:14:22.585996428 +0200
+***************
+*** 98,103 ****
+  (* Install, remove a printer *)
+  
+! type 'a printer_type_new = Format.formatter -> 'a -> unit
+! type 'a printer_type_old = 'a -> unit
+  
+  let match_printer_type ppf desc typename =
+--- 98,105 ----
+  (* Install, remove a printer *)
+  
+! type 'a printer_type2 = Format.formatter -> Types.type_expr -> 'a -> unit
+! type 'a printer_type1 = Format.formatter -> 'a -> unit
+! type 'a printer_type0 = 'a -> unit
+! 
+  
+  let match_printer_type ppf desc typename =
+***************
+*** 123,129 ****
+      let (ty_arg, is_old_style) =
+        try
+!         (match_printer_type ppf desc "printer_type_new", false)
+        with Ctype.Unify _ ->
+!         (match_printer_type ppf desc "printer_type_old", true) in
+      (ty_arg, path, is_old_style)
+    with
+--- 125,134 ----
+      let (ty_arg, is_old_style) =
+        try
+!         (match_printer_type ppf desc "printer_type2", 2)
+!       with Ctype.Unify _ ->
+!       try
+!         (match_printer_type ppf desc "printer_type1", 1)
+        with Ctype.Unify _ ->
+!         (match_printer_type ppf desc "printer_type0", 0) in
+      (ty_arg, path, is_old_style)
+    with
+***************
+*** 140,149 ****
+      let (ty_arg, path, is_old_style) = find_printer_type ppf lid in
+      let v = eval_path path in
+!     let print_function =
+!       if is_old_style then
+!         (fun formatter repr -> Obj.obj v (Obj.obj repr))
+!       else
+!         (fun formatter repr -> Obj.obj v formatter (Obj.obj repr)) in
+!     install_printer path ty_arg print_function
+    with Exit -> ()
+  
+--- 145,156 ----
+      let (ty_arg, path, is_old_style) = find_printer_type ppf lid in
+      let v = eval_path path in
+!     match is_old_style with
+!       | 0 -> install_printer path ty_arg
+!           (fun formatter repr -> Obj.obj v (Obj.obj repr))
+!       | 1 -> install_printer path ty_arg
+!           (fun formatter repr -> Obj.obj v (Obj.obj repr))
+!       | 2 -> install_printer2 path ty_arg
+!         (fun formatter ty repr -> Obj.obj v formatter ty (Obj.obj repr))
+!       | _ -> assert false
+    with Exit -> ()
+  
+diff -C 2 -r ocaml-4.00.0.orig/toplevel/topdirs.ml ocaml-4.00.0/toplevel/topdirs.ml
+*** ocaml-4.00.0.orig/toplevel/topdirs.ml	2012-07-07 13:41:17.000000000 +0200
+--- ocaml-4.00.0/toplevel/topdirs.ml	2012-08-31 14:14:22.585996428 +0200
+***************
+*** 173,178 ****
+  (* Install, remove a printer *)
+  
+! type 'a printer_type_new = Format.formatter -> 'a -> unit
+! type 'a printer_type_old = 'a -> unit
+  
+  let match_printer_type ppf desc typename =
+--- 173,180 ----
+  (* Install, remove a printer *)
+  
+! type 'a printer_type2 = Env.t -> Types.type_expr -> 'a -> Outcometree.out_value
+! type 'a printer_type1 = Format.formatter -> 'a -> unit
+! type 'a printer_type0 = 'a -> unit
+! 
+  
+  let match_printer_type ppf desc typename =
+***************
+*** 198,204 ****
+      let (ty_arg, is_old_style) =
+        try
+!         (match_printer_type ppf desc "printer_type_new", false)
+        with Ctype.Unify _ ->
+!         (match_printer_type ppf desc "printer_type_old", true) in
+      (ty_arg, path, is_old_style)
+    with
+--- 200,209 ----
+      let (ty_arg, is_old_style) =
+        try
+!         (match_printer_type ppf desc "printer_type2", 2)
+!       with Ctype.Unify _ ->
+!       try
+!         (match_printer_type ppf desc "printer_type1", 1)
+        with Ctype.Unify _ ->
+!         (match_printer_type ppf desc "printer_type0", 0) in
+      (ty_arg, path, is_old_style)
+    with
+***************
+*** 215,224 ****
+      let (ty_arg, path, is_old_style) = find_printer_type ppf lid in
+      let v = eval_path path in
+!     let print_function =
+!       if is_old_style then
+!         (fun formatter repr -> Obj.obj v (Obj.obj repr))
+!       else
+!         (fun formatter repr -> Obj.obj v formatter (Obj.obj repr)) in
+!     install_printer path ty_arg print_function
+    with Exit -> ()
+  
+--- 220,230 ----
+      let (ty_arg, path, is_old_style) = find_printer_type ppf lid in
+      let v = eval_path path in
+!     match is_old_style with
+!       | 0 -> install_printer path ty_arg
+!           (fun formatter repr -> Obj.obj v (Obj.obj repr))
+!       | 1 -> install_printer path ty_arg
+!           (fun formatter repr -> Obj.obj v formatter (Obj.obj repr))
+!       | 2 -> install_printer2 path ty_arg (Obj.obj v)
+!       | _ -> assert false
+    with Exit -> ()
+  
+diff -C 2 -r ocaml-4.00.0.orig/toplevel/topdirs.mli ocaml-4.00.0/toplevel/topdirs.mli
+*** ocaml-4.00.0.orig/toplevel/topdirs.mli	2012-07-07 13:41:17.000000000 +0200
+--- ocaml-4.00.0/toplevel/topdirs.mli	2012-08-31 14:14:22.585996428 +0200
+***************
+*** 29,34 ****
+  val dir_untrace_all : formatter -> unit -> unit
+  
+! type 'a printer_type_new = Format.formatter -> 'a -> unit
+! type 'a printer_type_old = 'a -> unit
+  
+  (* For topmain.ml. Maybe shouldn't be there *)
+--- 29,35 ----
+  val dir_untrace_all : formatter -> unit -> unit
+  
+! type 'a printer_type2 = Env.t -> Types.type_expr -> 'a -> Outcometree.out_value
+! type 'a printer_type1 = Format.formatter -> 'a -> unit
+! type 'a printer_type0 = 'a -> unit
+  
+  (* For topmain.ml. Maybe shouldn't be there *)
+diff -C 2 -r ocaml-4.00.0.orig/toplevel/toploop.ml ocaml-4.00.0/toplevel/toploop.ml
+*** ocaml-4.00.0.orig/toplevel/toploop.ml	2012-07-10 16:54:19.000000000 +0200
+--- ocaml-4.00.0/toplevel/toploop.ml	2012-08-31 14:14:22.585996428 +0200
+***************
+*** 96,99 ****
+--- 96,101 ----
+  let install_printer = Printer.install_printer
+  let remove_printer = Printer.remove_printer
++ let install_printer2 = Printer.install_printer2
++ let remove_printer2 = Printer.remove_printer2
+  
+  (* Hooks for parsing functions *)
+***************
+*** 445,446 ****
+--- 447,579 ----
+    Sys.interactive := false;
+    use_silently ppf name
++ 
++ let rec find_type2 env ty =
++   match (Ctype.repr ty).desc with
++     | Tconstr(path, ty_list, _) ->
++       begin
++       let decl = Env.find_type path env in
++       match decl with
++         | {type_kind = Type_abstract; type_manifest = None} ->
++           begin
++             match ty_list with
++                 [ty1; ty2] -> (ty1, ty2)
++               | _ -> raise Not_found
++           end
++         | {type_kind = Type_abstract; type_manifest = Some body} ->
++           find_type2 env
++             ( Ctype.apply env decl.type_params body ty_list )
++         | _ -> raise Not_found
++       end
++     | _ -> raise Not_found
++ 
++ let find_type2 env ty =
++   try
++     find_type2 env ty
++   with _ ->
++     (Genprintval.abstract_type, Genprintval.abstract_type)
++ 
++ let rec find_type1 env ty =
++   match (Ctype.repr ty).desc with
++     | Tconstr(path, ty_list, _) ->
++       begin
++       let decl = Env.find_type path env in
++       match decl with
++         | {type_kind = Type_abstract; type_manifest = None} ->
++           begin
++             match ty_list with
++                 [ty1] -> ty1
++               | _ -> raise Not_found
++           end
++         | {type_kind = Type_abstract; type_manifest = Some body} ->
++           find_type1 env
++             ( Ctype.apply env decl.type_params body ty_list )
++         | _ -> raise Not_found
++       end
++     | _ -> raise Not_found
++ 
++ let find_type1 env ty =
++   try
++     find_type1 env ty
++   with _ ->
++     Genprintval.abstract_type
++ 
++ let stringers = [
++   Predef.type_int, (fun i -> string_of_int (Obj.magic i));
++   Predef.type_float, (fun i -> string_of_float (Obj.magic i));
++   Predef.type_string, (fun i -> Printf.sprintf "\"%s\"" (String.escaped (Obj.magic i)));
++   Predef.type_char, (fun i -> String.make 1 (Obj.magic i));
++   Predef.type_int32, (fun i -> Int32.to_string (Obj.magic i));
++   Predef.type_int64, (fun i -> Int64.to_string (Obj.magic i));
++ ]
++ 
++ let rec find_stringer env ty list =
++   match list with
++       [] -> raise Not_found
++     | (ty', stringer) :: tail ->
++       if Ctype.moregeneral env false ty' ty then stringer else find_stringer env ty tail
++ 
++ let print_hashtbl env ty t =
++   let (t1, t2) = find_type2 env ty in
++   let stringer =
++     try
++       find_stringer env t1 stringers
++     with _ -> (fun _ -> "<too complex>")
++   in
++   let list = ref [] in
++   Hashtbl.iter (fun k v ->
++     list := (Oide_ident (stringer k), outval_of_value env (Obj.repr v) t2) :: !list
++   ) t;
++   Oval_record (List.rev !list)
++ 
++ let exn_printer = ref (fun _ _ _ -> raise Genprintval.Not_handled)
++ let print_exn env ty exn = !exn_printer env ty exn
++ let set_exn_printer printer = exn_printer := printer
++ 
++ let print_queue env ty t =
++   let t1 = find_type1 env ty in
++   let list = ref [] in
++   Queue.iter (fun v ->
++     list := (outval_of_value env (Obj.repr v) t1) :: !list
++   ) t;
++   Oval_list (List.rev !list)
++ 
++ let print_stack env ty t =
++   let t1 = find_type1 env ty in
++   let list = ref [] in
++   Stack.iter (fun v ->
++     list := (outval_of_value env (Obj.repr v) t1) :: !list
++   ) t;
++   Oval_list (List.rev !list)
++ 
++ let print_lazy env ty t =
++   let t1 = find_type1 env ty in
++   if Lazy.lazy_is_val t then
++     let v = Lazy.force t in
++     Oval_constr (Oide_ident "lazy", [outval_of_value env (Obj.repr v) t1])
++   else
++     Oval_stuff "<not evaluated>"
++ 
++ (*
++  #install_printer Toploop.print_hashtbl;;
++  #install_printer Toploop.print_queue;;
++  #install_printer Toploop.print_stack;;
++  #install_printer Toploop.print_lazy;;
++ 
++  let of_list list =
++   let t = Hashtbl.create 13 in
++   List.iter (fun (k,v) -> Hashtbl.add t k v) list;
++  t;;
++ 
++ of_list [1,1; 2,2 ];;
++ of_list [ "a", [1]; "b", [1;2] ];;
++ of_list [ (1,1) , [1] ];;
++ 
++ let x = lazy (4 * 4);;
++ x;;
++ Lazy.force x;;
++ x;;
++ 
++ *)
++ 
++ let set_wrap x = Clflags.wrap_constants := x
++ 
+diff -C 2 -r ocaml-4.00.0.orig/toplevel/toploop.mli ocaml-4.00.0/toplevel/toploop.mli
+*** ocaml-4.00.0.orig/toplevel/toploop.mli	2011-07-27 16:17:02.000000000 +0200
+--- ocaml-4.00.0/toplevel/toploop.mli	2012-08-31 14:14:22.585996428 +0200
+***************
+*** 73,76 ****
+--- 73,80 ----
+  val remove_printer : Path.t -> unit
+  
++ val outval_of_value : Env.t -> Obj.t -> Types.type_expr -> Outcometree.out_value
++ val install_printer2 : Path.t -> Types.type_expr -> (Env.t -> Types.type_expr -> Obj.t -> Outcometree.out_value) -> unit
++ val remove_printer2 : Path.t -> unit
++ 
+  val max_printer_depth: int ref
+  val max_printer_steps: int ref
+***************
+*** 111,112 ****
+--- 115,133 ----
+  
+  val may_trace : bool ref
++ 
++ val print_hashtbl : Env.t -> Types.type_expr -> ('a, 'b) Hashtbl.t -> Outcometree.out_value
++ val print_stack : Env.t -> Types.type_expr -> 'a Stack.t -> Outcometree.out_value
++ val print_queue : Env.t -> Types.type_expr -> 'a Queue.t -> Outcometree.out_value
++ val print_lazy : Env.t -> Types.type_expr -> 'a Lazy.t -> Outcometree.out_value
++  
++ val set_wrap : bool -> unit
++ 
++ val print_exn : Env.t -> Types.type_expr -> exn -> Outcometree.out_value
++ val set_exn_printer : (Env.t -> Types.type_expr -> exn -> Outcometree.out_value) -> unit
++ 
++ val print_hashtbl : Env.t -> Types.type_expr -> ('a, 'b) Hashtbl.t -> Outcometree.out_value
++ val print_stack : Env.t -> Types.type_expr -> 'a Stack.t -> Outcometree.out_value
++ val print_queue : Env.t -> Types.type_expr -> 'a Queue.t -> Outcometree.out_value
++ val print_lazy : Env.t -> Types.type_expr -> 'a Lazy.t -> Outcometree.out_value
++ 
++ val set_wrap : bool -> unit
+diff -C 2 -r ocaml-4.00.0.orig/utils/clflags.ml ocaml-4.00.0/utils/clflags.ml
+*** ocaml-4.00.0.orig/utils/clflags.ml	2012-05-30 15:29:48.000000000 +0200
+--- ocaml-4.00.0/utils/clflags.ml	2012-08-31 14:15:02.429996954 +0200
+***************
+*** 97,100 ****
+--- 97,101 ----
+  let shared = ref false (* -shared *)
+  let dlcode = ref true (* not -nodynlink *)
++ let wrap_constants = ref false
+  
+  let runtime_variant = ref "";;     (* -runtime-variant *)
+diff -C 2 -r ocaml-4.00.0.orig/utils/clflags.mli ocaml-4.00.0/utils/clflags.mli
+*** ocaml-4.00.0.orig/utils/clflags.mli	2012-05-30 15:29:48.000000000 +0200
+--- ocaml-4.00.0/utils/clflags.mli	2012-08-31 14:15:19.885997185 +0200
+***************
+*** 81,84 ****
+--- 81,85 ----
+  val shared : bool ref
+  val dlcode : bool ref
++ val wrap_constants : bool ref
+  val runtime_variant : string ref
+  

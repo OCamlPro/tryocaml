@@ -26,15 +26,15 @@ let f paths js_files input_file output_file =
   List.iter Linker.add_file js_files;
   let paths = List.rev_append paths [Findlib.package_directory "stdlib"] in
 
-  
+
   let t1 = Util.Timer.make () in
   let p =
     match input_file with
       None ->
-        Parse.from_channel ~paths stdin
+        Js_parse.from_channel ~paths stdin
     | Some f ->
         let ch = open_in_bin f in
-        let p = Parse.from_channel ~paths ch in
+        let p = Js_parse.from_channel ~paths ch in
         close_in ch;
         p
   in
@@ -49,7 +49,7 @@ let f paths js_files input_file output_file =
       close_out ch
   end;
   if times () then Format.eprintf "compilation: %a@." Util.Timer.print t
- 
+
 let _ =
   Findlib.init ();
   Util.Timer.init Unix.gettimeofday;
@@ -63,10 +63,11 @@ let _ =
      ("-disable",
       Arg.String Util.set_disabled, "<name> disable optimization <name>");
      ("-pretty", Arg.Unit Driver.set_pretty, " pretty print the output");
+     ("-debuginfo", Arg.Unit Driver.set_debug_info, " output debug info");
      ("-noinline", Arg.Unit Inline.disable_inlining, " disable inlining");
      ("-noruntime", Arg.Unit (fun () -> no_runtime := true),
       " do not include the standard runtime");
-     ("-toplevel", Arg.Unit Parse.build_toplevel,
+     ("-toplevel", Arg.Unit Js_parse.build_toplevel,
       " compile a toplevel");
      ("-I", Arg.String (fun s -> paths := s :: !paths),
       "<dir> Add <dir> to the list of include directories");
