@@ -18,9 +18,9 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
-let debug = Util.debug "driver"
+let debug = Util.debug "main"
 
-let f ?standalone p =
+let f ?standalone (p, d) =
 if debug () then Code.print_program (fun _ _ -> "") p;
 
 if debug () then Format.eprintf "Tail-call optimization...@.";
@@ -61,10 +61,12 @@ if debug () then Format.eprintf "Dead-code...@.";
   let (p, live_vars) = Deadcode.f p in
 
 if debug () then Code.print_program (fun _ _ -> "") p;
-  fun formatter -> Generate.f formatter ?standalone p live_vars
+  fun formatter -> Generate.f formatter ?standalone p d live_vars
 
 let from_string prims s =
-  let p = Parse.from_string prims s in
+  let p = Js_parse.from_string prims s in
   f ~standalone:false p
 
-let set_pretty () = Generate.set_pretty (); Parse.set_pretty ()
+let set_pretty () = Generate.set_pretty (); Js_parse.set_pretty ()
+
+let set_debug_info () = Js_output.set_debug_info ()

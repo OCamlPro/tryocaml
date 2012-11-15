@@ -20,8 +20,10 @@ json.cmo: js.cmi json.cmi
 json.cmx: js.cmx json.cmi
 lwt_js.cmo: js.cmi dom_html.cmi lwt_js.cmi
 lwt_js.cmx: js.cmx dom_html.cmx lwt_js.cmi
-lwt_js_events.cmo: js.cmi dom_html.cmi lwt_js_events.cmi
-lwt_js_events.cmx: js.cmx dom_html.cmx lwt_js_events.cmi
+lwt_js_events.cmo: lwt_js.cmi js.cmi firebug.cmi dom_html.cmi dom.cmi \
+    lwt_js_events.cmi
+lwt_js_events.cmx: lwt_js.cmx js.cmx firebug.cmx dom_html.cmx dom.cmx \
+    lwt_js_events.cmi
 regexp.cmo: js.cmi regexp.cmi
 regexp.cmx: js.cmx regexp.cmi
 typed_array.cmo: js.cmi typed_array.cmi
@@ -30,6 +32,8 @@ url.cmo: regexp.cmi js.cmi dom_html.cmi url.cmi
 url.cmx: regexp.cmx js.cmx dom_html.cmx url.cmi
 webGL.cmo: typed_array.cmi js.cmi dom_html.cmi webGL.cmi
 webGL.cmx: typed_array.cmx js.cmx dom_html.cmx webGL.cmi
+webSockets.cmo: js.cmi dom_html.cmi dom.cmi webSockets.cmi
+webSockets.cmx: js.cmx dom_html.cmx dom.cmx webSockets.cmi
 xmlHttpRequest.cmo: url.cmi js.cmi form.cmi file.cmi dom_html.cmi dom.cmi \
     xmlHttpRequest.cmi
 xmlHttpRequest.cmx: url.cmx js.cmx form.cmx file.cmx dom_html.cmx dom.cmx \
@@ -50,6 +54,7 @@ regexp.cmi:
 typed_array.cmi: js.cmi
 url.cmi:
 webGL.cmi: typed_array.cmi js.cmi dom_html.cmi
+webSockets.cmi: js.cmi dom_html.cmi dom.cmi
 xmlHttpRequest.cmi: url.cmi js.cmi form.cmi file.cmi dom.cmi
 deriving_json/deriving_Json_lexer.cmo: deriving_json/deriving_Json_lexer.cmi
 deriving_json/deriving_Json_lexer.cmx: deriving_json/deriving_Json_lexer.cmi

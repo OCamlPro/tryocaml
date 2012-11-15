@@ -3,7 +3,7 @@ depend: $(SOURCES)
 	$(OCAMLDEP) $(INCLUDES) $(PP) $(SOURCES) *.ml *.mli > .depend
 
 clean:
-	rm -f *.cm[aiox] *.o *.annot *~ $(TARGETS)
+	rm -f *.cm[aiox] *.cmt *.cmti *.o *.annot *~ $(TARGETS)
 
 -include .depend
 

@@ -29,6 +29,8 @@ let debug = Util.debug "parser"
 
 let blocks = ref AddrSet.empty
 
+type debug_loc = int -> (string * int * int * int) option
+
 let add_jump info pc = blocks := AddrSet.add pc !blocks
 
 let rec scan info code pc len =
@@ -161,10 +163,21 @@ module Debug = struct
       ce_heap: int Ident.tbl;  (* Structure of the heap-allocated env *)
       ce_rec: int Ident.tbl }  (* Functions bound by the same let rec *)
 
+  type pos =
+    { pos_fname: string;
+      pos_lnum: int;
+      pos_bol: int;
+      pos_cnum: int }
+
+  type loc_info =
+    { li_start: pos;
+      li_end: pos;
+      li_ghost: unit }
+
   type debug_event =
     { mutable ev_pos: int;                (* Position in bytecode *)
       ev_module: string;                  (* Name of defining module *)
-      ev_loc: unit;                       (* Location in source file *)
+      ev_loc: loc_info;                   (* Location in source file *)
       ev_kind: unit;                      (* Before/after event *)
       ev_info: unit;                      (* Extra information *)
       ev_typenv: unit;                    (* Typing environment *)
@@ -195,6 +208,16 @@ module Debug = struct
       Ident.table_contents ev.ev_stacksize ev.ev_compenv.ce_stack
     with Not_found ->
       []
+
+  let find_loc pc =
+    try
+      let ev = Hashtbl.find events_by_pc pc in
+      let loc = ev.ev_loc in
+      let pos = loc.li_start in
+      Some (pos.pos_fname, pos.pos_lnum, pos.pos_cnum - pos.pos_bol,
+            loc.li_end.pos_cnum - loc.li_end.pos_bol)
+    with Not_found ->
+      None
 
   let rec propagate l1 l2 =
     match l1, l2 with
@@ -878,7 +901,7 @@ and compile code limit pc state instrs =
         Format.printf "}@."
       end;
       compile code limit (pc + 2) state
-        (Let (x, Block (-1, Array.of_list contents)) :: instrs)
+        (Let (x, Block (254, Array.of_list contents)) :: instrs)
   | GETFIELD0 ->
       let y = State.accu state in
       let (x, state) = State.fresh_var state in
@@ -1651,7 +1674,10 @@ let parse_bytecode code state standalone_info =
   in
   let free_pc = free_pc + 1 in
   let blocks = match_exn_traps (pc, blocks, free_pc) in
-  (pc, blocks, free_pc)
+  let debug pc =
+    Debug.find_loc pc
+  in
+  ((pc, blocks, free_pc), debug)
 
 (****)
 
@@ -1751,8 +1777,7 @@ let from_channel ~paths ic =
   let globals = make_globals (Array.length init_data) init_data primitives in
   if !is_toplevel then begin
     Tbl.iter (fun _ n -> globals.is_exported.(n) <- true) symbols.num_tbl;
-    Primitives.mark_used "caml_string_greaterthan";
-    Primitives.mark_used "caml_js_meth_call"
+    Primitives.mark_used "caml_string_greaterthan"
   end;
 
   fix_min_max_int code;

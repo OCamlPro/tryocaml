@@ -60,7 +60,7 @@ let seq_loop evh ?use_capture target handler =
       aux ()
     else Lwt.return ()
   in
-  ignore (aux ());
+  Lwt.async aux;
   t
 
 let click ?use_capture target =
@@ -84,6 +84,10 @@ let keydown ?use_capture target =
   make_event Dom_html.Event.keydown ?use_capture target
 let keyup ?use_capture target =
   make_event Dom_html.Event.keyup ?use_capture target
+let change ?use_capture target =
+  make_event Dom_html.Event.change ?use_capture target
+let input ?use_capture target =
+  make_event Dom_html.Event.input ?use_capture target
 
 let dragstart ?use_capture target =
   make_event Dom_html.Event.dragstart ?use_capture target
@@ -156,6 +160,10 @@ let keydowns ?use_capture t =
   seq_loop keydown ?use_capture t
 let keyups ?use_capture t =
   seq_loop keyup ?use_capture t
+let changes ?use_capture t =
+  seq_loop change ?use_capture t
+let inputs ?use_capture t =
+  seq_loop input ?use_capture t
 
 let dragstarts ?use_capture t =
   seq_loop dragstart ?use_capture t
