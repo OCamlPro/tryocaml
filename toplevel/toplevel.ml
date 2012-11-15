@@ -706,6 +706,8 @@ let run () =
               Cookie.set_cookie "step" s;
               Tutorial.step (int_of_string s) in
   update_lesson_step !Tutorial.this_lesson !Tutorial.this_step;
+  let _ =
+    Tutorial.read_fun := (fun msg default -> read_from_input ~msg:msg ~default:default) in
   Js._false
 
 let main () =
