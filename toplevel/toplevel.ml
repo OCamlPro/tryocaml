@@ -345,14 +345,13 @@ let get_storage () =
 let get_history_size () =
   let st = get_storage () in
   match Js.Opt.to_option
-    (st##getItem(Js.string "history last")) with
+    (st##getItem(_s "history last")) with
       | None -> 0
       | Some s -> try int_of_string (Js.to_string s) with _ -> 0
 
 let set_history_size i =
   let st = get_storage () in
-  st##setItem(Js.string "history last",
-                                Js.string (string_of_int i))
+  st##setItem(_s "history last", _s (string_of_int i))
 
 let get_history () =
   try
@@ -361,7 +360,7 @@ let get_history () =
     let h = Array.init size
       (fun i -> Js.Opt.get
         (st##getItem(
-          Js.string (Printf.sprintf "history %i" i)))
+          _s (Printf.sprintf "history %i" i)))
         (fun () -> failwith "no history item")) in
     Array.to_list h
   with _ -> (* Probably no local storage *)
@@ -376,10 +375,10 @@ let add_history s =
     let st = get_storage () in
     let size = get_history_size () in
     st##setItem(
-      Js.string (Printf.sprintf "history %i" size), s);
+      _s (Printf.sprintf "history %i" size), s);
     set_history_size (size+1);
   with
-    | _ -> Firebug.console##warn(Js.string "can't set history")
+    | _ -> Firebug.console##warn(_s "can't set history")
 
 let run () =
   let top = get_element_by_id "toplevel"  in
@@ -393,12 +392,12 @@ let run () =
         Buffer.add_substring b s i l)
       (fun _ ->
         Dom.appendChild output_area
-          (doc##createTextNode(Js.string (Buffer.contents b)));
+          (doc##createTextNode(_s (Buffer.contents b)));
         Buffer.clear b) in
 
   let textbox = Html.createTextarea doc in
-  textbox##value <- Js.string "";
-  textbox##id <- Js.string "console";
+  textbox##value <- _s "";
+  textbox##id <- _s "console";
   Dom.appendChild top textbox;
   textbox##focus();
   textbox##select();
@@ -413,13 +412,13 @@ let run () =
     let textbox = match Js.Opt.to_option (Html.CoerceTo.textarea textbox) with
       | None   -> assert false
       | Some t -> t in
-    let codes = Dom.list_of_nodeList (doc##getElementsByTagName(Js.string "code")) in
+    let codes = Dom.list_of_nodeList (doc##getElementsByTagName(_s "code")) in
     List.iter (fun code ->
       let html =  code##innerHTML in
       let txt = text_of_html (Js.to_string html) in
-      code##title <- Js.string (Tutorial.translate "Click here to execute this code");
+      code##title <- _s (Tutorial.translate "Click here to execute this code");
       code##onclick <- Html.handler (fun _ ->
-        textbox##value <- Js.string ( txt ^ ";;" );
+        textbox##value <- _s ( txt ^ ";;" );
         execute ();
         Js._true)
     ) codes
@@ -428,14 +427,14 @@ let run () =
     let s = Js.to_string textbox##value in
     if s <> "" then
       begin
-        history := Js.string s :: !history;
-        add_history (Js.string s);
+        history := _s s :: !history;
+        add_history (_s s);
       end;
     history_bckwrd := !history;
     history_frwrd := [];
-    textbox##value <- Js.string "";
+    textbox##value <- _s "";
     (try loop s ppf buffer with _ -> ());
-    Tutorial.debug_fun := (fun s -> Firebug.console##log (Js.string s));
+    Tutorial.debug_fun := (fun s -> Firebug.console##log (_s s));
     make_code_clickable ();
     textbox##focus();
     container##scrollTop <- container##scrollHeight
@@ -448,7 +447,7 @@ let run () =
   let ev = DragnDrop.init () in
   (* Customize dropable part *)
   ev.DragnDrop.ondrop <- (fun e  ->
-    container##className <- Js.string "";
+    container##className <- _s "";
     let file =
       match Js.Opt.to_option (e##dataTransfer##files##item(0)) with
         | None -> assert false
@@ -464,14 +463,14 @@ let run () =
         in
         textbox##value <- s;
         execute ();
-        textbox##value <- Js.string "";
+        textbox##value <- _s "";
         Js._false);
     reader##onerror <- Dom.handler
       (fun _ ->
-        Firebug.console##log (Js.string "Drang and drop failed.");
-        textbox##value <- Js.string "Printf.printf \"Drag and drop failed. Try again\"";
+        Firebug.console##log (_s "Drang and drop failed.");
+        textbox##value <- _s "Printf.printf \"Drag and drop failed. Try again\"";
         execute ();
-        textbox##value <- Js.string "";
+        textbox##value <- _s "";
         Js._true);
     reader##readAsText ((file :> (File.blob Js.t)));
     Js._false);
@@ -488,23 +487,23 @@ let run () =
              | Some t -> t in
            (* Special handling of ctrl key *)
            if keyEv##ctrlKey = Js._true then
-             textbox##value <- Js.string ((Js.to_string textbox##value) ^ "\n");
+             textbox##value <- _s ((Js.to_string textbox##value) ^ "\n");
            if keyEv##ctrlKey = Js._true || keyEv##shiftKey = Js._true then
              let rows_height = textbox##scrollHeight / (textbox##rows + 1) in
              let h = string_of_int (rows_height * (textbox##rows + 1) + 20) ^ "px" in
-             textbox##style##height <- Js.string h;
+             textbox##style##height <- _s h;
              Js._true
            else begin
              execute ();
              textbox##style##height <- tbox_init_size;
-             textbox##value <- Js.string "";
+             textbox##value <- _s "";
              Js._false
            end
 	 | 38 -> (* UP ARROW key *) begin
 	   match !history_bckwrd with
 	     | s :: l ->
 	       let str = Js.to_string textbox##value in
-	       history_frwrd := Js.string str :: !history_frwrd;
+	       history_frwrd := _s str :: !history_frwrd;
 	       textbox##value <- s;
 	       history_bckwrd := l;
 	       Js._false
@@ -514,7 +513,7 @@ let run () =
 	   match !history_frwrd with
 	     | s :: l ->
 	       let str = Js.to_string textbox##value in
-	       history_bckwrd := Js.string str :: !history_bckwrd;
+	       history_bckwrd := _s str :: !history_bckwrd;
 	       textbox##value <- s;
 	       history_frwrd := l;
 	       Js._false
@@ -523,19 +522,20 @@ let run () =
 	 | _ -> Js._true));
 
   let clear () =
-    output_area##innerHTML <- (Js.string "");
+    output_area##innerHTML <- (_s "");
     textbox##focus();
     textbox##select() in
 
   let reset () =
-    output_area##innerHTML <- (Js.string "");
+    output_area##innerHTML <- (_s "");
     Toploop.initialize_toplevel_env ();
     Toploop.input_name := "";
     exec ppf "open Tutorial";
     textbox##focus();
     textbox##select() in
+
   let set_cols i =
-    textbox##style##width <- Js.string ((string_of_int (i * 7)) ^ "px") in
+    textbox##style##width <- _s ((string_of_int (i * 7)) ^ "px") in
 
   let send_button =
     Button.create (Tutorial.translate "Send") (fun () -> execute ()) in
@@ -549,16 +549,16 @@ let run () =
     let content = Js.to_string output_area##innerHTML in
     let l = Regexp.split (Regexp.regexp ("\n")) content in
     let content =
-      Js.string (
+      _s (
         let l = List.filter (fun x ->
           try x.[0] = '#' with _ -> false) l in
         let l = List.map  (fun x -> String.sub x 2 ((String.length x) - 2)) l in
         String.concat "\n" l)
     in
     let uriContent =
-      Js.string ("data:application/octet-stream," ^
+      _s ("data:application/octet-stream," ^
                     (Js.to_string (Js.encodeURI content))) in
-    let _ = window##open_(uriContent, Js.string "Try OCaml", Js.null) in
+    let _ = window##open_(uriContent, _s "Try OCaml", Js.null) in
     window##close ()) in
 
   let update_lesson () =
@@ -574,10 +574,10 @@ let run () =
   (* Choose your language *)
   let form = Html.createDiv doc in
   let sel = Dom_html.createSelect doc in
-  sel##id <- Js.string "languages";
+  sel##id <- _s "languages";
   List.iter (fun (_, (lang, _)) ->
     let opt = Html.createOption doc in
-    Dom.appendChild opt (doc##createTextNode (Js.string lang));
+    Dom.appendChild opt (doc##createTextNode (_s lang));
     sel##add (opt, Js.null);
   ) Tutorial.langs;
   sel##onchange <-
@@ -712,9 +712,8 @@ let main () =
   try
     ignore (run ());
   with e ->
-    window##alert (Js.string
-                     (Printf.sprintf "exception %s during init."
-                        (Printexc.to_string e)))
+    window##alert (_s (Printf.sprintf "exception %s during init."
+                         (Printexc.to_string e)))
 
 (* Force some dependencies to be linked : *)
 let _ =
