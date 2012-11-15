@@ -58,15 +58,8 @@ let fold_children blocks pc f accu =
       accu
   | Branch (pc', _) | Poptrap (pc', _) ->
       f pc' accu
-  | Pushtrap (cont1, var, (pc1, state), pc2) ->
-    let accu, pc2 =
-      if AddrMap.mem pc2 blocks then accu, pc2 else
-        let (visited, blocks) = accu in
-        let blocks = AddrMap.add pc { block with
-          branch = Pushtrap(cont1, var, (pc1, state), -1) } blocks in
-        (visited, blocks), -1
-    in
-    f pc1 (if pc2 >= 0 then f pc2 accu else accu)
+  | Pushtrap (_, _, (pc1, _), pc2) ->
+      f pc1 (if pc2 >= 0 then f pc2 accu else accu)
   | Cond (_, _, (pc1, _), (pc2, _)) ->
       accu >> f pc1 >> f pc2
   | Switch (_, a1, a2) ->

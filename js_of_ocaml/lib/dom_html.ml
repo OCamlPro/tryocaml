@@ -271,6 +271,12 @@ and storage = object
   method clear : unit meth
 end
 
+and hashChangeEvent = object
+  inherit event
+  method oldURL : js_string t readonly_prop
+  method newURL : js_string t readonly_prop
+end
+
 and nodeSelector = object
   method querySelector : js_string t -> element t opt meth
   method querySelectorAll : js_string t -> element Dom.nodeList t meth
@@ -365,6 +371,9 @@ module Event = struct
   let dragleave = Dom.Event.make "dragleave"
   let drag = Dom.Event.make "drag"
   let drop = Dom.Event.make "drop"
+  let hashchange = Dom.Event.make "hashchange"
+  let change = Dom.Event.make "change"
+  let input = Dom.Event.make "input"
 
   let make = Dom.Event.make
 end
@@ -479,6 +488,7 @@ class type selectElement = object ('self)
   method focus : unit meth
 
   method onchange : ('self t, event t) event_listener prop
+  method oninput : ('self t, event t) event_listener prop
 end
 
 class type inputElement = object ('self)
@@ -509,6 +519,7 @@ class type inputElement = object ('self)
 
   method onselect : ('self t, event t) event_listener prop
   method onchange : ('self t, event t) event_listener prop
+  method oninput : ('self t, event t) event_listener prop
 end
 
 class type textAreaElement = object ('self)
@@ -530,6 +541,7 @@ class type textAreaElement = object ('self)
 
   method onselect : ('self t, event t) event_listener prop
   method onchange : ('self t, event t) event_listener prop
+  method oninput : ('self t, event t) event_listener prop
 end
 
 class type buttonElement = object
@@ -1012,9 +1024,10 @@ class type window = object
   method onresize : (window t, event t) event_listener prop
   method onscroll : (window t, event t) event_listener prop
   method onpopstate : (window t, popStateEvent t) event_listener prop
+  method onhashchange : (window t, hashChangeEvent t) event_listener prop
 end
 
-let window : window t = Js.Unsafe.variable "window"
+let window : window t = Js.Unsafe.variable "this" (* The toplevel object *)
 
 let document = window##document
 
@@ -1195,7 +1208,7 @@ let createCanvas doc : canvasElement t =
   if not (Opt.test c##getContext) then raise Canvas_not_available;
   c
 
-let html_element : htmlElement t constr = Js.Unsafe.variable "window.HTMLElement"
+let html_element : htmlElement t constr = Js.Unsafe.variable "this.HTMLElement"
 
 module CoerceTo = struct
   let element : #Dom.node Js.t -> element Js.t Js.opt =
@@ -1282,11 +1295,11 @@ module CoerceTo = struct
       Js.some (Js.Unsafe.coerce ev)
     else Js.null
 
-  let mouseEvent ev = unsafeCoerceEvent "window.MouseEvent" ev
-  let keyboardEvent ev = unsafeCoerceEvent "window.KeyboardEvent" ev
-  let wheelEvent ev = unsafeCoerceEvent "window.WheelEvent" ev
-  let mouseScrollEvent ev = unsafeCoerceEvent "window.MouseScrollEvent" ev
-  let popStateEvent ev = unsafeCoerceEvent "window.PopStateEvent" ev
+  let mouseEvent ev = unsafeCoerceEvent "this.MouseEvent" ev
+  let keyboardEvent ev = unsafeCoerceEvent "this.KeyboardEvent" ev
+  let wheelEvent ev = unsafeCoerceEvent "this.WheelEvent" ev
+  let mouseScrollEvent ev = unsafeCoerceEvent "this.MouseScrollEvent" ev
+  let popStateEvent ev = unsafeCoerceEvent "this.PopStateEvent" ev
 
 end
 

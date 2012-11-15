@@ -91,12 +91,12 @@ let resolve_branch blocks (pc, args) =
 let concat_blocks pc instr params handler args params' instr' last' =
   (* This is only valid because we know that the params only occur in
      the block *)
-  let m = Varsubst.build_mapping params' args in
-  let s = Varsubst.from_map m in
+  let m = Js_subst.build_mapping params' args in
+  let s = Js_subst.from_map m in
     { params = params;
       handler = handler;
-      body = instr @ Varsubst.instrs s instr';
-      branch = Varsubst.last s last' }
+      body = instr @ Js_subst.instrs s instr';
+      branch = Js_subst.last s last' }
 
 let rec block_simpl pc (preds, entries, blocks) =
 Format.eprintf "VV %d@." pc;
