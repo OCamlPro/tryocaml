@@ -19,6 +19,8 @@ val get_by_id : string -> string
 
 val get_by_name : string -> string
 
+val read_from_input : ?msg:string -> ?default:string -> string
+
 (** {2 Constructors}  *)
 
 (** [jsnew0] is a function to build an object using contructor [constr]

@@ -19,6 +19,12 @@ val lessons_table : (string * string * (string * (string * string)) list * (stri
 val debug_fun : (string -> unit) ref
 val message_fun : (string -> unit) ref
 val update_lang_fun : (unit -> unit) ref
+val read_fun : (string -> string -> string) ref
+val read_bool : unit -> bool
+val read_string : unit -> string
+val read_int : unit -> int
+val read_float : unit -> float
+
 
 val lessons : unit -> unit
 val steps : unit -> unit
