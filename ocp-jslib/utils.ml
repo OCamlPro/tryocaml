@@ -29,6 +29,9 @@ let get_by_name id =
     List.hd (Dom.list_of_nodeList (doc##getElementsByTagName (Js.string id))) in
   Js.to_string div##innerHTML
 
+let read_from_input ?msg:(msg="") ?default:(default="") =
+  Js.to_string (window##prompt (_s msg, _s default))
+
 let jsnew0 (constr : 'a Js.t Js.constr) () =
   (Js.Unsafe.new_obj constr [| |] : 'a Js.t)
 

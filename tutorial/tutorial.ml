@@ -3,6 +3,11 @@ let debug = ref false
 
 let debug_fun = ref (fun _ -> ())
 let update_lang_fun = ref (fun _ -> ())
+let read_fun = ref (fun _ _ -> "")
+let read_bool = fun () -> bool_of_string (!read_fun "Enter your answer" "")
+let read_string = fun () -> !read_fun "Enter your answer" ""
+let read_int = fun () -> int_of_string (!read_fun "Enter your answer" "")
+let read_float = fun () -> float_of_string (!read_fun "Enter your answer" "")
 
 let print_debug s = if !debug then (!debug_fun) s
 
@@ -207,7 +212,6 @@ let set_lang lang =
   !update_lang_fun ()
 
 let lang () = !current_lang
-
 
 external int_of_int : int -> int = "%identity"
 external nativeint_of_nativeint : nativeint -> nativeint = "%identity"

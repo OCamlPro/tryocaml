@@ -33,6 +33,24 @@ open Javascript
 
 module PP = Pretty_print
 
+let enable_debug = ref false
+let debug_info = ref None
+
+let set_debug_info () = enable_debug := true
+
+let output_debug_info f pc =
+  if !enable_debug then
+    match !debug_info, pc with
+    | Some dl, Some pc ->
+      (match dl pc with
+      | Some (file, l, s, e) ->
+        PP.string f "/*";
+        PP.string f (Format.sprintf "<<%d: %s %d %d %d>>"
+                       pc file l s e);
+        PP.string f "*/"
+      | None -> ())
+    | _, _ -> ()
+
 let opt_identifier f i =
   match i with
     None   -> ()
@@ -147,7 +165,7 @@ let rec need_paren l e =
       l <= 15 && need_paren 15 e
   | EVar _ | EStr _ | EArr _ | EBool _ | ENum _ | EQuote _ | EUn _ | ENew _ ->
       false
-  | EFun _ | EObj _ ->
+  | EFun (_, _) | EObj _ ->
       true
 
 let string_escape s =
@@ -198,7 +216,8 @@ let rec expression l f e =
       PP.break f;
       expression 0 f e2;
       if l > 0 then begin PP.string f ")"; PP.end_group f end
-  | EFun (i, l, b) ->
+  | EFun ((i, l, b), pc) ->
+      output_debug_info f pc;
       PP.start_group f 1;
       PP.start_group f 0;
       PP.start_group f 0;
@@ -255,8 +274,13 @@ let rec expression l f e =
           if v = float_of_string s2 then s2 else
           Printf.sprintf "%.18g" v
         in
-        if l > 13 && (v < 0. || (v = 0. && 1. /. v < 0.)) then begin
+        if
           (* Negative numbers may need to be parenthesized. *)
+          (l > 13 && (v < 0. || (v = 0. && 1. /. v < 0.)))
+            ||
+          (* Parenthesize as well when followed by a dot. *)
+          (l = 15)
+        then begin
           PP.string f "("; PP.string f s; PP.string f ")"
         end else
           PP.string f s
@@ -487,9 +511,10 @@ and statement f s =
           PP.string f ";";
           PP.end_group f
       end
-  | Expression_statement e ->
+  | Expression_statement (e, pc) ->
       (* Parentheses are required when the expression
          starts syntactically with "{" or "function" *)
+      output_debug_info f pc;
       if need_paren 0 e then begin
         PP.start_group f 1;
         PP.string f "(";
@@ -613,7 +638,8 @@ and statement f s =
       PP.string f ")";
       PP.end_group f;
       PP.end_group f
-  | For_statement (e1, e2, e3, s) ->
+  | For_statement (e1, e2, e3, s, pc) ->
+      output_debug_info f pc;
       PP.start_group f 1;
       PP.start_group f 0;
       PP.string f "for";
@@ -649,7 +675,8 @@ and statement f s =
       begin match e with
         None   ->
           PP.string f "return;"
-      | Some (EFun (i, l, b)) ->
+      | Some (EFun ((i, l, b), pc)) ->
+          output_debug_info f pc;
           PP.start_group f 1;
           PP.start_group f 0;
           PP.start_group f 0;
@@ -741,7 +768,8 @@ and statement f s =
       PP.end_group f
       (* There must be a space between the return and its
          argument. A line return would not work *)
-  | Try_statement (b, ctch, fin) ->
+  | Try_statement (b, ctch, fin, pc) ->
+      output_debug_info f pc;
       PP.start_group f 0;
       PP.string f "try";
       PP.genbreak f " " 1;
@@ -789,7 +817,8 @@ and source_element f se =
   match se with
     Statement s ->
       statement f s
-  | Function_declaration (i, l, b) ->
+  | Function_declaration (i, l, b, pc) ->
+      output_debug_info f pc;
       PP.start_group f 1;
       PP.start_group f 0;
       PP.start_group f 0;
@@ -818,5 +847,11 @@ and source_elements f se =
   | [s]    -> source_element f s
   | s :: r -> source_element f s; PP.break f; source_elements f r
 
-let program f se =
+let statement f s dl =
+  debug_info := Some dl;
+  statement f s
+
+let program f se dl =
+  debug_info := Some dl;
   PP.start_group f 0; source_elements f se; PP.end_group f; PP.newline f
+

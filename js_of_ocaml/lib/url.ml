@@ -20,8 +20,6 @@
 
 (* Url tampering. *)
 
-let l = Dom_html.window##location
-
 let split c s =
   Js.str_array (s##split (Js.string (String.make 1 c)))
 
@@ -33,11 +31,19 @@ let interrupt () = raise Local_exn
 
 let plus_re = Regexp.regexp_string "+"
 let escape_plus s = Regexp.global_replace plus_re s "%2B"
+let unescape_plus s = Regexp.global_replace plus_re s " "
+
+let plus_re_js_string =
+  jsnew Js.regExp_withFlags (Js.string "\\+", Js.string "g")
+let unescape_plus_js_string s =
+  plus_re_js_string##lastIndex <- 0;
+  s##replace(plus_re_js_string, Js.string " ")
+
 
 let urldecode_js_string_string s =
-  Js.to_bytestring (Js.unescape s)
+  Js.to_bytestring (Js.unescape (unescape_plus_js_string s))
 let urldecode s =
-  Js.to_bytestring (Js.unescape (Js.bytestring s))
+  Js.to_bytestring (Js.unescape (Js.bytestring (unescape_plus s)))
 
 let urlencode_js_string_string s =
   Js.to_bytestring (Js.escape s)
@@ -141,7 +147,7 @@ let decode_arguments_js_string s =
                (pred idx)
          with Local_exn -> aux acc (pred idx)
   in
-    aux [] (len-1)
+  aux [] (len-1)
 
 let decode_arguments s =
   decode_arguments_js_string (Js.bytestring s)
@@ -302,6 +308,19 @@ let string_of_url = function
 module Current =
 struct
 
+  class type location = object
+    method href : Js.js_string Js.t Js.prop
+    method protocol : Js.js_string Js.t Js.readonly_prop
+    method host : Js.js_string Js.t Js.readonly_prop
+    method hostname : Js.js_string Js.t Js.readonly_prop
+    method port : Js.js_string Js.t Js.readonly_prop
+    method pathname : Js.js_string Js.t Js.readonly_prop
+    method search : Js.js_string Js.t Js.readonly_prop
+    method hash : Js.js_string Js.t Js.prop
+  end
+
+  let l : location Js.t = Js.Unsafe.variable "location"
+
   let host = urldecode_js_string_string l##hostname
 
   let port =
@@ -330,4 +349,3 @@ struct
   let as_string = urldecode_js_string_string l##href
 
 end
-
