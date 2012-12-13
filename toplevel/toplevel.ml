@@ -481,13 +481,16 @@ let run () =
   Html.document##onkeydown <-
     (Html.handler
        (fun e -> match e##keyCode with
+         | 09 -> (* Tabulation key*)
+           textbox##value <- textbox##value##concat (_s "   ");
+           Js._false
          | 13 -> (* ENTER key *)
            let keyEv = match Js.Opt.to_option (Html.CoerceTo.keyboardEvent e) with
              | None   -> assert false
              | Some t -> t in
            (* Special handling of ctrl key *)
            if keyEv##ctrlKey = Js._true then
-             textbox##value <- _s ((Js.to_string textbox##value) ^ "\n");
+             textbox##value <- textbox##value##concat (_s "\n");
            if keyEv##ctrlKey = Js._true || keyEv##shiftKey = Js._true then
              let rows_height = textbox##scrollHeight / (textbox##rows + 1) in
              let h = string_of_int (rows_height * (textbox##rows + 1) + 20) ^ "px" in
