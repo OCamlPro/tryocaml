@@ -1,13 +1,25 @@
 
 exception Graphic_failure of string
 
-open Utils
-(*
-val open_graph : (string -> unit)
+(* NOT IMPLEMENTED:
+
+- display_mode
+- remember_mode
+- synchronize
+
+- draw_arc
+- fill_arc
+
+- events (button, keys)
+
+- sound
 *)
+
+open Utils
 
 type state = {
   context : Dom_html.canvasRenderingContext2D Js.t;
+  canvas : Dom_html.canvasElement Js.t;
   mutable x : int;
   mutable y : int;
   mutable width : int;
@@ -23,16 +35,38 @@ let state = ref None
 let get_state () =
   match !state with
     None -> raise (Graphic_failure "Not initialized")
-  | Some s -> s
+  | Some s ->
+    Printf.fprintf stderr "state pos %d %d\n" s.x s.y;
+    Printf.fprintf stderr "state screen %d %d\n" s.width s.height;
+    Printf.fprintf stderr "state color %d\n" s.color;
+    s
 
-let raw_set_color s =
+let raw_set_color color =
 (* TODO : do better ! *)
-  s.context##fillStyle <- Js.string
-    (Printf.sprintf "#%02x%02x%02x"
+  let s = get_state () in
+  s.color <- color;
+  let color = Printf.sprintf "#%02x%02x%02x"
        ( (s.color lsr 16) land 0xff )
        ( (s.color lsr 8) land 0xff )
        ( (s.color lsr 0) land 0xff )
-    )
+  in
+  s.context##fillStyle <- Js.string color;
+  ()
+
+let raw_set_line_width w =
+  let s = get_state () in
+  s.line_width <- w;
+  s.context##lineWidth <- float w
+
+let raw_fill_rectangle context x1 y1 x2 y2 =
+  let dx = x1 - x2 in
+  let dy = y1 - y2 in
+  let dx = if dx < 0 then -dx else dx in
+  let dy = if dy < 0 then -dy else dy in
+  let x1 = if x1 > x2 then x2 else x1 in
+  let y1 = if y1 > y2 then y2 else y1 in
+  context##fillRect (float x1, float y1, float dx, float dy)
+
 
 
 (***********************************************************************)
@@ -55,10 +89,21 @@ let _ =
 
 let set_window_title title =
   (* TODO *) ()
+
 let resize_window width height =
-  (* TODO *) ()
+  let s = get_state () in
+  s.width <- width;
+  s.height <- height;
+  s.canvas##width <- width;
+  s.canvas##height <- height
+
 let clear_graph () =
-  (* TODO *) ()
+  let s = get_state () in
+  s.canvas##width <- s.width;
+  s.canvas##height <- s.height;
+  s.context##strokeRect (0., 0., float s.width, float s.height);
+  ()
+
 let size_x () =
   let s = get_state () in
   s.width
@@ -89,8 +134,7 @@ type color = int
 let rgb r g b = (r lsl 16) + (g lsl 8) + b
 
 let set_color color =
-  let s = get_state () in
-  s.color <- color
+  raw_set_color color
 
 let black   = 0x000000
 and white   = 0xFFFFFF
@@ -110,10 +154,12 @@ let plot x y =
   let s = get_state () in
   s.x <- x;
   s.y <- y;
-  raw_set_color s;
   let context = s.context in
+  context##beginPath();
   context##moveTo (float x, float (s.height - y));
-  context##lineTo (float x, float (s.height - y))
+  context##lineTo (float x, float (s.height - y));
+  context##stroke();
+  ()
 
 let plots points =
   for i = 0 to Array.length points - 1 do
@@ -138,12 +184,14 @@ let current_y () =
   s.y
 
 let current_point () = current_x (), current_y ()
+
 let lineto x y =
   let s = get_state () in
-  raw_set_color s;
   let context = s.context in
+  context##beginPath();
   context##moveTo (float s.x, float (s.height - s.y));
   context##lineTo (float x, float (s.height - y));
+  context##stroke();
   s.x <- x;
   s.y <- y;
   ()
@@ -154,7 +202,6 @@ let rmoveto x y = moveto (current_x () + x) (current_y () + y)
 
 let raw_draw_rect x y dx dy =
   let s = get_state () in
-  raw_set_color s;
   s.context##strokeRect (float x, float (s.height - y), float dx, float dy)
 
 let draw_rect x y w h =
@@ -196,10 +243,6 @@ let draw_arc x y rx ry a1 a2 =
 let draw_ellipse x y rx ry = draw_arc x y rx ry 0 360
 let draw_circle x y r = draw_arc x y r r 0 360
 
-let raw_set_line_width w =
-  let s = get_state () in
-  s.line_width <- w
-
 let set_line_width w =
   if w < 0 then raise (Invalid_argument "set_line_width")
   else raw_set_line_width w
@@ -207,7 +250,6 @@ let set_line_width w =
 
 let raw_fill_rect x y dx dy =
   let s = get_state () in
-  raw_set_color s;
   s.context##fillRect (float x, float (s.height - y), float dx, float dy)
 
 let fill_rect x y w h =
@@ -216,7 +258,18 @@ let fill_rect x y w h =
 ;;
 
 let fill_poly point_array =
-  failwith "Graphics.fill_poly not implemented"
+  let s = get_state () in
+  s.context##beginPath();
+  let p0 = point_array.(0) in
+  s.context##moveTo (float (fst p0), float (s.height - snd p0));
+  for i = 1 to Array.length point_array - 1 do
+    let p1 = point_array.(i) in
+    s.context##lineTo (float (fst p1), float (s.height - snd p1));
+  done;
+  s.context##lineTo (float (fst p0), float (s.height - snd p0));
+  s.context##fill();
+  ()
+
 let raw_fill_arc x y rx ry a1 a2 =
   failwith "Graphics.raw_fill_arc not implemented"
 
@@ -231,12 +284,19 @@ let fill_circle x y r = fill_arc x y r r 0 360
 (* Text *)
 
 
+let text_size cs =
+  let s = get_state () in
+  let m = s.context##measureText (Js.string cs) in
+  let dx = m##width in (* TODO check !!! *)
+  (int_of_float dx, s.text_size) (* TODO: fix height ? *)
+
 let draw_string cs =
   let s = get_state () in
-  let sdx = s.text_size * String.length cs in
-  s.context##strokeText_withWidth
-    (Js.string cs, float s.x, float (s.height - s.y), float sdx);
-  s.x <- s.x + sdx
+  let m = s.context##measureText (Js.string cs) in
+  let dx = m##width in
+  s.context##fillText
+    (Js.string cs, float s.x, float (s.height - s.y));
+  s.x <- s.x + int_of_float dx
 
 (*
   let m = s.context##measureText (Js.string cs) in
@@ -247,17 +307,13 @@ let draw_char c =
 
 let set_font f =
  let s = get_state () in
- s.font <- f
+ s.font <- f;
+  s.context##font <- Js.string (Printf.sprintf "%dpx %s" s.text_size s.font)
 
 let set_text_size sz =
   let s = get_state () in
-  s.text_size <- sz
-
-let text_size cs =
-  let s = get_state () in
-  let m = s.context##measureText (Js.string cs) in
-  let dx = m##width in (* TODO check !!! *)
-  (int_of_float dx, 10) (* TODO: fix height ? *)
+  s.text_size <- sz;
+  s.context##font <- Js.string (Printf.sprintf "%dpx %s" s.text_size s.font)
 
 (* Images *)
 
@@ -358,6 +414,9 @@ let close_graph () =
     None -> ()
   | Some c ->
     state := None;
+    let canvas = c.canvas in
+    canvas##width <- 0;
+    canvas##height <- 0;
     Utils.set_div_by_id "graphics" ""
 
 let open_graph string =
@@ -374,5 +433,11 @@ let open_graph string =
   let line_width = 1 in
   let font = "fixed" in
   let text_size = 26 in
-  state := Some { context; x; y; width; height; color;
+  let s =  { canvas; context; x; y; width; height; color;
                   line_width; font; text_size  }
+  in
+  state := Some s;
+  clear_graph ();
+  raw_set_color blue;
+  set_text_size text_size;
+  raw_set_line_width line_width
