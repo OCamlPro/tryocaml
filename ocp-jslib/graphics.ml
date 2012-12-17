@@ -36,9 +36,11 @@ let get_state () =
   match !state with
     None -> raise (Graphic_failure "Not initialized")
   | Some s ->
+(*
     Printf.fprintf stderr "state pos %d %d\n" s.x s.y;
     Printf.fprintf stderr "state screen %d %d\n" s.width s.height;
     Printf.fprintf stderr "state color %d\n" s.color;
+*)
     s
 
 let raw_set_color color =
