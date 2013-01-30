@@ -248,6 +248,7 @@ and eventTarget = object ('self)
   method onkeypress : ('self t, keyboardEvent t) event_listener writeonly_prop
   method onkeydown : ('self t, keyboardEvent t) event_listener writeonly_prop
   method onkeyup : ('self t, keyboardEvent t) event_listener writeonly_prop
+  method onscroll : ('self t, event t) event_listener writeonly_prop
   method ondragstart : ('self t, dragEvent t) event_listener writeonly_prop
   method ondragend : ('self t, dragEvent t) event_listener writeonly_prop
   method ondragenter : ('self t, dragEvent t) event_listener writeonly_prop
@@ -493,6 +494,8 @@ class type inputElement = object ('self)
   method onselect : ('self t, event t) event_listener prop
   method onchange : ('self t, event t) event_listener prop
   method oninput : ('self t, event t) event_listener prop
+  method onblur : ('self t, event t) event_listener prop
+  method onfocus : ('self t, event t) event_listener prop
 end
 
 class type textAreaElement = object ('self)
@@ -515,6 +518,8 @@ class type textAreaElement = object ('self)
   method onselect : ('self t, event t) event_listener prop
   method onchange : ('self t, event t) event_listener prop
   method oninput : ('self t, event t) event_listener prop
+  method onblur : ('self t, event t) event_listener prop
+  method onfocus : ('self t, event t) event_listener prop
 end
 
 class type buttonElement = object
@@ -665,6 +670,7 @@ class type scriptElement = object
   method defer : bool t prop
   method src : js_string t prop
   method _type : js_string t prop
+  method async : bool t prop
 end
 
 class type tableCellElement = object
@@ -887,7 +893,7 @@ class type document = object
   inherit nodeSelector
   method title : js_string t prop
   method referrer : js_string t readonly_prop
-  method domain : js_string t readonly_prop
+  method domain : js_string t prop
   method _URL : js_string t readonly_prop
   method head : headElement t prop
   method body : bodyElement t prop
@@ -979,7 +985,7 @@ class type window = object
   method location : location t readonly_prop
   method history : history t readonly_prop
   method undoManager : undoManager t readonly_prop
-  method navigator : navigator t
+  method navigator : navigator t readonly_prop
   method getSelection : selection t meth
   method close : unit meth
   method closed : bool t readonly_prop
@@ -987,7 +993,6 @@ class type window = object
   method focus : unit meth
   method blur : unit meth
   method scroll : int -> int -> unit meth
-  method screen : screen t readonly_prop
 
   method sessionStorage : storage t optdef readonly_prop
   method localStorage : storage t optdef readonly_prop
@@ -1007,6 +1012,12 @@ class type window = object
 
   method setTimeout : (unit -> unit) Js.callback -> float -> timeout_id meth
   method clearTimeout : timeout_id -> unit meth
+
+  method screen : screen t readonly_prop
+  method innerWidth : int optdef readonly_prop
+  method innerHeight : int optdef readonly_prop
+  method outerWidth : int optdef readonly_prop
+  method outerHeight : int optdef readonly_prop
 
   method onload : (window t, event t) event_listener prop
   method onbeforeunload : (window t, event t) event_listener prop
@@ -1112,6 +1123,10 @@ module Event : sig
   val hashchange : hashChangeEvent t typ
   val change : event t typ
   val input : event t typ
+  val submit : event t typ
+  val scroll : event t typ
+  val focus : event t typ
+  val blur : event t typ
 
   val make : string -> 'a typ
 end
@@ -1408,3 +1423,4 @@ end
 (**/**)
 
 val onIE : bool
+val hasPushState : unit -> bool
