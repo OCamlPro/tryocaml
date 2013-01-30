@@ -1778,7 +1778,7 @@ let from_channel ~paths ic =
   if !is_toplevel then begin
     Tbl.iter (fun _ n -> globals.is_exported.(n) <- true) symbols.num_tbl;
     List.iter Primitives.mark_used
-      [ "caml_string_greaterthan";  "caml_js_meth_call" ]
+      [ "caml_string_greaterthan";  "caml_js_meth_call"; "caml_string_lessequal"; "caml_string_greaterequal"]
   end;
 
   fix_min_max_int code;
