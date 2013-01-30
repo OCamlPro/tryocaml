@@ -525,12 +525,12 @@ let run () =
 	 | _ -> Js._true));
 
   let clear () =
-    output_area##innerHTML <- (_s "");
+    output_area##innerHTML <- (_s "\n");
     textbox##focus();
     textbox##select() in
 
   let reset () =
-    output_area##innerHTML <- (_s "");
+    output_area##innerHTML <- (_s "\n");
     Toploop.initialize_toplevel_env ();
     Toploop.input_name := "";
     exec ppf "open Tutorial";
