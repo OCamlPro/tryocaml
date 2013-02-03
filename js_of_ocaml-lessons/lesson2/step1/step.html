@@ -12,7 +12,7 @@ let _ =
   let v = v + 1 in
   Cookie.set_cookie "counter" (string_of_int v);
   title##innerHTML <- _s (
-    Printf.sprintf "This is your %s time in TryOCaml"
+    Printf.sprintf "This is your %s time on TryOCaml"
       (match v with
           1 -> "first"
         | 2 -> "second"
