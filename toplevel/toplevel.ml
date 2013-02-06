@@ -19,6 +19,7 @@
  *)
 
 open Utils
+open JsOfOCaml
 
 module Html = Dom_html
 
