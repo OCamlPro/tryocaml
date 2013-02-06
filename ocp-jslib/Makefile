@@ -6,7 +6,7 @@ include $(ROOT)/Makefile.jsconfig
 MLOBJS= utils.cmo button.cmo cookie.cmo dragnDrop.cmo graphics.cmo
 MLINTFS= $(MLOBJS:.cmo=.cmi)
 
-INCLUDES= -I $(JS_DIR)/lib
+INCLUDES= -I $(JS_DIR)
 LIBNAME=ocp-jslib
 
 

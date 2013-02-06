@@ -16,12 +16,11 @@ toplevel.cma: $(TOPLEVEL_CMOS) $(TOPLEVEL_CMIS)
 
 INCLUDES= \
    -I $(CMICOMP_DIR) \
-   -I $(JS_DIR)/compiler \
+   -I $(JS_DIR) \
    -I $(TUTORIAL_DIR)/ \
    $(INCLUDE_TOPLEVELLIB) \
    -I $(OCAMLNUM_DIR) \
    -I $(OCPJSLIB_DIR) \
-   -I $(TOPLEVEL_DIR) \
-   -I .
+   -I $(JS_COMPILER_LIB) js_of_ocaml_compiler.cma
 
 include ../Makefile.rules

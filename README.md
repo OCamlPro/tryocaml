@@ -13,6 +13,7 @@ js_of_ocaml (see http://ocsigen.org/js_of_ocaml/).
 
   * Findlib
   * Lwt (version 2.4.0** at least, see http://ocsigen.org/lwt/)
+  * js_of_ocaml (development version)
 
 # Try it
 
