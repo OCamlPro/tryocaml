@@ -18,11 +18,6 @@ tutorial/lessons.ml
 tutorial/make_lessons
 *.byte
 #*#
-js_of_ocaml/compiler/js_of_ocaml
-js_of_ocaml/lib/deriving_json/deriving_Json_lexer.ml
-js_of_ocaml/lib/log
-js_of_ocaml/lib/stubs.c
-js_of_ocaml/runtime/runtime.js
 try-ocaml/lessons.ml
 try-ocaml/lessons.mli
 try-ocaml/try-ocaml.js
