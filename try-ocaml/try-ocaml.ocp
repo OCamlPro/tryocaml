@@ -1,0 +1,13 @@
+
+begin library "try-ocaml-lessons"
+  files = [ "lessons.ml" ]
+  is_before = [ "try-tutorial" ]
+
+end
+
+begin program "try-ocaml"
+  has_asm = false
+  bytelink = "-linkall"
+  files = [ "main.ml" ]
+  requires = [ "ocp-jslib" "lwt" "try-ocaml-lessons"  "try-tutorial"  "try-toplevel" ]
+end

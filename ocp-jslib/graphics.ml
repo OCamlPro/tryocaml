@@ -442,4 +442,5 @@ let open_graph string =
   clear_graph ();
   raw_set_color blue;
   set_text_size text_size;
-  raw_set_line_width line_width
+  raw_set_line_width line_width;
+  ()

@@ -2,10 +2,11 @@
 
 all: Makefile.config
 	$(MAKE) -C cmicomp
-	$(MAKE) -C ocp-jslib
-	$(MAKE) -C ocaml-num
-	$(MAKE) -C toplevel
-	$(MAKE) -C tutorial
+	ocp-build -scan -meta - try-make-lessons
+#	$(MAKE) -C ocp-jslib
+#	$(MAKE) -C ocaml-num
+#	$(MAKE) -C toplevel
+#	$(MAKE) -C tutorial
 	$(MAKE) -C try-ocaml
 	$(MAKE) -C try-js_of_ocaml
 
@@ -14,13 +15,14 @@ Makefile.config:
 
 clean:
 	$(MAKE) -C cmicomp clean
-	$(MAKE) -C ocp-jslib clean
-	$(MAKE) -C toplevel clean
-	$(MAKE) -C ocaml-num clean
-	$(MAKE) -C toplevel clean
-	$(MAKE) -C tutorial clean
+#	$(MAKE) -C ocp-jslib clean
+#	$(MAKE) -C toplevel clean
+#	$(MAKE) -C ocaml-num clean
+#	$(MAKE) -C toplevel clean
+#	$(MAKE) -C tutorial clean
 	$(MAKE) -C try-ocaml clean
 	$(MAKE) -C try-js_of_ocaml clean
+	rm -rf _obuild
 
 depend:
 	$(MAKE) -C ocp-jslib depend
