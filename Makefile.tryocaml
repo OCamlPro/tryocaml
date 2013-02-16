@@ -9,6 +9,7 @@ all: lessons.ml byte
 
 clean:
 	rm -f *~ $(SOURCES) $(TRYOCAML_NAME).tmp  $(TRYOCAML_NAME).js
+	ocp-build -clean
 
 lessons.mli: $(TUTORIAL_DIR)/lessons.mli
 	cp -f  $(TUTORIAL_DIR)/lessons.mli lessons.mli
@@ -71,11 +72,12 @@ STDLIB_MODULES=\
   stringLabels \
   weak
 
-TOPLEVEL_MODULES=$(STDLIB_MODULES) n regexp tutorial outcometree topdirs toploop toplevel clflags n big_int num topnum
+TOPLEVEL_MODULES=$(STDLIB_MODULES) n regexp tutorial outcometree topdirs toploop toplevel clflags n big_int num topnum lwt
 
 TOPLEVEL_CMIS=$(TOPLEVEL_INCDIR)/toplevel.cmi
 
 INCLUDES= \
+   -I $(LWT_DIR) \
    -I $(CMICOMP_DIR) \
    -I $(JS_COMPILER_LIB) \
    -I $(JS_DIR) \
@@ -90,7 +92,7 @@ INCLUDES= \
 ALWAYS:
 
 ../_obuild/$(TRYOCAML_NAME)/$(TRYOCAML_NAME).byte: ALWAYS $(SOURCES)
-	ocp-build -meta - $(TRYOCAML_NAME)
+	ocp-build $(TRYOCAML_NAME)
 
 $(TRYOCAML_NAME).js: \
    ../_obuild/$(TRYOCAML_NAME)/$(TRYOCAML_NAME).byte \
@@ -102,7 +104,7 @@ $(TRYOCAML_NAME).js: \
 	$(COMP) $(INCLUDES) \
 		-toplevel -linkall -noinline -noruntime  \
 		$(JSFILES) $(TRYOCAML_NAME).tmp $(OPTIONS)
-	@rm -f $(TRYOCAML_NAME).tmp
+#	@rm -f $(TRYOCAML_NAME).tmp
 
 byte: $(TRYOCAML_NAME).js
 

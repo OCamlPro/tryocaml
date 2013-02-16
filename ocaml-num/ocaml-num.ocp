@@ -5,10 +5,12 @@ begin library "ocaml-num"
           ]
 end
 
+(*
 begin program "testdiv"
     files = [ "tests/testdiv.ml" ]
     requires = [ "ocaml-num" ]
 end
+*)
 
 (*
 numtop: OCamlNum.cmo

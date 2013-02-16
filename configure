@@ -4,9 +4,10 @@ echo Generating Makefile.config
 echo OCAMLC=ocamlc > Makefile.config.temp
 echo OCAMLDEP=ocamldep.opt >> Makefile.config.temp
 echo OCAMLVNUM=`ocamlc -version` >> Makefile.config.temp
-echo JS_DIR=`ocamlfind -query js_of_ocaml` >> Makefile.config.temp
+echo JS_DIR=`ocp-build -configure -query js_of_ocaml` >> Makefile.config.temp
+echo LWT_DIR=`ocp-build -configure -query lwt` >> Makefile.config.temp
 echo JS_COMP=`which js_of_ocaml` >> Makefile.config.temp
-echo JS_COMPILER_LIB=`ocamlfind -query js_of_ocaml_compiler` >> Makefile.config.temp
+echo JS_COMPILER_LIB=`ocp-build -configure  -query js_of_ocaml_compiler` >> Makefile.config.temp
 echo 'TOPLEVEL_DIR=$(ROOT)/toplevel' >> Makefile.config.temp
 echo 'TOPLEVEL_INCDIR=$(ROOT)/_obuild/try-toplevel' >> Makefile.config.temp
 echo 'OCAMLNUM_INCDIR=$(ROOT)/_obuild/ocaml-num' >> Makefile.config.temp
@@ -19,3 +20,5 @@ echo 'SCP=scp' >> Makefile.config.temp
 
 mv Makefile.config.temp Makefile.config
 echo Makefile.config generated
+
+echo -n "" >> ocp-build.root

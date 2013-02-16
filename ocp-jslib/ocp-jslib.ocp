@@ -6,10 +6,11 @@ begin
   By default, ocp-build renames X.asm in X, and keeps X.byte. We should
   add options "byte_name" and "asm_name".
 *)
+(*
   begin program "camlp4o"
       requires = [ "camlp4lib" "camlp4-pa-op" "Camlp4Bin" ]
   end
-
+*)
   dirname = [ "/home/lefessan/.opam/4.00.1/lib/js_of_ocaml" ]
 
   begin objects "js_of_ocaml.camlp4-syntax.objects"

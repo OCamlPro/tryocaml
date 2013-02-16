@@ -1,4 +1,7 @@
 
+let graphics_title_id = "graphics-title"
+let graphics_id = "graphics"
+
 exception Graphic_failure of string
 
 (* NOT IMPLEMENTED:
@@ -31,6 +34,7 @@ type state = {
 }
 
 let state = ref None
+let graphics_title = ref "Graphics Window"
 
 let get_state () =
   match !state with
@@ -90,6 +94,8 @@ let _ =
   Callback.register_exception "Graphics.Graphic_failure" (Graphic_failure "")
 
 let set_window_title title =
+  graphics_title := title;
+  Utils.set_div_by_id graphics_title_id !graphics_title;
   (* TODO *) ()
 
 let resize_window width height =
@@ -419,12 +425,13 @@ let close_graph () =
     let canvas = c.canvas in
     canvas##width <- 0;
     canvas##height <- 0;
-    Utils.set_div_by_id "graphics" ""
+    Utils.set_div_by_id graphics_id "";
+    Utils.set_div_by_id graphics_title_id ""
 
 let open_graph string =
   close_graph ();
   let canvas = Dom_html.createCanvas doc in
-  let body = Utils.get_element_by_id "graphics" in
+  let body = Utils.get_element_by_id graphics_id in
   let context = canvas##getContext (Dom_html._2d_) in
   Dom.appendChild body canvas;
   let x = 0 in
@@ -443,4 +450,5 @@ let open_graph string =
   raw_set_color blue;
   set_text_size text_size;
   raw_set_line_width line_width;
+  Utils.set_div_by_id graphics_title_id !graphics_title;
   ()

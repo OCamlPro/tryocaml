@@ -2,7 +2,6 @@
 begin library "try-js_of_ocaml-lessons"
   files = [ "lessons.ml" ]
   is_before = [ "try-tutorial" ]
-
 end
 
 begin program "try-js_of_ocaml"
