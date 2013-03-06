@@ -1,0 +1,21 @@
+<h3>Exercise: let there be lets!</h3>
+
+<p>Fix all these expressions in order to get the expected result at
+the end:</p>
+
+<pre><code>let name =
+  let x = 'x' and let y = ['a'; 'n'; 'e']
+  in x :: y</code></pre>
+
+<pre><code>let name =
+  let a =
+    let b = name in 'o' :: b
+  in 'r' :: b
+</code></pre>
+
+<pre><code>let rec lst2str = function
+    [] -> ""
+  | c::cs -> (String.make 1 c) ^ lst2str cs in
+  let up = Char.uppercase in
+  a = List.map up name ;
+  lst2str a</code></pre>
