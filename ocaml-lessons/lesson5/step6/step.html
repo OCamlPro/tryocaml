@@ -1,0 +1,25 @@
+<h3>Exercise: Fix the grouping</h3>
+
+<p>A Lisp programmer stole all our parentheses!
+Get them back in order to get the proper result at the end.</p>
+
+<pre><code>let ten =
+  let double x = x+x in
+  double 3 + 2</code></pre>
+
+<pre><code>let hundred =
+  if true or false then
+    print_string "May I help you?\n" ;
+    100
+  else 0</code></pre>
+
+<pre><code>let one =
+  let accum = ref -54 in
+  for i = 1 to ten do accum := !accum + i done ;
+  !accum </code></pre>
+
+<pre><code>one + match hundred with
+  | 42  -> match ten with 10 -> 52  | _ -> 0
+  | 100 -> match ten with 10 -> 110 | _ -> 0
+</code></pre>
+
