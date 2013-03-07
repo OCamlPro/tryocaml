@@ -3,7 +3,7 @@
 <p>With regard to grouping expression or enforcing order of evaluation,
 OCaml syntax is surprisingly easy: you can use pervasively either parentheses
 of <em>begin</em>/<em>end</em> keywords.</p>
-
+<br />
 <p>Example grouping expressions in an <em>if</em> form:</p>
 <pre><code>if 1+2 = 3 then (
   print_string "did you knew that?\n" ;
@@ -15,6 +15,7 @@ of <em>begin</em>/<em>end</em> keywords.</p>
 you won't find this often!):</p>
 <code>begin 1 + 2 end * 3</code>
 
+<br /><br />
 <p>Also, as function application takes precedence over infix operators you will
 frequently uses parentheses to make explicit the expected evaluation order, as
 in: <code>square (1 + 1)</code> since <code>square 1+1</code> would yield
