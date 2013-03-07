@@ -80,11 +80,24 @@ let num_digits_nat nat ofs len =
 (*  if debug then Printf.printf "= %d\n" num; *)
   num
 
+let lit0xFFFF0000 = 0xFFFF lsl 16
+(* avoid literal size restriction on 32 bits implementations;
+
+   The implementation of num_leading_zero_bits below is in fact still
+   correct on [0 .. 2^30-1] when this constant wraps around in the
+   negative. The following output comes from a 32 bits version of
+   OCaml:
+
+     # Printf.printf "%x" (0xFFFF lsl 16);;
+     7fff0000- : unit = ()
+     # Printf.printf "%x" (1 lsl 30);;
+     40000000- : unit = ()
+*)
 
 let num_leading_zero_bits_in_digit nat int =
   let d = ref nat.(int) in
   let n = ref length_of_digit in
-  if !d land 0xFFFF0000 <> 0 then (n := !n - 16; d := !d lsr 16);
+  if !d land lit0xFFFF0000 <> 0 then (n := !n - 16; d := !d lsr 16);
   if !d land 0xFF00 <> 0 then (n := !n - 8; d := !d lsr 8);
   if !d land 0xF0 <> 0 then (n := !n - 4; d := !d lsr 4);
   if !d land 0xC <> 0 then (n := !n - 2; d := !d lsr 2);
