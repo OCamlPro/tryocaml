@@ -1,7 +1,5 @@
 all: byte $(TRYOCAML_NAME).js
 
-include $(ROOT)/Makefile.jsconfig
-
 SOURCES= lessons.ml lessons.mli
 TARGETS=$(TRYOCAML_NAME).byte $(TRYOCAML_NAME).js
 
@@ -9,20 +7,24 @@ include $(ROOT)/Makefile.config
 
 all: lessons.ml byte
 
+clean:
+	rm -f *~ $(SOURCES) $(TRYOCAML_NAME).tmp  $(TRYOCAML_NAME).js
+	ocp-build clean
+
 lessons.mli: $(TUTORIAL_DIR)/lessons.mli
 	cp -f  $(TUTORIAL_DIR)/lessons.mli lessons.mli
-lessons.ml: lessons.cmi $(LESSON_SET)/goodies.ml
-	$(TUTORIAL_DIR)/make_lessons $(LESSON_SET) > lessons.ml
+lessons.ml: $(LESSON_SET)/goodies.ml
+	../_obuild/try-make-lessons/try-make-lessons.byte $(LESSON_SET) > lessons.ml
 
 CMOS= $(SOURCES:.ml=.cmo)
 
 ############### TRYOCAML_NAME=toplevel
 # remove this variable to use the default ocaml toplevel
-include $(ROOT)/toplevellib-$(OCAMLVNUM)/Makefile.config
+include $(ROOT)/toplevellib/toplevellib-$(OCAMLVNUM)/Makefile.config
 
 
-COMP=$(JS_DIR)/compiler/js_of_ocaml
-JSFILES=$(JS_DIR)/runtime/runtime.js $(JS_DIR)/runtime/weak.js $(TOPLEVEL_DIR)/toplevel_runtime.js
+COMP=$(JS_COMP)
+JSFILES=$(JS_DIR)/runtime.js $(TOPLEVEL_DIR)/toplevel_runtime.js
 #OCAMLC=ocamlfind ocamlc -annot -pp "camlp4o $(JS_DIR)/lib/syntax/pa_js.cmo"
 EXPUNGE=$(shell ocamlc -where)/expunge
 # Removed gc and sys
@@ -70,41 +72,39 @@ STDLIB_MODULES=\
   stringLabels \
   weak
 
-TOPLEVEL_MODULES=$(STDLIB_MODULES) n regexp tutorial outcometree topdirs toploop toplevel clflags n big_int num topnum
+TOPLEVEL_MODULES=$(STDLIB_MODULES) n regexp tutorial outcometree topdirs toploop toplevel clflags n big_int num topnum lwt
 
-TOPLEVEL_CMIS=$(TOPLEVEL_DIR)/toplevel.cmi
-TOPLEVEL_CMAS= \
-  $(CMICOMP_DIR)/js_of_ocaml.cma $(JS_DIR)/compiler/compiler.cma \
-  $(TOPLEVELLIB_CMAS) \
-  $(OCAMLNUM_DIR)/ocaml-num.cma \
-  lessons.cmo \
-  $(TUTORIAL_DIR)/tutorial.cma \
-  $(OCPJSLIB_DIR)/ocp-jslib.cma
-TOPLEVEL_CMOS=$(TOPLEVEL_DIR)/toplevel.cmo \
-   $(TOPLEVEL_DIR)/topmain.cmo main.cmo
+TOPLEVEL_CMIS=$(TOPLEVEL_INCDIR)/toplevel.cmi
 
 INCLUDES= \
+   -I $(LWT_DIR) \
    -I $(CMICOMP_DIR) \
-   -I $(JS_DIR)/compiler \
-   -I $(JS_DIR)/lib \
-   -I $(TUTORIAL_DIR)/ \
+   -I $(JS_COMPILER_LIB) \
+   -I $(JS_DIR) \
+   -I $(TUTORIAL_INCDIR)/ \
    $(INCLUDE_TOPLEVELLIB) \
-   -I $(OCAMLNUM_DIR) \
-   -I $(TOPLEVEL_DIR) \
-   -I $(OCPJSLIB_DIR) \
+   -I $(OCAMLNUM_INCDIR) \
+   -I $(TOPLEVEL_INCDIR) \
+   -I $(OCPJSLIB_INCDIR) \
    $(TRYOCAML_EXTRA_INCLUDES) \
    -I .
 
-$(TRYOCAML_NAME).js: $(TRYOCAML_NAME).byte $(JSFILES)
-	$(COMP) $(INCLUDES) -toplevel -noinline -noruntime $(JSFILES) $(TRYOCAML_NAME).byte $(OPTIONS)
+ALWAYS:
 
-$(TRYOCAML_NAME).byte: $(TOPLEVEL_CMIS) $(TOPLEVEL_CMOS) $(TOPLEVEL_CMAS) \
-                       $(TRYOCAML_EXTRA_CMAS) $(TRYOCAML_EXTRA_CMIS)
-	$(OCAMLFIND) $(OCAMLC) $(INCLUDES) -linkall $(OCAMLFIND_OPTIONS) -package str -linkpkg \
-                  -o $@.tmp $(TOPLEVEL_CMAS) \
-                  $(TRYOCAML_EXTRA_CMAS) $(TRYOCAML_EXTRA_CMOS) $(TOPLEVEL_CMOS)
-	$(EXPUNGE) $@.tmp $@ $(TOPLEVEL_MODULES) $(TRYOCAML_EXTRA_MODULES)
-	rm -f $@.tmp
+../_obuild/$(TRYOCAML_NAME)/$(TRYOCAML_NAME).byte: ALWAYS $(SOURCES)
+	ocp-build $(TRYOCAML_NAME)
 
-byte: lessons.cmo $(TRYOCAML_NAME).byte
+$(TRYOCAML_NAME).js: \
+   ../_obuild/$(TRYOCAML_NAME)/$(TRYOCAML_NAME).byte \
+   $(JSFILES)
+	$(EXPUNGE) \
+		../_obuild/$(TRYOCAML_NAME)/$(TRYOCAML_NAME).byte \
+		$(TRYOCAML_NAME).tmp \
+		$(TOPLEVEL_MODULES) $(TRYOCAML_EXTRA_MODULES)
+	$(COMP) $(INCLUDES) \
+		-toplevel -linkall -noinline -noruntime  \
+		$(JSFILES) $(TRYOCAML_NAME).tmp $(OPTIONS)
+#	@rm -f $(TRYOCAML_NAME).tmp
+
+byte: $(TRYOCAML_NAME).js
 

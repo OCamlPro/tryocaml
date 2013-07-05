@@ -1,12 +1,42 @@
-button.cmo: utils.cmi button.cmi
-button.cmx: utils.cmx button.cmi
-cookie.cmo: cookie.cmi
-cookie.cmx: cookie.cmi
-dragnDrop.cmo: utils.cmi dragnDrop.cmi
-dragnDrop.cmx: utils.cmx dragnDrop.cmi
-utils.cmo: utils.cmi
-utils.cmx: utils.cmi
-button.cmi:
-cookie.cmi:
-dragnDrop.cmi:
-utils.cmi:
+button.cmo : utils.cmi /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/js.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom_html.cmi button.cmi
+button.cmx : utils.cmx /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/js.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom_html.cmi button.cmi
+cookie.cmo : /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/regexp.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/js.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom_html.cmi cookie.cmi
+cookie.cmx : /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/regexp.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/js.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom_html.cmi cookie.cmi
+dragnDrop.cmo : utils.cmi /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/js.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom_html.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom.cmi dragnDrop.cmi
+dragnDrop.cmx : utils.cmx /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/js.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom_html.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom.cmi dragnDrop.cmi
+gra.cmo : utils.cmi /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/js.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom_html.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom.cmi
+gra.cmx : utils.cmx /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/js.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom_html.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom.cmi
+graphics.cmo : utils.cmi /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/js.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom_html.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom.cmi graphics.cmi
+graphics.cmx : utils.cmx /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/js.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom_html.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom.cmi graphics.cmi
+utils.cmo : /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/js.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom_html.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom.cmi utils.cmi
+utils.cmx : /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/js.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom_html.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom.cmi utils.cmi
+button.cmi : /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/js.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom_html.cmi
+cookie.cmi : /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/js.cmi
+dragnDrop.cmi : /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/js.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom_html.cmi
+graphics.cmi :
+utils.cmi : /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/js.cmi \
+    /home/lefessan/.opam/4.00.1/lib/js_of_ocaml/dom_html.cmi

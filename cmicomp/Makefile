@@ -15,9 +15,9 @@ CMICOMP=$(TOPLEVELLIB_DIR)/cmicomp
 all: $(CMICOMP) $(JS_CMIS)
 
 
-$(JS_CMIS):  $(JS_DIR)/lib/*.cmi
-	cp -f $(JS_DIR)/lib/*.cmi .
-	cp -f $(JS_DIR)/lib/js_of_ocaml.cma .
+$(JS_CMIS):  $(JS_DIR)/*.cmi
+	cp -f $(JS_DIR)/*.cmi .
+	cp -f $(JS_DIR)/js_of_ocaml.cma .
 	ocamlrun $(CMICOMP) $(CMICOMP_FLAGS) $(JS_CMIS)
 
 clean:

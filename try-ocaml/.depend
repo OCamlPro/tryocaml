@@ -1,0 +1,8 @@
+lessons.cmo : lessons.cmi
+lessons.cmx : lessons.cmi
+lessons.cmi :
+lessons.cmo : lessons.cmi
+lessons.cmx : lessons.cmi
+main.cmo : ../ocp-jslib/graphics.cmi
+main.cmx : ../ocp-jslib/graphics.cmx
+lessons.cmi :

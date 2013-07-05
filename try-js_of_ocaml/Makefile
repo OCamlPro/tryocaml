@@ -30,7 +30,6 @@ TRYOCAML_EXTRA_MODULES= \
 
 include $(ROOT)/Makefile.config
 include $(ROOT)/Makefile.tryocaml
-include $(ROOT)/Makefile.rules
 
 upload:
 	$(SCP) -C index.html webmaster@ssh.ocamlpro.com:/home/try.ocamlpro.com/www/js_of_ocaml/index.html
