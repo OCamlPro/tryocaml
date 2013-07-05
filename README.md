@@ -16,8 +16,8 @@ js_of_ocaml (see http://ocsigen.org/js_of_ocaml/).
 
 # Try it
 
-    $ opam pin js_of_ocaml https://github.com/OCamlPro/opam-repo-dev 
-    $ opam install js_of_ocaml
+    $ opam remote add devel git@github.com:OCamlPro/opam-repo-dev.git
+    $ opam install js_of_ocaml.100
     $ ./configure
     $ make
 
