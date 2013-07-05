@@ -1,9 +1,23 @@
 
 has_asm = false
 
-if ocaml_major_version = "4" && ocaml_minor_version = "00" then {
+if ocaml_major_version = "4"
+&& ocaml_minor_version = "01"
+&& ocaml_point_version = "0" then {
 
-if ocaml_point_version = "1" then {
+(* for 4.01.0 *)
+begin library "try-toplevellib"
+  generated = true
+  dirname = [ "toplevellib/toplevellib-4.01.0" ]
+  archive = "ocamltoplevel"
+  requires = [ "ocamlbytecomp" ]
+end
+}
+
+
+if ocaml_major_version = "4"
+&& ocaml_minor_version = "00"
+&& ocaml_point_version = "1" then {
 
 (* for 4.00.1 *)
 begin library "try-toplevellib"
@@ -14,7 +28,10 @@ begin library "try-toplevellib"
 end
 }
 
-if ocaml_point_version = "0" then {
+
+if ocaml_major_version = "4"
+&& ocaml_minor_version = "00"
+&& ocaml_point_version = "0" then {
 
 (* for 4.00.0 *)
 begin library "try-toplevellib"
@@ -25,10 +42,10 @@ begin library "try-toplevellib"
 end
 }
 
-}
 
-if ocaml_major_version = "3" && ocaml_minor_version = "12" &&
-  ocaml_point_version = "1" then {
+if ocaml_major_version = "3"
+&& ocaml_minor_version = "12"
+&& ocaml_point_version = "1" then {
 
 (* for 3.12.1 *)
 begin library "try-toplevellib"

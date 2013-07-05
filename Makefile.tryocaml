@@ -9,7 +9,7 @@ all: lessons.ml byte
 
 clean:
 	rm -f *~ $(SOURCES) $(TRYOCAML_NAME).tmp  $(TRYOCAML_NAME).js
-	ocp-build -clean
+	ocp-build clean
 
 lessons.mli: $(TUTORIAL_DIR)/lessons.mli
 	cp -f  $(TUTORIAL_DIR)/lessons.mli lessons.mli

@@ -11,7 +11,7 @@ begin
       requires = [ "camlp4lib" "camlp4-pa-op" "Camlp4Bin" ]
   end
 *)
-  dirname = [ "/home/lefessan/.opam/4.00.1/lib/js_of_ocaml" ]
+  dirname = [ "%{js_of_ocaml.syntax_SRC_DIR}%" ]
 
   begin objects "js_of_ocaml.camlp4-syntax.objects"
     files = [ "pa_js.ml" ]
