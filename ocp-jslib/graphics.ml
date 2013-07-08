@@ -165,7 +165,7 @@ let plot x y =
   let context = s.context in
   context##beginPath();
   context##moveTo (float x, float (s.height - y));
-  context##lineTo (float x, float (s.height - y));
+  context##lineTo (float x +. 1., float (s.height - y) +. 1.);
   context##stroke();
   ()
 
@@ -210,7 +210,7 @@ let rmoveto x y = moveto (current_x () + x) (current_y () + y)
 
 let raw_draw_rect x y dx dy =
   let s = get_state () in
-  s.context##strokeRect (float x, float (s.height - y), float dx, float dy)
+  s.context##strokeRect (float x, float (s.height - y), float dx, float (-dy))
 
 let draw_rect x y w h =
   if w < 0 || h < 0 then raise (Invalid_argument "draw_rect")
@@ -258,7 +258,7 @@ let set_line_width w =
 
 let raw_fill_rect x y dx dy =
   let s = get_state () in
-  s.context##fillRect (float x, float (s.height - y), float dx, float dy)
+  s.context##fillRect (float x, float (s.height - y), float dx, float (-dy))
 
 let fill_rect x y w h =
   if w < 0 || h < 0 then raise (Invalid_argument "fill_rect")
@@ -360,6 +360,62 @@ type event =
 let wait_next_event elist =
   failwith "Graphics.wait_next_event cannot be implemented"
 
+
+let loop_on_exit elist f =
+  let doc = Dom_html.document in
+  let canvas = (get_state ()).canvas in
+  let cx, cy = canvas##offsetLeft, canvas##offsetTop in
+  let button = ref false in
+  let null = char_of_int 0 in
+  let mouse_x, mouse_y = ref 0, ref 0 in
+
+  let get_pos_mouse () = !mouse_x, !mouse_y in
+
+  if List.mem Button_down elist then
+    canvas##onmousedown <- Dom_html.handler (fun ev ->
+      let mouse_x, mouse_y = get_pos_mouse () in
+      button := true;
+      let s = { mouse_x ; mouse_y ; button=true ;
+		keypressed=false ; key=null } in
+      f s;
+      Js._true);
+
+  if List.mem Button_up elist then
+    canvas##onmouseup <- Dom_html.handler (fun ev ->
+      let mouse_x, mouse_y = get_pos_mouse () in
+      button := false;
+      let s = { mouse_x ; mouse_y ; button=false ;
+		keypressed=false ; key=null } in
+      f s;
+      Js._true);
+  
+
+  canvas##onmousemove <- Dom_html.handler (fun ev ->
+    let state = get_state () in
+    mouse_x := (Js.Optdef.get (ev##pageX) (fun _ -> 0)) - cx;
+    mouse_y := state.height - (Js.Optdef.get (ev##pageY) (fun _ -> 0) - cy);
+    if List.mem Mouse_motion elist then
+      (let mouse_x, mouse_y = get_pos_mouse () in
+       let s = { mouse_x ; mouse_y ; button=(!button) ;
+		 keypressed=false ; key=null } in
+       f s);
+    Js._true);
+
+  (* EventListener sur le doc car pas de moyen simple de le faire
+     sur un canvasElement *)
+  if List.mem Key_pressed elist then
+    doc##onkeypress <- Dom_html.handler (fun ev ->
+      (* Uncaught Invalid_argument char_of_int with key € for example *)
+      let key =
+	try char_of_int (Js.Optdef.get (ev##charCode) (fun _ -> 0))
+	with Invalid_argument _ -> null in
+      let mouse_x, mouse_y = get_pos_mouse () in
+      let s = { mouse_x ; mouse_y ; button=(!button) ;
+		keypressed=true ; key } in	
+      f s;
+      Js._true)
+
+
 let mouse_pos () =
   let e = wait_next_event [Poll] in (e.mouse_x, e.mouse_y)
 
@@ -371,6 +427,7 @@ let read_key () =
 
 let key_pressed () =
   let e = wait_next_event [Poll] in e.keypressed
+
 
 (*** Sound *)
 
@@ -429,15 +486,88 @@ let close_graph () =
     Utils.set_div_by_id graphics_title_id ""
 
 let open_graph string =
+
+  let size = ref "" in
+
+  (* Parses the "command line" to determine whether or not a new window needs to
+     be used as canvas *)
+  let no_info, new_window = 
+    try
+      let sep = 
+        try 
+          String.index string ' '
+        with _ -> 
+          (* If the string begins with a number, we assume there is no display
+             information *)
+          let c = int_of_char string.[0] in
+          if c >= 48 && c <= 57 then
+            raise (Invalid_argument "No display information")
+          else String.length string
+      in 
+      let display = String.create sep in
+      String.blit string 0 display 0 sep;
+      let l = (String.length string) - sep in
+      size := String.sub string (sep+1) (l-1);
+      false, not (display = "toplvl")
+    with
+        _ -> true, true
+  in
+    
   close_graph ();
+  
+  
+  let x = 0 in
+  let y = 0 in
+
+  (* Parses the "command line" to find the size informations, returns 400x400 if
+  it fails *)
+  let width, height =
+    try
+      begin
+        (* In case the user forgot to add the empty space before declaring size *)
+        let size = if no_info then string else !size in 
+        let sep = String.index size 'x' in
+        let width = String.sub size 0 sep in
+        let l = (String.length size) - sep - 1 in
+        let sec_sep =
+          try 
+            (String.index size '+') - sep - 1
+          with _ -> l
+        in
+        let height = String.sub size (sep+1) sec_sep in
+        int_of_string width, int_of_string height
+      end
+    with
+        _ -> 400, 400
+  in
+
+    (* If a new window is specified, will create a popup and return its document
+  otherwise, it returns the actual document *)
+  let doc = 
+    if new_window then
+      begin
+        let params = 
+          Format.sprintf "status=1,width=%d,height=%d" (width+20) (height+20) 
+        in
+        let params = Js.some (Js.string params) in
+        let pop = 
+          Dom_html.window##open_(
+            Js.string "", 
+            Js.string "OCaml Graphic context", 
+            params)
+        in
+        pop##document
+      end
+    else doc
+  in
+  
   let canvas = Dom_html.createCanvas doc in
-  let body = Utils.get_element_by_id graphics_id in
+  let body = if new_window then doc##body
+    else Utils.get_element_by_id "graphics" in
   let context = canvas##getContext (Dom_html._2d_) in
   Dom.appendChild body canvas;
   let x = 0 in
   let y = 0 in
-  let width = 400 in
-  let height = 400 in
   let color = blue in
   let line_width = 1 in
   let font = "fixed" in
@@ -450,5 +580,6 @@ let open_graph string =
   raw_set_color blue;
   set_text_size text_size;
   raw_set_line_width line_width;
-  Utils.set_div_by_id graphics_title_id !graphics_title;
+  if not new_window then
+    Utils.set_div_by_id graphics_title_id !graphics_title;
   ()
