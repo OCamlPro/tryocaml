@@ -11,12 +11,14 @@ js_of_ocaml (see http://ocsigen.org/js_of_ocaml/).
 
 # Requirements
 
-  * Findlib
-  * Lwt (version 2.4.0** at least, see http://ocsigen.org/lwt/)
   * js_of_ocaml (development version)
+
 
 # Try it
 
+    $ opam remote add devel git@github.com:OCamlPro/opam-repo-dev.git
+    $ opam install js_of_ocaml.100
+    $ ./configure
     $ make
 
 Then, with your favorite browser launch tryocaml/index.html:

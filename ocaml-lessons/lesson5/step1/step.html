@@ -1,4 +1,21 @@
-<h3>This lesson is not yet available</h3>
+<h3>Sequence of expressions</h3>
 
-<p>Use <code>lessons ()</code> to get the list of all lessons.
-Use <code>back ()</code> to return to the previous step.</p>
+<p>It is easy to get confused by OCaml syntax since it's different from
+mainstream languages. So you'd better be aware of a few things before digging
+any deeper.</p>
+
+<br />
+<p>To begin with, you should know that a proper command must normally ends with
+<em>';;'</em> to be processed by the top-level.  This tutorial automatically adds
+the double semicolon as soon as you hit enter but the normal top-level won't.
+The double semicolon is only required when interacting with the top level
+interpreter and as such is not part of OCaml syntax.</p>
+
+<br />
+<p>What <em>is</em> part of OCaml syntax, though, is the simple semicolon
+<em>';'</em> which is commonly used as an expression terminator, except that in
+OCaml it's a <b>separator</b>.  In other words, you must not write <code>expr1;
+expr2;</code> but <code>expr1 ; expr2</code>.</p>
+
+<br/ >
+<p>You may now enter <code>next ()</code> to check your understanding.</p>

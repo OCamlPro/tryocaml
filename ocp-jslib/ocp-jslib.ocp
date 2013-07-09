@@ -1,0 +1,39 @@
+
+begin
+  generated = true
+
+(* BUG: ocp-build should look for camlp4o.byte, instead of just camlp4o ?
+  By default, ocp-build renames X.asm in X, and keeps X.byte. We should
+  add options "byte_name" and "asm_name".
+*)
+(*
+  begin program "camlp4o"
+      requires = [ "camlp4lib" "camlp4-pa-op" "Camlp4Bin" ]
+  end
+*)
+  dirname = [ "%{js_of_ocaml.syntax_SRC_DIR}%" ]
+
+  begin objects "js_of_ocaml.camlp4-syntax.objects"
+    files = [ "pa_js.ml" ]
+  end
+
+  begin syntax "js_of_ocaml.camlp4-syntax"
+    requires = [ "js_of_ocaml.camlp4-syntax.objects" "camlp4o" ]
+  end
+
+(*
+  begin library "js_of_ocaml.lib"
+    archive = [ "js_of_ocaml" ]
+    requires = [ "lwt" ]
+  end
+*)
+
+end
+
+begin library "ocp-jslib"
+  has_asm = false
+  syntax = "js_of_ocaml.camlp4-syntax"
+  files = [ "utils.ml" "button.ml" "cookie.ml"
+              "dragnDrop.ml" "graphics.ml" ]
+  requires = [ "js_of_ocaml.camlp4-syntax" "js_of_ocaml" ]
+end

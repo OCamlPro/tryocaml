@@ -1,0 +1,13 @@
+(* ocp-build BUG:
+Warning: program try-ocaml, requirements try-ocaml-lessons and tutorial both
+	define a module name Lessons.
+*)
+
+begin library "try-tutorial"
+  files = [ "lessons.mli" "n.ml" "tutorial.ml" ]
+end
+
+begin program "try-make-lessons"
+  files = [ "make_lessons.ml" ]
+  requires = [ "unix" ]
+end

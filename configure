@@ -1,18 +1,24 @@
 #!/bin/sh
 echo Generating Makefile.config
 
+ocp-build init
+ocp-build configure
+
 echo OCAMLC=ocamlc > Makefile.config.temp
 echo OCAMLDEP=ocamldep.opt >> Makefile.config.temp
-echo OCAMLVNUM=`ocamlc -version` >> Makefile.config.temp
-echo JS_DIR=`ocamlfind -query js_of_ocaml` >> Makefile.config.temp
+echo OCAMLVNUM=`ocamlc -version | cut -b 1-6` >> Makefile.config.temp
+echo JS_DIR=`ocp-build query -libdir js_of_ocaml` >> Makefile.config.temp
+echo LWT_DIR=`ocp-build query -libdir lwt` >> Makefile.config.temp
 echo JS_COMP=`which js_of_ocaml` >> Makefile.config.temp
-echo JS_COMPILER_LIB=`ocamlfind -query js_of_ocaml_compiler` >> Makefile.config.temp
+echo JS_COMPILER_LIB=`ocp-build query -libdir js_of_ocaml_compiler` >> Makefile.config.temp
 echo 'TOPLEVEL_DIR=$(ROOT)/toplevel' >> Makefile.config.temp
-echo 'OCAMLNUM_DIR=$(ROOT)/ocaml-num' >> Makefile.config.temp
+echo 'TOPLEVEL_INCDIR=$(ROOT)/_obuild/try-toplevel' >> Makefile.config.temp
+echo 'OCAMLNUM_INCDIR=$(ROOT)/_obuild/ocaml-num' >> Makefile.config.temp
+echo 'TUTORIAL_INCDIR=$(ROOT)/_obuild/try-tutorial' >> Makefile.config.temp
 echo 'TUTORIAL_DIR=$(ROOT)/tutorial' >> Makefile.config.temp
 echo 'TOPLEVELLIB_DIR=$(ROOT)/toplevellib/toplevellib-$(OCAMLVNUM)' >> Makefile.config.temp
 echo 'CMICOMP_DIR=$(ROOT)/cmicomp' >> Makefile.config.temp
-echo 'OCPJSLIB_DIR=$(ROOT)/ocp-jslib' >> Makefile.config.temp
+echo 'OCPJSLIB_INCDIR=$(ROOT)/_obuild/ocp-jslib' >> Makefile.config.temp
 echo 'SCP=scp' >> Makefile.config.temp
 
 mv Makefile.config.temp Makefile.config

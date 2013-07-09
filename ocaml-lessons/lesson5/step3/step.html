@@ -1,0 +1,23 @@
+<h3>The <em>let</em> keyword</h3>
+
+<p>The other source of confusion for newcomers is the <em>let</em> keyword
+which acts differently in the toplevel than in normal OCaml expressions.</p>
+<br />
+
+<p>In the toplevel <code>let x = 1</code> binds the name <code>x</code> to the
+integer 1 as seen in <code>lesson 2</code>. If <em>x</em> was already bound to something
+it's previous binding is lost:</p> 
+<code>let x = "I am now a string!"</code>
+<br /><br />
+
+<p>The <em>let</em> keyword is also used to form an expression in which a name
+is given to some value temporarily, for the evaluation of a subexpression only:<br />
+<code>let x = 41 in x + 1</code><br />
+
+ The value of <em>x</em> is <em>41</em> during
+the evaluation of <em>x + 1</em> only; the global binding of <em>x</em> to
+<code>"I am now a string!"</code> is preserved.</p>
+<br />
+
+<p>See what <code>x</code> is evaluated to now, and type <code>next ()</code>
+for a little practice.</p>
