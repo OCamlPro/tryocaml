@@ -9,6 +9,9 @@ all: Makefile.config
 Makefile.config:
 	./configure
 
+clone:
+	git clone git@github.com:OCamlPro/ocp-jslib.git
+
 clean:
 	$(MAKE) -C cmicomp clean
 	$(MAKE) -C try-ocaml clean
