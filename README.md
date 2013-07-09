@@ -12,12 +12,14 @@ js_of_ocaml (see http://ocsigen.org/js_of_ocaml/).
 # Requirements
 
   * js_of_ocaml (development version)
+  * ocp-jslib (https://github.com/OCamlPro/ocp-jslib)
 
 
 # Try it
 
     $ opam remote add devel git@github.com:OCamlPro/opam-repo-dev.git
     $ opam install js_of_ocaml.100
+    $ git clone git@github.com:OCamlPro/ocp-jslib.git
     $ ./configure
     $ make
 
