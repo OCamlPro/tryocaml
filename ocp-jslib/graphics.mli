@@ -305,6 +305,10 @@ val wait_next_event : event list -> status
    are queued, and dequeued one by one when the [Key_pressed]
    event is specified. *)
 
+val loop_on_exit : event list -> (status -> unit) -> unit
+(** Loops until exit and listen to the given events. Those events automatically
+    returns a status record, which is used by the function given in argument. *)
+
 (** {6 Mouse and keyboard polling} *)
 
 val mouse_pos : unit -> int * int

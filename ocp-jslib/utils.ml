@@ -30,7 +30,9 @@ let get_by_name id =
   Js.to_string div##innerHTML
 
 let read_from_input ?msg:(msg="") ?default:(default="") =
-  Js.to_string (window##prompt (_s msg, _s default))
+  match Js.Opt.to_option (window##prompt (_s msg, _s default)) with
+  None -> assert false
+  | Some s -> Js.to_string s
 
 let jsnew0 (constr : 'a Js.t Js.constr) () =
   (Js.Unsafe.new_obj constr [| |] : 'a Js.t)

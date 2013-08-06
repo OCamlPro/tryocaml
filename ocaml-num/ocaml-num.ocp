@@ -1,0 +1,18 @@
+begin library "ocaml-num"
+  files = [ "int_misc.ml" "nat.ml" "big_int.ml"
+              "arith_flags.ml" "ratio.ml" "num.ml"
+              "arith_status.ml" "topnum.ml"
+          ]
+end
+
+(*
+begin program "testdiv"
+    files = [ "tests/testdiv.ml" ]
+    requires = [ "ocaml-num" ]
+end
+*)
+
+(*
+numtop: OCamlNum.cmo
+        ocamlmktop -o numtop nums.cma OCamlNum.cmo
+*)

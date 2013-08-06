@@ -1,0 +1,18 @@
+<h3>Exercise: let there be lets!</h3>
+
+<p>Fix all these <em>let</em> expressions in order to get the expected result
+at the end:</p>
+
+<pre><code>let xy =
+  let x = 'x' and let y = 'y' in x ::[y]</code></pre>
+
+<pre><code>let ab =
+  let a = 'a'
+  let b = 'B' in Char.lowercase b
+  in a ::[b]
+</code></pre>
+
+<pre><code>let up = Char.uppercase in
+  big_xy = List.map up xy ;
+  big_ab = List.map up ab ;
+  big_ab @ big_xy</code></pre>
