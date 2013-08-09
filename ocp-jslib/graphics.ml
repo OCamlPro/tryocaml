@@ -21,6 +21,7 @@ exception Graphic_failure of string
 open Utils
 
 type state = {
+  doc : Dom_html.document Js.t;
   context : Dom_html.canvasRenderingContext2D Js.t;
   canvas : Dom_html.canvasElement Js.t;
   mutable x : int;
@@ -380,7 +381,7 @@ let wait_next_event elist =
 
 
 let loop_on_exit elist f =
-  let doc = Dom_html.document in
+  let s = get_state () in
   let canvas = (get_state ()).canvas in
   let cx, cy = canvas##offsetLeft, canvas##offsetTop in
   let button = ref false in
@@ -422,7 +423,7 @@ let loop_on_exit elist f =
   (* EventListener sur le doc car pas de moyen simple de le faire
      sur un canvasElement *)
   if List.mem Key_pressed elist then
-    doc##onkeypress <- Dom_html.handler (fun ev ->
+    s.doc##onkeypress <- Dom_html.handler (fun ev ->
       (* Uncaught Invalid_argument char_of_int with key € for example *)
       let key =
 	try char_of_int (Js.Optdef.get (ev##charCode) (fun _ -> 0))
@@ -618,8 +619,8 @@ let open_graph string =
       let doc = pop##document in
       graphics_id := "graphics";
       let body = doc##body in
-      doc##body##innerHTML <- Js.string "<div id=\"graphics\"></div>";
-      doc, doc##body
+      body##innerHTML <- Js.string "<div id=\"graphics\"></div>";
+      doc, body
   in
 
   let canvas = Dom_html.createCanvas doc in
@@ -632,7 +633,7 @@ let open_graph string =
   let font = "fixed" in
   let text_size = 26 in
   let s =  { canvas; context; x; y; width; height; color;
-             line_width; font; text_size  }
+             line_width; font; text_size; doc  }
   in
   state := Some s;
   clear_graph ();
