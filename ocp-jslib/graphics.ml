@@ -1,6 +1,6 @@
 
-let graphics_title_id = "graphics-title"
-let graphics_id = "graphics"
+let graphics_title_id = ref "graphics-title"
+let graphics_id = ref "graphics"
 
 exception Graphic_failure of string
 
@@ -95,7 +95,7 @@ let _ =
 
 let set_window_title title =
   graphics_title := title;
-  Utils.set_div_by_id graphics_title_id !graphics_title;
+  Utils.set_div_by_id !graphics_title_id !graphics_title;
   (* TODO *) ()
 
 let resize_window width height =
@@ -240,12 +240,33 @@ let draw_segments segs =
   done;
   moveto savex savey;
 ;;
-let raw_draw_arc x y rx ry a1 a2 =
-  failwith "Graphics.raw_draw_arc not implemented"
+
+let pi = 4. *. atan 1.
+let degree_to_radian n =
+  pi  *. float n /. 180.
+
+let raw_draw_arc x y rx ry a1 a2 fillp =
+  let s = get_state () in
+  let ctx = s.context in
+  let scale = rx <> ry in
+  let yy = float (s.height - y) in
+  let yy = if scale then begin
+      ctx##save ();
+      let y_scale = float ry /. float rx in
+      ctx##scale (1., y_scale);
+      yy /. y_scale
+    end else
+      yy
+  in
+  ctx##beginPath();
+  ctx##arc (float x, yy, float rx,
+    degree_to_radian a1, degree_to_radian a2, Js.bool true);
+  if fillp then ctx##fill () else ctx##stroke();
+  if scale then ctx##restore ()
 
 let draw_arc x y rx ry a1 a2 =
   if rx < 0 || ry < 0 then raise (Invalid_argument "draw_arc/ellipse/circle")
-  else raw_draw_arc x y rx ry a1 a2
+  else raw_draw_arc x y rx ry a1 a2 false
 ;;
 
 let draw_ellipse x y rx ry = draw_arc x y rx ry 0 360
@@ -278,12 +299,9 @@ let fill_poly point_array =
   s.context##fill();
   ()
 
-let raw_fill_arc x y rx ry a1 a2 =
-  failwith "Graphics.raw_fill_arc not implemented"
-
 let fill_arc x y rx ry a1 a2 =
   if rx < 0 || ry < 0 then raise (Invalid_argument "fill_arc/ellipse/circle")
-  else raw_fill_arc x y rx ry a1 a2
+  else raw_draw_arc x y rx ry a1 a2 true
 ;;
 
 let fill_ellipse x y rx ry = fill_arc x y rx ry 0 360
@@ -388,7 +406,7 @@ let loop_on_exit elist f =
 		keypressed=false ; key=null } in
       f s;
       Js._true);
-  
+
 
   canvas##onmousemove <- Dom_html.handler (fun ev ->
     let state = get_state () in
@@ -411,7 +429,7 @@ let loop_on_exit elist f =
 	with Invalid_argument _ -> null in
       let mouse_x, mouse_y = get_pos_mouse () in
       let s = { mouse_x ; mouse_y ; button=(!button) ;
-		keypressed=true ; key } in	
+		keypressed=true ; key } in
       f s;
       Js._true)
 
@@ -482,28 +500,59 @@ let close_graph () =
     let canvas = c.canvas in
     canvas##width <- 0;
     canvas##height <- 0;
-    Utils.set_div_by_id graphics_id "";
-    Utils.set_div_by_id graphics_title_id ""
+    Utils.set_div_by_id !graphics_id "";
+    Utils.set_div_by_id !graphics_title_id ""
+
+let cut_at s c =
+  let pos = String.index s c in
+  String.sub s 0 pos, String.sub s (pos+1) (String.length s - pos - 1)
 
 let open_graph string =
+
+  let div, (width, height) =
+    try
+      if string = "" then raise Not_found;
+      let div, size =
+        try
+          let (div, size) = cut_at string ' ' in
+          Some div, Some size
+        with Not_found ->
+          match string.[0] with
+          | '0'..'9' -> None, Some string
+          | 'a'..'z' | 'A'..'Z' -> Some string, None
+          | _ -> raise Not_found
+      in
+      let size = try
+        match size with
+          None -> raise Not_found
+        | Some size ->
+          let width, height = cut_at size 'x' in
+          (int_of_string width, int_of_string height)
+      with _ -> (400,400)
+      in
+      div, size
+    with _ -> None, (400, 400)
+  in
+
+(*
 
   let size = ref "" in
 
   (* Parses the "command line" to determine whether or not a new window needs to
      be used as canvas *)
-  let no_info, new_window = 
+  let no_info, new_window =
     try
-      let sep = 
-        try 
+      let sep =
+        try
           String.index string ' '
-        with _ -> 
+        with _ ->
           (* If the string begins with a number, we assume there is no display
              information *)
           let c = int_of_char string.[0] in
           if c >= 48 && c <= 57 then
             raise (Invalid_argument "No display information")
           else String.length string
-      in 
+      in
       let display = String.create sep in
       String.blit string 0 display 0 sep;
       let l = (String.length string) - sep in
@@ -512,10 +561,8 @@ let open_graph string =
     with
         _ -> true, true
   in
-    
-  close_graph ();
-  
-  
+
+
   let x = 0 in
   let y = 0 in
 
@@ -525,12 +572,12 @@ let open_graph string =
     try
       begin
         (* In case the user forgot to add the empty space before declaring size *)
-        let size = if no_info then string else !size in 
+        let size = if no_info then string else !size in
         let sep = String.index size 'x' in
         let width = String.sub size 0 sep in
         let l = (String.length size) - sep - 1 in
         let sec_sep =
-          try 
+          try
             (String.index size '+') - sep - 1
           with _ -> l
         in
@@ -541,29 +588,41 @@ let open_graph string =
         _ -> 400, 400
   in
 
-    (* If a new window is specified, will create a popup and return its document
-  otherwise, it returns the actual document *)
-  let doc = 
-    if new_window then
-      begin
-        let params = 
-          Format.sprintf "status=1,width=%d,height=%d" (width+20) (height+20) 
-        in
-        let params = Js.some (Js.string params) in
-        let pop = 
-          Dom_html.window##open_(
-            Js.string "", 
-            Js.string "OCaml Graphic context", 
-            params)
-        in
-        pop##document
-      end
-    else doc
+*)
+
+  close_graph ();
+
+  (* If a new window is specified, will create a popup and return its document
+     otherwise, it returns the actual document *)
+  let doc, body =
+    try
+      match div with
+        Some div ->
+        let div = if div = "toplvl" then "graphics" else div in
+        let body = Utils.get_element_by_id !graphics_id in
+        graphics_id := div;
+        Utils.set_div_by_id !graphics_title_id !graphics_title;
+        doc, body
+      | None -> raise Not_found
+    with _ ->
+      let params =
+        Format.sprintf "status=no,width=%d,height=%d" (width+20) (height+20)
+      in
+      let params = Js.some (Js.string params) in
+      let pop =
+        Dom_html.window##open_(
+          Js.string "",
+          Js.string "OCaml Graphic context",
+          params)
+      in
+      let doc = pop##document in
+      graphics_id := "graphics";
+      let body = doc##body in
+      doc##body##innerHTML <- Js.string "<div id=\"graphics\"></div>";
+      doc, doc##body
   in
-  
+
   let canvas = Dom_html.createCanvas doc in
-  let body = if new_window then doc##body
-    else Utils.get_element_by_id "graphics" in
   let context = canvas##getContext (Dom_html._2d_) in
   Dom.appendChild body canvas;
   let x = 0 in
@@ -573,13 +632,12 @@ let open_graph string =
   let font = "fixed" in
   let text_size = 26 in
   let s =  { canvas; context; x; y; width; height; color;
-                  line_width; font; text_size  }
+             line_width; font; text_size  }
   in
   state := Some s;
   clear_graph ();
   raw_set_color blue;
   set_text_size text_size;
   raw_set_line_width line_width;
-  if not new_window then
-    Utils.set_div_by_id graphics_title_id !graphics_title;
+  window##focus();
   ()

@@ -44,7 +44,7 @@ function caml_sys_file_exists (x) { return (caml_global_data.interfaces[x])?1:0;
 
 //Provides: caml_sys_open
 //Requires: MlString, caml_raise_sys_error, caml_global_data
-function caml_sys_open (x) {
+function caml_sys_open (x, flags, perm) {
   var v = caml_global_data.interfaces[x];
   if (v) {
     var s = new MlString (v);
