@@ -1,5 +1,5 @@
-###step:
-<h3>A moving box</h3>
+###lesson:Simple examples
+###step:A moving box
 
 <pre><code>
 open Utils
@@ -23,12 +23,12 @@ let _ =
   let _ = window##setInterval (_f redraw, 2.5) in
   ()
 </code></pre>
+
 ###test:
 fun input output ->
   false
 
-###step:
-<h3>A moving box</h3>
+###step:A moving box with stop button
 
 <pre><code>
 open Utils
@@ -52,6 +52,8 @@ let _ =
   Dom.appendChild body (Button.create "Stop" stop);
   setTimeout stop 50000.
 </code></pre>
+
 ###test:
+
 fun input output ->
   find_in  "- : string array =" output

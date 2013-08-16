@@ -1,5 +1,5 @@
-###step:
-<h3>Play with Cookies</h3>
+###lesson:Play with Cookies
+###step:Play with Cookies
 
 <pre><code>
 open Utils
@@ -20,5 +20,7 @@ let _ =
         | 3 -> "third"
         | _ -> string_of_int v ^ "th"))
 </code></pre>
+
 ###test:
+
 fun input output -> find_in "val y : int = 43" output
