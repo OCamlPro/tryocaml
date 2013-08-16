@@ -1,0 +1,13 @@
+
+begin
+
+  if OCAMLVNUM = "4.01.0" then {
+
+    generated = true
+    begin library "tryocaml-toplevellib"
+      files = [ "toploop.ml" "topdirs.ml" "clflags.ml" ]
+    end
+
+  }
+
+end

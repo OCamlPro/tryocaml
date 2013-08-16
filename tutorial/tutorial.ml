@@ -23,7 +23,7 @@ let langs = ref [
   (default_language, (default_language_name, default_translation))
 ]
 
-let _ =
+let set_langs l =
   List.iter (fun (lang, messages) ->
     let h = Hashtbl.create 13 in
     List.iter (fun (x,y) -> Hashtbl.add h x y) messages;
@@ -31,7 +31,7 @@ let _ =
       let name = Hashtbl.find h default_language_name in
       langs := ( lang, (name,h) ) :: !langs
     with Not_found -> ()
-  ) Lessons.langs
+  ) l
 
 let langs = List.sort compare !langs
 
@@ -51,10 +51,12 @@ let this_step_check = ref (fun _ _ -> false)
 let this_step_title = ref ""
 let this_step_html = ref ""
 
-let lessons_table =
+let lessons_table = ref [||]
+
+let set_lessons lessons =
   let all_lessons =
     let max_lesson = ref 1 in
-    List.iter (fun (num, _, _, _, _) -> if num > !max_lesson then max_lesson := num) Lessons.lessons;
+    List.iter (fun (num, _, _, _, _) -> if num > !max_lesson then max_lesson := num) lessons;
     let all_lessons = Array.create (!max_lesson+1) None in
     all_lessons
   in
@@ -66,8 +68,8 @@ let lessons_table =
       all_steps.(num) <- Some (step_title, step_html, step_langs, step_check)
     ) steps;
     all_lessons.(num) <- Some (lesson_title, lesson_html, lesson_langs, all_steps)
-  ) Lessons.lessons;
-  all_lessons
+  ) lessons;
+  lessons_table := all_lessons
 
 let user_navigation = ref false
 
@@ -76,8 +78,10 @@ let get_lesson lesson_title lesson_html lesson_langs =
     List.assoc !current_lang lesson_langs
   with Not_found -> (lesson_title, lesson_html)
 
+let lessons_table_get n = (!lessons_table).(n)
+
 let update_lesson () =
-  match lessons_table.(!this_lesson) with
+  match lessons_table_get !this_lesson with
       None -> ()
     | Some (lesson_title, lesson_html, lesson_langs, steps) ->
       let (title, html) = get_lesson lesson_title lesson_html lesson_langs in
@@ -119,8 +123,8 @@ let rec step num =
 
 and lesson num =
   print_debug (Printf.sprintf "lesson %d\n" num);
-  if num >= 1 && num < Array.length lessons_table then
-    match lessons_table.(num) with
+  if num >= 1 && num < Array.length !lessons_table then
+    match lessons_table_get num with
         None -> lesson (num + 1)
       | Some (lesson_title, lesson_html, lesson_langs, steps) ->
         this_lesson := num;
@@ -129,15 +133,15 @@ and lesson num =
 
 and lesson_back num =
   print_debug (Printf.sprintf "lesson_back %d\n" num);
-  if num >= 1 && num < Array.length lessons_table then
-    match lessons_table.(num) with
+  if num >= 1 && num < Array.length !lessons_table then
+    match lessons_table_get num with
         None -> lesson_back (num - 1)
       | Some (lesson_title, lesson_html, lesson_langs, steps) ->
         this_lesson := num;
         update_lesson ();
         step (Array.length steps - 1)
 
-let check_step ppf input output =
+let check_step (ppf: Format.formatter) input output =
   print_debug (Printf.sprintf "debug: output=[%s]" (String.escaped output));
   if !user_navigation then begin
     user_navigation := false;
@@ -177,8 +181,8 @@ let debug d =
 let lessons () =
   Printf.printf "%s:\n%!" (translate "All lessons");
   let left = ref true in
-  for i = 0 to Array.length lessons_table - 1 do
-    match lessons_table.(i) with
+  for i = 0 to Array.length !lessons_table - 1 do
+    match lessons_table_get i with
         None -> ()
       | Some (lesson_title, lesson_html, lesson_langs, steps) ->
         let (title, html) = get_lesson lesson_title lesson_html lesson_langs in

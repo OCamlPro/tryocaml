@@ -1,0 +1,38 @@
+
+begin rules "tryocaml-cmicomp"
+
+ JS_DIR= %dstdir( p = "js_of_ocaml" )
+ LWT_DIR= %dstdir( p = "lwt" )
+ JS_COMPILER_LIB= %dstdir( p = "js_of_ocaml_compiler")
+
+ js_cmis_rule = %uniq()
+
+ TOPLEVELLIB_DIR = %srcdir ( p = "tryocaml-toplevellib" )
+
+ cmicomp = %path( path = [ TOPLEVELLIB_DIR "cmicomp" ] )
+
+ JS_SRC_CMIS = %subst_file (
+    files = JS_CMIS
+    to_file = %path( path = [ JS_DIR "%{file}%" ])
+   )
+
+ if %mem( string = OCAMLVNUM strings = [ "4.00.0" "4.00.1" "4.01.0" ]) then {
+   cmicomp_flags = [ "compress" ]
+ } else {
+   cmicomp_flags = []
+ }
+
+ build_rules = [
+
+    JS_CMIS (
+       uniq_rule = js_cmis_rule
+       sources = JS_SRC_CMIS
+       commands = [
+         { "cp" "-f" JS_SRC_CMIS "." }
+         { "ocamlrun" cmicomp cmicomp_flags JS_CMIS }
+       ]
+       build_target = true
+    )
+  ]
+
+end

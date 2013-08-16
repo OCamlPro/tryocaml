@@ -2,6 +2,9 @@ let doc = Dom_html.document
 
 let window = Dom_html.window
 
+
+let alert s = window##alert (Js.string s)
+
 let loc = Js.Unsafe.variable "location"
 
 let _s s = Js.string s

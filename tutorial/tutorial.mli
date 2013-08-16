@@ -1,4 +1,12 @@
 
+val set_langs : (string * (string * string) list) list -> unit
+val set_lessons :
+           (int * string * string * (string * (string * string)) list *
+            (int * string * string * (string * (string * string)) list *
+             (string -> string -> bool))
+            list)
+           list -> unit
+
 val this_lesson : int ref
 val this_lesson_title : string ref
 val this_lesson_html : string ref
@@ -14,7 +22,9 @@ val check_step : Format.formatter -> string -> string -> unit
 
 val debug : bool -> unit
 
+(*
 val lessons_table : (string * string * (string * (string * string)) list * (string * string * (string * (string * string)) list * (string -> string -> bool)) option array) option array
+*)
 
 val debug_fun : (string -> unit) ref
 val message_fun : (string -> unit) ref

@@ -165,8 +165,11 @@ let plot x y =
   s.y <- y;
   let context = s.context in
   context##beginPath();
+(*
   context##moveTo (float x, float (s.height - y));
   context##lineTo (float x +. 1., float (s.height - y) +. 1.);
+*)
+  context##fillRect(float x, float (s.height-y), float 1, float 1);
   context##stroke();
   ()
 
@@ -516,7 +519,7 @@ let open_graph string =
       let div, size =
         try
           let (div, size) = cut_at string ' ' in
-          Some div, Some size
+          (if div = "" then None else Some div), Some size
         with Not_found ->
           match string.[0] with
           | '0'..'9' -> None, Some string
@@ -534,63 +537,6 @@ let open_graph string =
       div, size
     with _ -> None, (400, 400)
   in
-
-(*
-
-  let size = ref "" in
-
-  (* Parses the "command line" to determine whether or not a new window needs to
-     be used as canvas *)
-  let no_info, new_window =
-    try
-      let sep =
-        try
-          String.index string ' '
-        with _ ->
-          (* If the string begins with a number, we assume there is no display
-             information *)
-          let c = int_of_char string.[0] in
-          if c >= 48 && c <= 57 then
-            raise (Invalid_argument "No display information")
-          else String.length string
-      in
-      let display = String.create sep in
-      String.blit string 0 display 0 sep;
-      let l = (String.length string) - sep in
-      size := String.sub string (sep+1) (l-1);
-      false, not (display = "toplvl")
-    with
-        _ -> true, true
-  in
-
-
-  let x = 0 in
-  let y = 0 in
-
-  (* Parses the "command line" to find the size informations, returns 400x400 if
-  it fails *)
-  let width, height =
-    try
-      begin
-        (* In case the user forgot to add the empty space before declaring size *)
-        let size = if no_info then string else !size in
-        let sep = String.index size 'x' in
-        let width = String.sub size 0 sep in
-        let l = (String.length size) - sep - 1 in
-        let sec_sep =
-          try
-            (String.index size '+') - sep - 1
-          with _ -> l
-        in
-        let height = String.sub size (sep+1) sec_sep in
-        int_of_string width, int_of_string height
-      end
-    with
-        _ -> 400, 400
-  in
-
-*)
-
   close_graph ();
 
   (* If a new window is specified, will create a popup and return its document

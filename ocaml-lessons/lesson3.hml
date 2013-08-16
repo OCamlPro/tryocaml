@@ -1,0 +1,159 @@
+###lesson:Functions
+###step:Defining a one-argument function
+
+<p>In OCaml defining a function with one argument, will look like this:</p>
+<p><code>let incr n = n + 1</code></p>
+
+
+<br />
+<p>You can also use tuples:<p>
+<p><code>let plus_and_divide (x, y, z) = (x + y) / z</code></p>
+<p>Note that even though you have <code>x</code>, <code>y</code> and <code>z</code> as
+arguments, this syntax with tuples means that you call the function
+plus_and_divide with <strong>one</strong> argument which is a triple in
+this case.<p>
+
+<br />
+<p>To call a function, nothing is simpler:</p>
+<p><code>incr 42</code></p>
+<p><code>plus_and_divide (10, 20, 2)</code></p>
+
+###test:
+
+fun _ output ->
+  find_in  "- : int = 15" output
+
+###step:Defining a multiple-arguments function
+
+<p>In C or Java, a function <code>plus</code>, will look like:
+<p>int plus (int x, int y) { return x + y; }</p>
+
+<br />
+<p>Then the call to this function, will be:</p>
+<p>plus (1, 2);</p>
+
+<br />
+<p>In OCaml, the same function <code>plus</code> will be define like follow:</p>
+<p><code>let plus x y = x + y</code></p>
+
+<br />
+<p>To call this function, nothing is simpler:</p>
+<p><code>plus 1 2</code></p>
+<p>Note that there is no need to bracket or comma between function's parameters.</p>
+
+###test:
+
+fun _ output ->
+  find_in  "- : int =" output
+
+###step:Returning multiple values
+
+<p>You will notice that in OCaml, there is no <code>return</code>
+statement; to return a value, the whole body expression is implicitly returned.</p>
+
+<br />
+<p>To return multiple values, we will use tuples. For example:</p>
+<p><code>(2, 3, 4, 5)</code></p>
+
+<br />
+<p>We can write functions which will return multiple values thanks to
+tuples. For example:</p>
+<p><code>let divide x y = (x / y, x mod y)</code></p>
+
+<br />
+<p>Then we get:</p>
+<p><code>divide 10 3</code></p>
+
+###test:
+
+fun _ output ->
+  find_in  "- : int * int =" output
+
+###step:Partial application
+
+<p>It is possible to apply a number of parameters less than what is
+required by a function. The result would be a partial application of a
+function.</p>
+
+
+<br />
+<p>Let's take the <code>plus</code> example:</p>
+<p><code>let plus x y = x + y</code></p>
+
+<br />
+<p>Using the partial application, we could rewrite the function
+<code>incr</code>, by giving just one argument to the
+function <code>plus</code>:</p>
+<p><code>let incr = plus 1</code></p>
+
+<br />
+<p>In this way, <code>plus 1</code> will return a function arity 1: <code> val incr : int -> int = &lt;fun&gt;</code><p>
+<p>To increment an integer by one, you can now use the function <code>incr</code>:</p>
+<p><code>incr 42</code></p>
+
+<br />
+<p>Similarly, we can define a function which double each integer
+passed as argument of the function:</p>
+<p><code>let mul x y = x * y </code><p>
+<p><code>let double = mul 2</code><p>
+<p><code>double 8</code><p>
+
+###test:
+fun _ output ->
+  find_in  "- : int = 16" output
+
+###step:Anonymous functions
+
+<p>In OCaml, we can write anonymous functions, functions defined
+without being bound to an identifier. For example:</p>
+<p><code>(fun x -> x + 1) 42</code></p>
+
+<br />
+<p>We can bound an anonymous function to an identifier. That's way, we
+have severals ways to define functions:</p>
+<p><code>let incr = fun x -> x + 1</code></p>
+<p><code>incr 42</code></p>
+
+###test:
+
+fun input _ ->
+  find_in  "incr 42;;" input
+
+###step:Iterators
+
+<p>What is really fun is that you can now mix anonymous functions and
+iterators.
+Let's take an example with list. If you want to increment all elements
+of a list, you will use <code>List.map</code>:</p>
+<p><code>List.map (fun x -> x + 1) [ 1; 2; 3; 4 ]</code></p>
+<br />
+<p>Here, <code>x</code> is an element of the list, <code>x + 1</code>
+is the operation that will be done on <code>x</code>. The result will
+be a list with all its elements incremented by 1.</p>
+
+<br />
+<p>Here is an example with <code>fold_left</code>. If you want to
+compute the sum of all elements of a list:</p>
+<pre><code>List.fold_left
+     (fun acc x -> acc + x)
+     0
+     [ 1; 2; 3; 4 ]
+</code></pre>
+
+<p>If we have :</p>
+<p><code>let plus = fun acc x -> acc + x</code></p>
+<p>then:</p>
+<p><code>List.fold_left plus 0 [ 1; 2; 3; 4 ]</code></p>
+<p>is equivalent to:</p>
+<p><code>plus (plus (plus (plus 0 1) 2) 3) 4</code></p>
+
+<br />
+<p>To finish, you may need to print values from a list:</p>
+<p><code>List.iter print_int [ 1; 2; 3; 4 ]</code></p>
+
+
+<br />
+<p>You can do the same sort of things on arrays too.</p>
+###test:
+fun _ output ->
+  find_in  "- : unit = ()" output

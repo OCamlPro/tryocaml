@@ -1,0 +1,38 @@
+###lesson:the Graphics module
+###step:The Graphics module
+
+<p>The simple
+<a href="http://caml.inria.fr/pub/docs/manual-ocaml/libref/Graphics.html">
+Graphics module</a> works also in Try OCaml !</p>
+
+<p>Here is a very simple program, that opens a canvas of
+size 900x900, draw points where the mouse button is pressed,
+and draw chars when key are pressed:</p>
+
+<pre><code>open Graphics;;
+open_graph " 900x600";;
+loop_on_exit [Key_pressed; Button_down]
+   (fun event ->
+     if event.keypressed then
+       draw_char event.key
+     else
+       fill_circle event.mouse_x event.mouse_y 10)</code></pre>
+
+
+<p><inline>loop_on_exit</inline> must be used instead of
+<inline>wait_next_event</inline> and <inline>read_key</inline>.</p>
+<p>Note that Graphics.loop_on_exit is only available
+in the standard OCaml distribution since OCaml 4.01.</p>
+</p>
+###test:
+fun input output -> false
+###step:A simple game using Graphics
+
+    <p>A simple game written by Sylvain Conchon for students is also
+        available : <code>Sylvain.main()</code>.</p>
+
+      <p>You can click on a group of balls of the same color to make them disappear.</p>
+
+    </p>
+###test:
+fun input output -> false

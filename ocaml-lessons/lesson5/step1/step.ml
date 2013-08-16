@@ -1,2 +1,0 @@
-fun input output ->
-  false

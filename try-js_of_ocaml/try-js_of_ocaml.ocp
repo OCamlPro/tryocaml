@@ -1,12 +1,12 @@
+tryocaml_lessons = [ "lesson1.hml" "lesson2.hml" ]
+tryocaml_lessons_package = "js_of_ocaml-lessons"
+tryocaml_extra_modules = [
+  "css"  "dom"  "dom_events"  "dom_html"  "event_arrows"  "file"  "firebug"  "form"
+  "js"  "json"  "deriving_Json"  "lwt_js"  "regexp"  "url"  "xmlHttpRequest"
+  "utils"  "graphics"  "button"  "cookie"  "dragnDrop"
+]
+tryocaml_extra_includes = []
+tryocaml_extra_files = [ ]
+tryocaml_name = "try-js_of_ocaml"
 
-begin library "try-js_of_ocaml-lessons"
-  files = [ "lessons.ml" ]
-  is_before = [ "try-tutorial" ]
-end
-
-begin program "try-js_of_ocaml"
-  has_asm = false
-  bytelink = "-linkall"
-  files = [ "main.ml" ]
-  requires = [ "ocp-jslib" "lwt" "try-js_of_ocaml-lessons"  "try-tutorial"  "try-toplevel" ]
-end
+if include "../try-ocaml.ocpinc" then {} else {}

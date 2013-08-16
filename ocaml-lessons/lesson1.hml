@@ -1,0 +1,144 @@
+###lesson:Simple Expressions
+###step:Simple Expressions
+
+<p>Numerical expressions are easy to compute in OCaml. For example:</p>
+
+<p><code>1+2</code></p>
+
+<br/>
+
+<p>Strings are also easy to define. For example, you can define a string with your name:</p>
+
+<p><code>"Mary"</code></p>
+
+<br/>
+
+<p>The basic element of a string is a char:</p>
+
+<p><code>'a'</code></p>
+
+####################################################################
+###test:
+
+fun input output ->
+  find_in  "- : char =" output
+
+####################################################################
+###step:List and arrays
+
+<p>Lists and arrays are predefined data structures, for
+example you can have a list of integers:</p>
+<p><code>[ 42; 1; 55 ]</code></p>
+
+<br />
+<p>An array of strings:<p>
+<p><code>[|"John"; "Doe"|]</code></p>
+
+###################################################################
+###test:
+
+fun input output ->
+  find_in  "- : string array =" output
+
+###################################################################
+###step:Operations on lists
+
+<p>You can use some predefined functions on lists such as reversing the list</p>
+<p><code>List.rev [1; 2; 3]</code></p>
+
+<br />
+<p>Get the first element of the list:</p>
+<p><code>List.hd [1; 2; 3]</code></p>
+
+<br />
+<h3>Operations on arrays</h3>
+
+<p>You can also use some predefined functions on arrays such as
+concatenate two arrays</p>
+<p><code>Array.append [| 1; 2 |] [| 3; 4; 5 |]</code></p>
+
+<br />
+<p>To get the element number <code>i</code> of an array, you have two
+ways to do this (don't forget, the first element has number <code>0</code>):</p>
+<p><code>Array.get [| 42; 51; 32 |] 2 </code></p>
+
+<p>or</p>
+
+<p><code>[| 42; 51; 32 |].(2) </code></p>
+
+###################################################################
+###test:
+
+fun input output ->
+  find_in  "- : int = 32" output
+
+###################################################################
+###step:Basic operations on strings
+
+<p>Strings are sequences of chars. It is possible to create a
+string from just one char, using:</p>
+<p><code>String.make 10 'x'</code></p>
+
+<br />
+<p>Strings can also be created by joining other strings:</p>
+<p><code>"Mary" ^ " and " ^ "John"</code></p>
+
+<br />
+<p>It might also be interesting to get the length of a string:</p>
+
+<p><code>String.length "abcdefghijklmnopqstuvwxyz"</code></p>
+
+<p>(and yes, one character is missing !)</p>
+
+###################################################################
+###test:
+
+fun input output ->
+  find_in "- : int =" output
+
+###################################################################
+###step:More operations on strings
+
+<p>There are many operations available on strings, like a function
+which returns a copy of the argument, with all uppercase letters
+translated to lowercase:</p>
+<p><code>String.lowercase "MARY"</code></p>
+
+<br />
+<p>Here's a more practical example, generating a filename from components: </p>
+<p><code>String.concat "/" [""; "usr"; "local"; "bin"]</code></p>
+<p>Note that the second argument is a list of strings.</p>
+
+<br />
+<p>It is sometimes useful to extract an integer from a string. This is
+easy in OCaml:</p>
+<p><code>int_of_string "546"</code></p>
+
+###################################################################
+###test:
+
+fun input output ->
+  find_in "- : int =" output
+###################################################################
+###step:Operations on Tuples
+
+<p>A tuple consists of values (zero or more), enclosed in parentheses
+and separated by commas. Note that you can have differents types for
+each element, remember</p>
+<p><code>(42, "John", true)</code></p>
+
+<br />
+<p>When you have a pair (a tuple with two elements), you can use some
+predefined functions like get the first element:</p>
+<p><code>fst (42, "John")</code></p>
+
+<br />
+<p>Or the second element:</p>
+<p><code>snd (42, "John")</code></p>
+
+
+###################################################################
+###test:
+
+fun input output -> find_in "- : string =" output
+

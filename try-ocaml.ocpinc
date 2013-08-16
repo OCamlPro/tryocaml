@@ -1,0 +1,159 @@
+
+lessons_sources = %subst_file( files = tryocaml_lessons
+  to_file = %path( path = [ %srcdir( p = tryocaml_lessons_package ) "%{file}%" ] ) )
+
+stdlib_modules = [
+"arg"
+"array"
+"arrayLabels"
+"buffer"
+"callback"
+"camlinternalLazy"
+"camlinternalMod"
+"camlinternalOO"
+"char"
+"complex"
+"digest"
+"filename"
+"format"
+"genlex"
+"hashtbl"
+"int32"
+"int64"
+"lazy"
+"lexing"
+"list"
+"listLabels"
+"map"
+"marshal"
+"moreLabels"
+"nativeint"
+"obj"
+"oo"
+"parsing"
+"pervasives"
+"printexc"
+"printf"
+"queue"
+"random"
+"scanf"
+"set"
+"sort"
+"stack"
+"stdLabels"
+"stream"
+"string"
+"stringLabels"
+"weak"
+]
+toplevel_modules = [
+  stdlib_modules
+  "n" "regexp" "tutorial" "outcometree" "topdirs" "toploop"
+  "toplevel" "clflags" "n" "big_int" "num" "topnum" "lwt"
+]
+
+expunge = "%{OCAMLLIB}%/expunge"
+
+JS_DIR = %srcdir( p = "js_of_ocaml" )
+TOPLEVEL_DIR = %srcdir( p = "try-toplevel" )
+js_options = []
+js_includes = [
+  "-I" %srcdir( p = "lwt" )
+  "-I" %srcdir( p = "tryocaml-cmicomp" )
+  "-I" %srcdir( p = "js_of_ocaml_compiler" )
+   "-I" %srcdir( p = "js_of_ocaml" )
+   "-I" %dstdir( p = "try-tutorial" )
+   "-I" %dstdir( p = "tryocaml-toplevellib" )
+   "-I" %dstdir( p = "ocaml-num")
+   "-I" %dstdir( p = "try-toplevel" )
+   "-I" %dstdir( p = "ocp-jslib" )
+   tryocaml_extra_includes
+   "-I" "."
+   "-I" %dstdir( p = "try-ocaml" )
+]
+
+js_files = [
+  %path ( path = [ JS_DIR "runtime.js" ])
+  %path ( path = [ TOPLEVEL_DIR "toplevel_runtime.js" ])
+]
+
+src_lessons_mli = %srcdir( p = "try-tutorial" file = "lessons.mli" )
+make_lessons_byte =        %byte_exe( p = "try-make-lessons" )
+
+begin program tryocaml_name
+  has_asm = false
+  bytelink += "-linkall"
+  files = [ "lessons.mli" "lessons.ml" tryocaml_extra_files "main.ml" ]
+
+  requires = [ "try-make-lessons" "ocp-jslib" "lwt"   "try-tutorial"  "try-toplevel" ]
+
+  cmi_files = %subst_file( files = JS_CMIS ;
+      to_file = "%{tryocaml-cmicomp_FULL_SRC_DIR}%/%{file}%" )
+  tryocaml_byte = %byte_exe( p = tryocaml_name )
+  basename_tmp = %string( strings = [tryocaml_name ".tmp"])
+  basename_js = %string( strings = [tryocaml_name ".js"])
+  tryocaml_tmp = %dstdir( p = tryocaml_name file = basename_tmp )
+(*  tryocaml_js = %dstdir( p = tryocaml_name file = basename_js ) *)
+  tryocaml_js = basename_js
+
+  build_targets = [ basename_js ]
+  build_rules = [
+
+    "lessons.mli" (
+      sources = [ src_lessons_mli ]
+      commands = [ { "cp" "-f" src_lessons_mli "lessons.mli" } ]
+    )
+    "lessons.ml" (
+      sources = [
+        make_lessons_byte lessons_sources
+      ]
+      commands = [
+        { make_lessons_byte %srcdir( p = tryocaml_lessons_package ) } (stdout = "lessons.ml" )
+      ]
+    )
+    tryocaml_tmp (
+      sources = [
+        cmi_files tryocaml_byte
+      ]
+      commands = [
+        { expunge tryocaml_byte tryocaml_tmp toplevel_modules tryocaml_extra_modules }
+      ]
+    )
+    tryocaml_js (
+      sources = [
+        cmi_files tryocaml_tmp
+      ]
+      commands = [
+        { JS_COMP js_includes "-toplevel" "-linkall" "-noinline" "-noruntime"
+                js_files tryocaml_tmp "-o" tryocaml_js js_options }
+      ]
+      build_target = true
+    )
+
+  ]
+
+end
+
+
+
+(*
+ROOT=..
+TRYOCAML_NAME=try-ocaml
+LESSON_SET=$(ROOT)/ocaml-lessons
+
+TRYOCAML_EXTRA_CMIS=
+TRYOCAML_EXTRA_CMAS=
+TRYOCAML_EXTRA_CMOS=
+TRYOCAML_EXTRA_MODULES=utils graphics
+
+TRYOCAML_EXTRA_INCLUDES=
+
+include $(ROOT)/Makefile.config
+include $(ROOT)/Makefile.tryocaml
+
+upload:
+	$(SCP) -C index.html webmaster@ssh.ocamlpro.com:/home/try.ocamlpro.com/www/index.html
+	$(SCP) -C try-ocaml.js webmaster@ssh.ocamlpro.com:/home/try.ocamlpro.com/www/try-ocaml.js
+	$(SCP) -C style.css webmaster@ssh.ocamlpro.com:/home/try.ocamlpro.com/www/style.css
+
+*)

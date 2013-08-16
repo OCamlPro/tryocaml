@@ -42,3 +42,5 @@ val jsnew3 : ('a -> 'b -> 'c -> 'd Js.t) Js.constr -> 'a * 'b * 'c -> 'd Js.t
 val setIntervalUntilFalse : (unit -> bool) -> float -> unit
 val setInterval : (unit -> unit) -> float -> (unit -> unit)
 val setTimeout : (unit -> unit) -> float -> (unit -> unit)
+
+val alert : string -> unit

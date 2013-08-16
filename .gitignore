@@ -29,3 +29,4 @@ try-js_of_ocaml/try-ocaml.js
 Makefile.config
 ocp-build.root*
 _obuild
+config.ocpgen

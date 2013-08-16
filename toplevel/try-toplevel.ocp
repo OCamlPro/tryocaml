@@ -1,7 +1,7 @@
 
 begin library "try-toplevel"
   syntax = "js_of_ocaml.camlp4-syntax"
-  files = [ "toplevel.ml" "topmain.ml" ]
+  files = [ "toplevel.ml" ]
   requires = [
     "try-toplevellib"
     "js_of_ocaml.camlp4-syntax" "js_of_ocaml" "ocp-jslib"

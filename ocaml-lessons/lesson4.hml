@@ -1,0 +1,171 @@
+###lesson:Pattern-matching
+###step:Pattern-matching on integers
+<p>A powerful feature of OCaml is pattern-matching.
+
+  For simple values as integers, pattern-matching is quite similar to
+  case switches in other languages (<em>_</em> corresponds to the
+  default case). Moreover, each case is handled in chronological order:
+
+<pre><code>let string_of_int x = match x with
+   | 0 -> "zero"
+   | 1 -> "one"
+   | 2 -> "two"
+   | _ -> "many"
+</code></pre>
+
+In this case, the pattern matching is done on the last function
+argument, so this function can be rewritten in a shorter form:
+
+<pre><code>let string_of_int2 = function
+    | 0 -> "zero"
+    | 1 -> "one"
+    | 2 -> "two"
+    | _ -> "many"
+</code></pre>
+
+</p>
+
+###test:
+fun input output ->
+  find_in  "string_of_int2 : int -> string =" output
+###step:Pattern-matching on chars
+
+<p>Pattern-matching on characters is also possible, with a special
+  syntax to denote character ranges:
+
+<pre><code>let is_capital = function
+  | 'a' .. 'z' -> false
+  | 'A' .. 'Z' -> true
+  | _          -> failwith "Not a valid letter"
+</code></pre>
+
+It is possible to give a name the value which is matched using the
+keyword <em>as</em>:
+
+<pre><code>let capitalize = function
+  | 'a' .. 'z' as letter -> Char.uppercase letter
+  | 'A' .. 'Z' as letter -> letter
+  | _                    -> failwith "Not a valid letter"
+</code></pre>
+
+</p>
+###test:
+fun input output ->
+  find_in  "val capitalize : char -> char =" output
+###step:Pattern-matching on tuples
+
+<p>Pattern-matching is also possible on tuples:
+
+<pre><code>let fit str len = match (str,len) with
+  | ("foo", 51) -> true
+  | ("bar", 51) -> true
+  | (_    , 42) -> false
+  | _           -> (String.length str) = len
+</code></pre>
+
+In case multiple patterns return a similar value, it is possible to
+omit the first occurrences of the value:
+
+<pre><code>let fit str len = match (str,len) with
+  | ("foo", 51)
+  | ("bar", 51) -> true
+  | (_    , 42) -> false
+  | _           -> (String.length str) = len
+</code></pre>
+
+Furthermore, it is possible to guard each of the pattern with some
+condition which will be computed when the pattern is evaluated, using
+the keyword <em>when</em>:
+
+<pre><code>let fit str len = match (str,len) with
+  | (_,51) when (str="foo" || str="bar") -> true
+  | (_, x) when x=42 -> false
+  | _ -> (String.length str) = len
+</code></pre>
+
+</p>
+###test:
+fun input output ->
+  find_in "  | (_, x) when x=42 -> false" input &&
+  find_in "val fit : string -> int -> bool =" output
+###step:Pattern-matching on lists
+
+<p>
+ However, the real power of pattern-matching appears when we start
+ using more structured values, when we start needing giving a name to
+ matched patterns. For instance, a list is either the empty
+ list <em>[]</em> or a head and a tail, denoted by the
+ pattern <em>h::t</em> where <em>h</em> and <em>t</em> are fresh
+ variables bound to the matched patterns:
+
+<pre><code>let head = function
+  | []   -> failwith "empty list"
+  | h::t -> h
+</code></pre>
+
+More complex patterns can be written, for instance to look at the head
+of the tail:
+
+<pre><code>let second_element = function
+  | []      -> failwith "the list is empty"
+  | [_]     -> failwith "the list contains only one element"
+  | _::e::_ -> e
+</code></pre>
+
+Or to look deeper into the matched list:
+
+<pre><code>let head_head = function
+  | []        -> failwith "the list is empty"
+  | []::_     -> failwith "the head is the empty list"
+  | (h::_)::_ -> h
+</code></pre>
+</p>
+
+###test:
+fun input output ->
+  find_in  "val head_head : 'a list list -> 'a =" output
+###step:Pattern-matching on arrays
+
+<p>You can also pattern match on arrays:
+
+<pre><code>let has_size_two = function
+  | [| _; _ |] -> true
+  | _          -> false
+</code></pre>
+
+And you can mix all the kind of values:
+
+<pre><code>let f = function
+  | []                 -> failwith "empty list"
+  | [| _; (_, x) |]::_ -> x
+  | _                  -> failwith "the first array should be of size two"
+</code></pre>
+</p>
+###test:
+fun input output ->
+  find_in  "val f : ('a * 'b) array list -> 'b =" output
+###step:Exhaustiveness
+
+<p>One of the benefit of pattern-matching is the exhaustiveness check
+  done by the compiler statically. Indeed, the OCaml compiler can
+  verify that all the cases are handled. For instance, when
+  pattern-matching on a list, the compiler will warn
+  the user if she forgets to handle the empty list case:
+
+<pre><code>let head_partial = function
+  | h::_ -> h
+</code></pre>
+
+Moreover, the compiler will also warm the user when a case is handled
+multiple times or when a case is unused:
+
+<pre><code>let head = function
+  | []   -> failwith "empty list"
+  | h::_ -> h
+  | [h]  -> h
+</code></pre>
+
+</p>
+###test:
+fun input output ->
+  find_in "val head : 'a list -> 'a =" output

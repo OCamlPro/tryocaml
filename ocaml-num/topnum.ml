@@ -7,9 +7,27 @@ let print_big_int ppf b =
 let print_num ppf b =
   Format.fprintf ppf "@[Num %s@]@." (Num.string_of_num b)
 
+module S = struct
+  let int_of_int n = n
+  let (+) = (+)
+  let (-) = (-)
+  let ( * ) = ( * )
+  let (/) = (/)
+end
+
+module F = struct
+  let int_of_int n = float_of_int n
+  let (+) = (+.)
+  let (-) = (-.)
+  let ( * ) = ( *. )
+  let (/) = (/.)
+end
+
 module I = struct
 
   open Big_int
+
+  let int_of_int = Big_int.big_int_of_int
 
   let (+) = add_big_int
   let (-) = sub_big_int
