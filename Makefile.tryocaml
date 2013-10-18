@@ -24,7 +24,7 @@ include $(ROOT)/toplevellib/toplevellib-$(OCAMLVNUM)/Makefile.config
 
 
 COMP=$(JS_COMP)
-JSFILES=$(JS_DIR)/runtime.js $(TOPLEVEL_DIR)/toplevel_runtime.js
+JSFILES=$(JS_DIR)/runtime.js $(TOPLEVEL_DIR)/toplevel_runtime.js $(JS_DIR)/weak.js
 #OCAMLC=ocamlfind ocamlc -annot -pp "camlp4o $(JS_DIR)/lib/syntax/pa_js.cmo"
 EXPUNGE=$(shell ocamlc -where)/expunge
 # Removed gc and sys
@@ -87,6 +87,7 @@ INCLUDES= \
    -I $(TOPLEVEL_INCDIR) \
    -I $(OCPJSLIB_INCDIR) \
    $(TRYOCAML_EXTRA_INCLUDES) \
+   -I $(TOPLEVELLIB_DIR)/ \
    -I .
 
 ALWAYS:

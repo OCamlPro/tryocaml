@@ -1,7 +1,7 @@
 
 
 all: Makefile.config
-	$(MAKE) -C cmicomp
+	$(MAKE) -C cmicomp 
 	ocp-build build try-make-lessons
 	$(MAKE) -C try-ocaml
 	$(MAKE) -C try-js_of_ocaml
