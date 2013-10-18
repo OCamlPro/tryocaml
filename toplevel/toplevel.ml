@@ -19,7 +19,7 @@
  *)
 
 open Utils
-open JsOfOCaml
+open Compiler
 
 module Html = Dom_html
 

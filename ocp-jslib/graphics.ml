@@ -361,7 +361,7 @@ let wait_next_event elist =
   failwith "Graphics.wait_next_event cannot be implemented"
 
 
-let loop_on_exit elist f =
+let loop_at_exit elist f =
   let doc = Dom_html.document in
   let canvas = (get_state ()).canvas in
   let cx, cy = canvas##offsetLeft, canvas##offsetTop in
@@ -388,7 +388,7 @@ let loop_on_exit elist f =
 		keypressed=false ; key=null } in
       f s;
       Js._true);
-  
+
 
   canvas##onmousemove <- Dom_html.handler (fun ev ->
     let state = get_state () in
@@ -411,7 +411,7 @@ let loop_on_exit elist f =
 	with Invalid_argument _ -> null in
       let mouse_x, mouse_y = get_pos_mouse () in
       let s = { mouse_x ; mouse_y ; button=(!button) ;
-		keypressed=true ; key } in	
+		keypressed=true ; key } in
       f s;
       Js._true)
 
@@ -491,19 +491,19 @@ let open_graph string =
 
   (* Parses the "command line" to determine whether or not a new window needs to
      be used as canvas *)
-  let no_info, new_window = 
+  let no_info, new_window =
     try
-      let sep = 
-        try 
+      let sep =
+        try
           String.index string ' '
-        with _ -> 
+        with _ ->
           (* If the string begins with a number, we assume there is no display
              information *)
           let c = int_of_char string.[0] in
           if c >= 48 && c <= 57 then
             raise (Invalid_argument "No display information")
           else String.length string
-      in 
+      in
       let display = String.create sep in
       String.blit string 0 display 0 sep;
       let l = (String.length string) - sep in
@@ -512,10 +512,10 @@ let open_graph string =
     with
         _ -> true, true
   in
-    
+
   close_graph ();
-  
-  
+
+
   let x = 0 in
   let y = 0 in
 
@@ -525,12 +525,12 @@ let open_graph string =
     try
       begin
         (* In case the user forgot to add the empty space before declaring size *)
-        let size = if no_info then string else !size in 
+        let size = if no_info then string else !size in
         let sep = String.index size 'x' in
         let width = String.sub size 0 sep in
         let l = (String.length size) - sep - 1 in
         let sec_sep =
-          try 
+          try
             (String.index size '+') - sep - 1
           with _ -> l
         in
@@ -543,24 +543,24 @@ let open_graph string =
 
     (* If a new window is specified, will create a popup and return its document
   otherwise, it returns the actual document *)
-  let doc = 
+  let doc =
     if new_window then
       begin
-        let params = 
-          Format.sprintf "status=1,width=%d,height=%d" (width+20) (height+20) 
+        let params =
+          Format.sprintf "status=1,width=%d,height=%d" (width+20) (height+20)
         in
         let params = Js.some (Js.string params) in
-        let pop = 
+        let pop =
           Dom_html.window##open_(
-            Js.string "", 
-            Js.string "OCaml Graphic context", 
+            Js.string "",
+            Js.string "OCaml Graphic context",
             params)
         in
         pop##document
       end
     else doc
   in
-  
+
   let canvas = Dom_html.createCanvas doc in
   let body = if new_window then doc##body
     else Utils.get_element_by_id "graphics" in

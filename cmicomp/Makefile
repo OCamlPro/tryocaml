@@ -18,7 +18,7 @@ all: $(CMICOMP) $(JS_CMIS)
 $(JS_CMIS):  $(JS_DIR)/*.cmi
 	cp -f $(JS_DIR)/*.cmi .
 	cp -f $(JS_DIR)/js_of_ocaml.cma .
-	ocamlrun $(CMICOMP) $(CMICOMP_FLAGS) $(JS_CMIS)
+	ocamlrun $(CMICOMP) compress $(CMICOMP_FLAGS) $(JS_CMIS)
 
 clean:
 	rm -f *.cmi *.cmi.old
