@@ -85,7 +85,7 @@ let main () =
   set_color black;
   fill_rect 0 0 900 600;
   dessine ();
-  loop_on_exit [Button_down] (fun st ->
+  loop_at_exit [Button_down] (fun st ->
   let dx = st.mouse_x mod case - rayon in
   let dy = st.mouse_y mod case - rayon in
   if dx * dx + dy * dy <= rayon * rayon then

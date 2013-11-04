@@ -85,7 +85,7 @@ begin program tryocaml_name
   bytelink += "-linkall"
   files = [ "lessons.mli" "lessons.ml" tryocaml_extra_files "main.ml" ]
 
-  requires = [ "try-make-lessons" "ocp-jslib" "lwt"   "try-tutorial"  "try-toplevel" ]
+  requires = [ "try-make-lessons" "ocp-jslib" "lwt"   "try-tutorial"  "try-toplevel" "compiler-libs" ]
 
   cmi_files = %subst_file( files = JS_CMIS ;
       to_file = "%{tryocaml-cmicomp_FULL_SRC_DIR}%/%{file}%" )

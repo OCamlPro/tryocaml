@@ -141,6 +141,7 @@ Get them back in order to get the proper result at the end.</p>
 <pre><code>one + match hundred with
   | 42  -> match ten with 10 -> 52  | _ -> 0
   | 100 -> match ten with 10 -> 110 | _ -> 0
+  | _ -> -1
 </code></pre>
 
 ###test:

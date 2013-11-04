@@ -1,0 +1,88 @@
+
+begin
+  version = "[distributed with Ocaml]"
+  generated = true
+  dirname = [ "%{OCAMLLIB}%" "camlp4" ]
+
+   begin library "camlp4lib"
+     link = [ "-I" "+camlp4" ]
+     requires = [ "dynlink" ]
+   end
+
+   begin objects "Camlp4Bin"
+     files = [ "Camlp4Bin.ml" ]
+     requires = [ "camlp4lib" ]
+   end
+
+   begin objects "Camlp4OCamlRevisedParser"
+     files = [ "Camlp4Parsers/Camlp4OCamlRevisedParser.ml" ]
+     requires = [ "camlp4lib" ]
+   end
+
+   begin objects "camlp4-pa-r"
+     requires = [ "camlp4lib" "Camlp4OCamlRevisedParser" ]
+   end
+
+   begin objects "Camlp4OCamlRevisedParserParser"
+     files = [ "Camlp4Parsers/Camlp4OCamlRevisedParserParser.ml" ]
+     requires = [ "camlp4-pa-r" ]
+   end
+
+   begin objects "camlp4-pa-rp"
+     requires = [ "camlp4-pa-r" "Camlp4OCamlRevisedParserParser" ]
+   end
+
+
+
+   begin objects "Camlp4OCamlParser"
+     files = [ "Camlp4Parsers/Camlp4OCamlParser.ml" ]
+     requires = [ "camlp4lib" "camlp4-pa-r" ]
+   end
+
+   begin objects "camlp4-pa-o"
+     requires = [ "camlp4lib" "Camlp4OCamlParser" ]
+   end
+
+   begin objects "Camlp4OCamlParserParser"
+     files = [ "Camlp4Parsers/Camlp4OCamlParserParser.ml" ]
+     requires = [ "camlp4-pa-o" "Camlp4OCamlRevisedParserParser" ]
+   end
+
+   begin objects "camlp4-pa-op"
+     requires = [ "camlp4-pa-o" "Camlp4OCamlParserParser" ]
+   end
+
+   begin objects "Camlp4QuotationCommon"
+    files = [ "Camlp4Parsers/Camlp4QuotationCommon.ml"]
+     requires = [ "camlp4lib" ]
+  end
+
+   begin objects "Camlp4OCamlRevisedQuotationExpander"
+    files = [ "Camlp4Parsers/Camlp4OCamlRevisedQuotationExpander.ml"]
+     requires = [ "camlp4lib" "Camlp4OCamlRevisedParser" "Camlp4QuotationCommon" ]
+  end
+
+   begin objects "Camlp4GrammarParser"
+    files = [ "Camlp4Parsers/Camlp4GrammarParser.ml"]
+     requires = [ "camlp4lib" "camlp4-pa-o" ]
+  end
+
+  begin objects "Camlp4AutoPrinter"
+    files = [ "Camlp4Printers/Camlp4AutoPrinter.ml" ]
+     requires = [ "camlp4lib" "unix" ]
+  end
+
+  begin objects "camlp4-pr-p"
+    requires = [ "Camlp4AutoPrinter" ]
+  end
+
+  begin objects "pa_macro"
+    files = [ "Camlp4Parsers/Camlp4MacroParser.ml" ]
+    requires = [ "camlp4-pa-o" ]
+  end
+
+  begin program "camlp4o"
+      requires = [ "camlp4lib" "camlp4-pa-op" "Camlp4Bin" ]
+  end
+
+end

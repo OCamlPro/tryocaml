@@ -34,7 +34,7 @@ begin library "try-toplevellib"
   generated = true
   dirname = [ "toplevellib/toplevellib-4.01.0" ]
   archive = "ocamltoplevel"
-  requires = [ "ocamlbytecomp" ]
+  requires = [ "compiler-libs.bytecomp" ]
 end
 }
 
@@ -48,7 +48,7 @@ begin library "try-toplevellib"
   generated = true
   dirname = [ "toplevellib/toplevellib-4.00.1" ]
   archive = "ocamltoplevel"
-  requires = [ "ocamlbytecomp" ]
+  requires = [ "compiler-libs.bytecomp" ]
 end
 }
 
@@ -62,7 +62,7 @@ begin library "try-toplevellib"
   generated = true
   dirname = [ "toplevellib/toplevellib-4.00.0" ]
   archive = "ocamltoplevel"
-  requires = [ "ocamlbytecomp" ]
+  requires = [ "compiler-libs" ]
 end
 }
 
