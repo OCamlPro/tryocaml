@@ -11,7 +11,7 @@ and draw chars when key are pressed:</p>
 
 <pre><code>open Graphics;;
 open_graph " 900x600";;
-loop_on_exit [Key_pressed; Button_down]
+loop_at_exit [Key_pressed; Button_down]
    (fun event ->
      if event.keypressed then
        draw_char event.key
@@ -19,9 +19,9 @@ loop_on_exit [Key_pressed; Button_down]
        fill_circle event.mouse_x event.mouse_y 10)</code></pre>
 
 
-<p><inline>loop_on_exit</inline> must be used instead of
+<p><inline>loop_at_exit</inline> must be used instead of
 <inline>wait_next_event</inline> and <inline>read_key</inline>.</p>
-<p>Note that Graphics.loop_on_exit is only available
+<p>Note that Graphics.loop_at_exit is only available
 in the standard OCaml distribution since OCaml 4.01.</p>
 </p>
 ###test:

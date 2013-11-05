@@ -74,6 +74,7 @@ js_includes = [
 
 js_files = [
   %path ( path = [ JS_DIR "runtime.js" ])
+  %path ( path = [ JS_DIR "weak.js" ])
   %path ( path = [ TOPLEVEL_DIR "toplevel_runtime.js" ])
 ]
 
