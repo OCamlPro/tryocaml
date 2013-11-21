@@ -1,0 +1,3 @@
+[submodule "ocp-jslib"]
+	path = ocp-jslib
+	url = git@github.com:OCamlPro/ocp-jslib.git
