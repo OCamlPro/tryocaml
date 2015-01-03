@@ -142,7 +142,7 @@ dl dt {
     margin-top: 10px;
     margin-right: 10px;
     padding: 7px;
- }
+}
 
 #buttons {
     text-align: center;
@@ -152,4 +152,8 @@ dl dt {
     position: absolute;
     top: 2%;
     float: left
- }
+}
+
+code {
+    cursor: pointer;
+} 
