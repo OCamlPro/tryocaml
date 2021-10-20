@@ -1,3 +1,9 @@
+>
+> NOTICE: this repository is deprecated; please see the Try OCaml reboot at https://gitlab.ocamlpro.com/OCamlPro/learn-ocaml instead.
+>
+> the above is in fact the version that is now depoyed to https://try.ocamlpro.com
+>
+
 # Overview
 
 TryOCaml is the easiest way to learn how to code in OCaml language. A
