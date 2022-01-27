@@ -1,13 +1,13 @@
 <h3>Pattern-matching on arrays</h3>
 
-<p>You can also pattern match on arrays:
+<p>You can also use pattern-matching on arrays:
 
 <pre><code>let has_size_two = function
   | [| _; _ |] -> true
   | _          -> false
 </code></pre>
 
-And you can mix all the kind of values:
+And you can mix all kinds of values:
 
 <pre><code>let f = function
   | []                 -> failwith "empty list"

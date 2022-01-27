@@ -2,12 +2,12 @@
 
 <p>
  However, the real power of pattern-matching appears when we start
- using more structured values, when we start needing giving a name to
- matched patterns. For instance, a list is either the empty
+ using more structured values, and when the need appears for assigning variable names to
+ matched patterns. For instance, a list is either an empty
  list <em>[]</em> or a head and a tail, denoted by the
  pattern <em>h::t</em> where <em>h</em> and <em>t</em> are fresh
  variables bound to the matched patterns:
-
+<!-- This head and tail part is not clear at all. Can somebody explain this part better? -->
 <pre><code>let head = function
   | []   -> failwith "empty list"
   | h::t -> h
